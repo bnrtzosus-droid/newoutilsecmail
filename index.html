@@ -610,11 +610,11 @@ function checkAuth() {
   var s = getSession();
   if (!s || !s.ok) { showLogin(); return false; }
   if (s.expires_at && Date.now() / 1000 > s.expires_at) { clearSession(); showLogin(); return false; }
-  document.getElementById('loginOverlay').hidden = true;
+  document.getElementById('loginOverlay').style.display = 'none';
   return true;
 }
 function showLogin() {
-  document.getElementById('loginOverlay').hidden = false;
+  document.getElementById('loginOverlay').style.display = '';
 }
 function doLogin(e) {
   e.preventDefault();
@@ -624,10 +624,9 @@ function doLogin(e) {
   btn.disabled = true; btn.textContent = 'Vérification…'; err.hidden = true;
   var h = 5381;
   for (var i = 0; i < pass.length; i++) h = ((h << 5) + h + pass.charCodeAt(i)) & 0xFFFFFFFF;
-  alert('DEBUG hash=' + (h>>>0) + ' attendu=' + _ph + ' ok=' + ((h>>>0)===_ph));
   if ((h >>> 0) === _ph) {
     saveSession({ ok: true, expires_at: Date.now()/1000 + 86400 * 30 });
-    document.getElementById('loginOverlay').hidden = true;
+    document.getElementById('loginOverlay').style.display = 'none';
     loadContactsFromDB();
     setInterval(loadContactsFromDB, 10000);
   } else {
