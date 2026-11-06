@@ -847,25 +847,7 @@ def google_search_profiles(page, query: str, network: str) -> list[str]:
             return results
     except Exception as e:
         print(f"  [!] DuckDuckGo search error: {e}")
-
-    # Fallback Bing (si DuckDuckGo échoue)
-    try:
-        page.goto(f"https://www.bing.com/search?q={q}&count=10", timeout=20000)
-        pause(1.5, 2.5)
-        links = page.eval_on_selector_all(
-            "a[href]",
-            """els => [...new Set(
-              els.map(e => e.href)
-                 .filter(h => h.includes('instagram.com/') || h.includes('tiktok.com/@') ||
-                              h.includes('x.com/') || h.includes('twitter.com/') ||
-                              h.includes('linkedin.com/in/') || h.includes('youtube.com/') ||
-                              h.includes('facebook.com/'))
-            )]"""
-        )
-        return [l for l in links if not any(s in l.lower() for s in skip)][:8]
-    except Exception as e:
-        print(f"  [!] Bing search error: {e}")
-        return []
+    return []
 
 
 def scrape_profile_url(page, url: str, network: str, query: str, country: str) -> dict | None:
@@ -920,35 +902,61 @@ def scrape_profile_url(page, url: str, network: str, query: str, country: str) -
         return None
 
 
+def is_phone_query(query: str) -> bool:
+    """Return True if the query looks like a phone number."""
+    digits = re.sub(r"[\s\-\.\+\(\)]", "", query)
+    return digits.isdigit() and len(digits) >= 7
+
+
 def search_by_query(page, query: str, networks: list, country: str, logged_in: set = None) -> int:
     """Search all networks for a name or phone number."""
     if logged_in is None:
         logged_in = set()
+    is_phone = is_phone_query(query)
     total = 0
+
     for net in networks:
         print(f"\n  [{net.upper()}] Recherche : {query}")
-
-        # Recherche directe si connecté (bien plus efficace que Google)
         profile_urls = []
-        if net == "facebook" and "facebook" in logged_in:
-            print(f"  → Recherche directe Facebook (connecté)...")
-            profile_urls = search_facebook_direct(page, query)
-        elif net == "instagram" and "instagram" in logged_in:
-            print(f"  → Recherche directe Instagram (connecté)...")
-            profile_urls = search_instagram_direct(page, query)
-        elif net == "linkedin" and "linkedin" in logged_in:
-            print(f"  → Recherche directe LinkedIn (connecté)...")
-            profile_urls = search_linkedin_direct(page, query)
 
-        # Fallback Google si pas connecté ou aucun résultat
-        if not profile_urls:
-            if net in logged_in:
-                print(f"  → Aucun résultat direct, essai Google...")
-            profile_urls = google_search_profiles(page, query, net)
+        # ── Recherche par numéro de téléphone ───────────────────────────────
+        if is_phone:
+            if net == "facebook" and "facebook" in logged_in:
+                print(f"  → Recherche directe Facebook (connecté)...")
+                profile_urls = search_facebook_direct(page, query)
+                if not profile_urls:
+                    print(f"  → Aucun profil trouvé sur Facebook")
+            elif net == "facebook":
+                print(f"  → Facebook non connecté — connexion requise pour chercher par numéro")
+            else:
+                # Instagram/Twitter/etc. n'indexent pas les numéros → inutile
+                print(f"  → Recherche par numéro non disponible sur {net} (pas indexé)")
+            # Pas de fallback moteur de recherche pour les numéros — ça ne marche jamais
+            if not profile_urls:
+                continue
 
-        if not profile_urls:
-            print(f"  → Aucun profil trouvé")
-            continue
+        # ── Recherche par nom / prénom ───────────────────────────────────────
+        else:
+            if net == "facebook" and "facebook" in logged_in:
+                print(f"  → Recherche directe Facebook (connecté)...")
+                profile_urls = search_facebook_direct(page, query)
+            elif net == "instagram" and "instagram" in logged_in:
+                print(f"  → Recherche directe Instagram (connecté)...")
+                profile_urls = search_instagram_direct(page, query)
+            elif net == "linkedin" and "linkedin" in logged_in:
+                print(f"  → Recherche directe LinkedIn (connecté)...")
+                profile_urls = search_linkedin_direct(page, query)
+
+            # Fallback DuckDuckGo pour la recherche par nom
+            if not profile_urls:
+                if net in logged_in:
+                    print(f"  → Aucun résultat direct, essai DuckDuckGo...")
+                profile_urls = google_search_profiles(page, query, net)
+
+            if not profile_urls:
+                print(f"  → Aucun profil trouvé")
+                continue
+
         for url in profile_urls:
             contact = scrape_profile_url(page, url, net, query, country)
             if contact:
