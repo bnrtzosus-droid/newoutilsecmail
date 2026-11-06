@@ -8,85 +8,41 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* ── Tokens ───────────────────────────────────────────── */
 :root {
-  --bg:    #080E14;
-  --bg2:   #0C1520;
-  --sf:    #111C28;
-  --sf2:   #162233;
-  --sf3:   #1D2D40;
-  --bd:    rgba(37,211,102,.10);
-  --bda:   rgba(37,211,102,.25);
-  --fg:    #E8F5EE;
-  --fg2:   #7A9E8A;
-  --fg3:   #3D6050;
-  --ac:    #25D366;
-  --acl:   #2FEB73;
-  --acd:   rgba(37,211,102,.12);
-  --acd2:  rgba(37,211,102,.06);
-  --ac2:   #128C7E;
-  --ok:    #25D366;
-  --er:    #F87171;
-  --warn:  #FBBF24;
-  --blue:  #60A5FA;
-  --r:     14px;
-  --rs:    8px;
-  --shadow: 0 4px 24px rgba(0,0,0,.45);
-  --shadow-sm: 0 2px 10px rgba(0,0,0,.3);
+  --bg:   #080E14; --bg2:  #0C1520;
+  --sf:   #111C28; --sf2:  #162233; --sf3: #1D2D40;
+  --bd:   rgba(37,211,102,.10); --bda: rgba(37,211,102,.25);
+  --fg:   #E8F5EE; --fg2:  #7A9E8A; --fg3: #3D6050;
+  --ac:   #25D366; --acl:  #2FEB73;
+  --acd:  rgba(37,211,102,.12); --acd2: rgba(37,211,102,.06);
+  --ac2:  #128C7E;
+  --er:   #F87171;
+  --r: 14px; --rs: 8px;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg:    #F4FBF7;
-    --bg2:   #EAF6EF;
-    --sf:    #FFFFFF;
-    --sf2:   #EDF7F2;
-    --sf3:   #DCF0E6;
-    --bd:    rgba(18,140,126,.13);
-    --bda:   rgba(18,140,126,.30);
-    --fg:    #071610;
-    --fg2:   #3A7A5A;
-    --fg3:   #A0C8B0;
-    --ac:    #128C7E;
-    --acl:   #0DAF9C;
-    --acd:   rgba(18,140,126,.10);
-    --acd2:  rgba(18,140,126,.05);
-    --ac2:   #075E54;
-    --ok:    #15A050;
-    --er:    #DC2626;
-    --warn:  #D97706;
-    --blue:  #2563EB;
-    --shadow: 0 4px 24px rgba(0,0,0,.12);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+    --bg: #F4FBF7; --bg2: #EAF6EF;
+    --sf: #FFFFFF; --sf2: #EDF7F2; --sf3: #DCF0E6;
+    --bd: rgba(18,140,126,.13); --bda: rgba(18,140,126,.30);
+    --fg: #071610; --fg2: #3A7A5A; --fg3: #A0C8B0;
+    --ac: #128C7E; --acl: #0DAF9C;
+    --acd: rgba(18,140,126,.10); --acd2: rgba(18,140,126,.05);
+    --ac2: #075E54; --er: #DC2626;
     color-scheme: light;
   }
 }
 :root[data-theme="light"] {
-  --bg:    #F4FBF7;
-  --bg2:   #EAF6EF;
-  --sf:    #FFFFFF;
-  --sf2:   #EDF7F2;
-  --sf3:   #DCF0E6;
-  --bd:    rgba(18,140,126,.13);
-  --bda:   rgba(18,140,126,.30);
-  --fg:    #071610;
-  --fg2:   #3A7A5A;
-  --fg3:   #A0C8B0;
-  --ac:    #128C7E;
-  --acl:   #0DAF9C;
-  --acd:   rgba(18,140,126,.10);
-  --acd2:  rgba(18,140,126,.05);
-  --ac2:   #075E54;
-  --ok:    #15A050;
-  --er:    #DC2626;
-  --warn:  #D97706;
-  --blue:  #2563EB;
-  --shadow: 0 4px 24px rgba(0,0,0,.12);
-  --shadow-sm: 0 2px 8px rgba(0,0,0,.08);
+  --bg: #F4FBF7; --bg2: #EAF6EF;
+  --sf: #FFFFFF; --sf2: #EDF7F2; --sf3: #DCF0E6;
+  --bd: rgba(18,140,126,.13); --bda: rgba(18,140,126,.30);
+  --fg: #071610; --fg2: #3A7A5A; --fg3: #A0C8B0;
+  --ac: #128C7E; --acl: #0DAF9C;
+  --acd: rgba(18,140,126,.10); --acd2: rgba(18,140,126,.05);
+  --ac2: #075E54; --er: #DC2626;
   color-scheme: light;
 }
 
-/* ── Reset ───────────────────────────────────────────── */
 *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 body {
   background:var(--bg); color:var(--fg);
@@ -100,10 +56,10 @@ body::before {
   height:env(safe-area-inset-top,0px); background:var(--bg); z-index:200;
 }
 
-/* ── Header / Nav ──────────────────────────────────────── */
+/* Header */
 .hdr {
   position:sticky; top:env(safe-area-inset-top,0px); z-index:100;
-  background:rgba(8,14,20,.85);
+  background:rgba(8,14,20,.88);
   backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);
   border-bottom:1px solid var(--bd);
@@ -114,21 +70,17 @@ body::before {
   display:flex; align-items:center; justify-content:space-between; gap:16px;
   height:62px;
 }
-
-/* Brand */
 .brand { display:flex; align-items:center; gap:12px; text-decoration:none; flex-shrink:0; }
 .brand-icon {
   width:40px; height:40px;
   background:linear-gradient(135deg,var(--ac),var(--ac2));
   border-radius:11px; display:grid; place-items:center;
-  font-size:20px; box-shadow:0 4px 16px rgba(37,211,102,.35);
-  flex-shrink:0;
+  font-size:20px; box-shadow:0 4px 16px rgba(37,211,102,.35); flex-shrink:0;
 }
-.brand-text { display:flex; flex-direction:column; }
 .brand-name { font-size:15px; font-weight:700; color:var(--fg); letter-spacing:-.3px; }
 .brand-sub  { font-size:11px; color:var(--fg2); }
 
-/* Nav links */
+/* Nav */
 .nav { display:flex; align-items:center; gap:2px; }
 .nav-link {
   display:flex; align-items:center; gap:7px;
@@ -138,341 +90,83 @@ body::before {
   cursor:pointer; transition:color .15s, background .15s;
   white-space:nowrap; font-family:inherit;
 }
-.nav-link svg { opacity:.7; flex-shrink:0; transition:opacity .15s; }
 .nav-link:hover { color:var(--fg); background:var(--sf2); }
-.nav-link:hover svg { opacity:1; }
 .nav-link.active { color:var(--ac); background:var(--acd2); }
-.nav-link.active svg { opacity:1; color:var(--ac); }
 .nav-badge {
   background:var(--ac); color:#fff;
   border-radius:20px; padding:1px 7px; font-size:11px; font-weight:700; line-height:1.6;
 }
-
-/* Nav right */
-.nav-right { display:flex; align-items:center; gap:8px; }
 .btn-menu {
   display:none; background:var(--sf2); border:1px solid var(--bd);
-  border-radius:var(--rs); padding:9px 11px; cursor:pointer; color:var(--fg);
-  line-height:1; transition:background .15s;
+  border-radius:var(--rs); padding:9px 11px; cursor:pointer; color:var(--fg); line-height:1;
 }
-.btn-menu:hover { background:var(--sf3); }
+@media (max-width:680px) { .nav { display:none; } .btn-menu { display:flex; align-items:center; } }
 
-/* Mobile menu */
 .nav-mobile {
   display:none; flex-direction:column; gap:3px;
   padding:10px max(24px,env(safe-area-inset-left,0px)) 14px;
-  border-top:1px solid var(--bd);
-  background:rgba(8,14,20,.95);
+  border-top:1px solid var(--bd); background:rgba(8,14,20,.95);
 }
 .nav-mobile.open { display:flex; }
 .nav-mobile .nav-link { justify-content:flex-start; padding:11px 14px; }
 
-@media (max-width:680px) {
-  .nav { display:none; }
-  .btn-menu { display:flex; align-items:center; }
-}
-
-/* ── Hero ─────────────────────────────────────────────── */
+/* Hero */
 .hero {
-  background:linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+  background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);
   border-bottom:1px solid var(--bd);
   padding:40px max(24px,env(safe-area-inset-left,0px)) 36px;
 }
 .hero-inner { max-width:1100px; margin:0 auto; }
-.hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; }
-.hero-left { max-width:580px; }
 .hero-pill {
   display:inline-flex; align-items:center; gap:7px;
   background:var(--acd2); border:1px solid var(--bda);
   border-radius:100px; padding:5px 14px;
-  font-size:12px; font-weight:600; color:var(--ac);
-  margin-bottom:14px;
+  font-size:12px; font-weight:600; color:var(--ac); margin-bottom:14px;
 }
 .hero-pill::before { content:""; width:7px; height:7px; background:var(--ac); border-radius:50%; animation:pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
-.hero-h { font-size:clamp(22px,4vw,32px); font-weight:800; line-height:1.2; letter-spacing:-.6px; text-wrap:balance; color:var(--fg); }
+.hero-h { font-size:clamp(22px,4vw,32px); font-weight:800; line-height:1.2; letter-spacing:-.6px; text-wrap:balance; }
 .hero-h span { color:var(--ac); }
 .hero-p { font-size:14.5px; color:var(--fg2); margin-top:10px; line-height:1.65; max-width:460px; }
-.hero-stats { display:flex; align-items:center; gap:20px; margin-top:20px; flex-wrap:wrap; }
-.hs { text-align:center; }
-.hs-n { font-size:22px; font-weight:800; color:var(--ac); letter-spacing:-.5px; }
-.hs-l { font-size:11px; color:var(--fg2); font-weight:500; margin-top:2px; }
-.hs-sep { width:1px; height:36px; background:var(--bd); }
+.hero-kpi { display:flex; align-items:center; gap:24px; margin-top:24px; flex-wrap:wrap; }
+.kpi { text-align:center; }
+.kpi-n { font-size:28px; font-weight:800; color:var(--ac); letter-spacing:-.5px; }
+.kpi-l { font-size:11.5px; color:var(--fg2); font-weight:500; margin-top:2px; }
+.kpi-sep { width:1px; height:40px; background:var(--bd); }
 
-/* ── Main layout ─────────────────────────────────────── */
+/* Page */
 .page { max-width:1100px; margin:0 auto; padding:32px max(24px,env(safe-area-inset-left,0px)) 80px; }
 
-/* ── Stat cards ────────────────────────────────────────── */
-.stats-grid {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
-  margin-bottom:32px;
-}
-@media (max-width:700px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
-@media (max-width:380px) { .stats-grid { grid-template-columns:1fr 1fr; gap:10px; } }
-
-.sc {
-  background:var(--sf); border:1px solid var(--bd);
-  border-radius:var(--r); padding:20px;
-  position:relative; overflow:hidden;
-  transition:border-color .2s, transform .15s;
-}
-.sc:hover { border-color:var(--bda); transform:translateY(-1px); }
-.sc::before {
-  content:""; position:absolute; top:0; left:0; right:0; height:3px;
-  border-radius:var(--r) var(--r) 0 0;
-}
-.sc.total::before  { background:var(--fg3); }
-.sc.active::before { background:linear-gradient(90deg,var(--ac),var(--acl)); }
-.sc.inactive::before { background:linear-gradient(90deg,var(--er),#FDA4A4); }
-.sc.pending::before  { background:linear-gradient(90deg,var(--warn),#FDE68A); }
-
-.sc-icon {
-  width:38px; height:38px; border-radius:10px;
-  display:grid; place-items:center; margin-bottom:12px;
-  font-size:17px;
-}
-.sc.total  .sc-icon { background:var(--sf3); }
-.sc.active .sc-icon { background:rgba(37,211,102,.12); }
-.sc.inactive .sc-icon { background:rgba(248,113,113,.10); }
-.sc.pending  .sc-icon { background:rgba(251,191,36,.10); }
-
-.sc-num { font-size:28px; font-weight:800; letter-spacing:-.8px; font-variant-numeric:tabular-nums; }
-.sc.total  .sc-num { color:var(--fg); }
-.sc.active .sc-num { color:var(--ok); }
-.sc.inactive .sc-num { color:var(--er); }
-.sc.pending  .sc-num { color:var(--warn); }
-.sc-lbl { font-size:12px; color:var(--fg2); font-weight:500; margin-top:4px; }
-
-/* ── Section headers ──────────────────────────────────── */
-.sec-hdr {
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  margin-bottom:18px;
-}
-.sec-title {
-  font-size:16px; font-weight:700; display:flex; align-items:center; gap:9px; color:var(--fg);
-}
+/* Section header */
+.sec-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+.sec-title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:9px; color:var(--fg); }
 .sec-title svg { color:var(--ac); }
 .sec-badge {
   background:var(--acd); color:var(--ac); border:1px solid var(--bda);
   border-radius:100px; padding:2px 10px; font-size:12px; font-weight:700;
 }
 
-/* ── Mode tabs ─────────────────────────────────────────── */
-.mode-tabs { display:flex; gap:0; margin-bottom:18px; background:var(--sf); border:1px solid var(--bd); border-radius:var(--rs); padding:4px; align-self:flex-start; width:fit-content; }
-.mode-tab {
-  padding:8px 18px; border-radius:6px; font-size:13px; font-weight:600;
-  border:none; background:none; color:var(--fg2); cursor:pointer;
-  transition:all .15s; font-family:inherit; display:flex; align-items:center; gap:7px;
-  white-space:nowrap;
-}
-.mode-tab.active { background:var(--ac); color:#fff; box-shadow:0 2px 8px rgba(37,211,102,.4); }
-.mode-tab:not(.active):hover { color:var(--fg); background:var(--sf2); }
-
-/* ── Tool layout ─────────────────────────────────────── */
-.tool-grid {
-  display:grid; grid-template-columns:1fr 320px; gap:16px; margin-bottom:20px;
-}
-@media (max-width:780px) { .tool-grid { grid-template-columns:1fr; } }
-
-/* ── Card ─────────────────────────────────────────────── */
-.card {
-  background:var(--sf); border:1px solid var(--bd);
-  border-radius:var(--r); padding:22px;
-  box-shadow:var(--shadow-sm);
-}
-.card-label {
-  font-size:11px; font-weight:700; letter-spacing:.8px;
-  text-transform:uppercase; color:var(--fg3); margin-bottom:14px;
-  display:flex; align-items:center; gap:7px;
-}
-.card-label svg { color:var(--ac); opacity:.8; }
-
-/* ── Inputs ───────────────────────────────────────────── */
-.field-label { font-size:12px; color:var(--fg2); font-weight:500; display:block; margin-bottom:6px; }
-textarea, .inp {
-  width:100%; background:var(--bg); border:1.5px solid var(--bd);
-  border-radius:var(--rs); padding:11px 14px;
-  font-size:13px; color:var(--fg); outline:none;
-  transition:border-color .15s, box-shadow .15s;
-}
-textarea {
-  font-family:'JetBrains Mono',monospace; resize:vertical; min-height:130px; line-height:1.75;
-}
-.inp { font-family:'JetBrains Mono',monospace; }
-textarea:focus, .inp:focus { border-color:var(--ac); box-shadow:0 0 0 3px rgba(37,211,102,.12); }
-textarea::placeholder, .inp::placeholder { color:var(--fg3); font-family:'Inter',sans-serif; font-size:13px; }
-select.inp { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A9E8A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px; }
-
-/* ── Buttons ──────────────────────────────────────────── */
-.btn-row { display:flex; gap:8px; margin-top:16px; }
-.btn-primary {
-  flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
-  background:linear-gradient(135deg,var(--ac),var(--ac2));
-  color:#fff; border:none; border-radius:var(--rs);
-  padding:12px 22px; font-size:14px; font-weight:700; font-family:inherit;
-  cursor:pointer; transition:filter .15s, transform .1s, box-shadow .15s;
-  box-shadow:0 4px 16px rgba(37,211,102,.3);
-}
-.btn-primary:hover { filter:brightness(1.08); box-shadow:0 6px 22px rgba(37,211,102,.4); }
-.btn-primary:active { transform:scale(.98); }
-.btn-primary:disabled { opacity:.45; cursor:not-allowed; filter:none; box-shadow:none; }
-
-.btn-secondary {
-  display:flex; align-items:center; justify-content:center; gap:7px;
-  background:var(--sf2); color:var(--fg2); border:1px solid var(--bd);
-  border-radius:var(--rs); padding:12px 15px;
-  font-size:14px; font-family:inherit; cursor:pointer; transition:background .15s, color .15s;
-  white-space:nowrap;
-}
-.btn-secondary:hover { background:var(--sf3); color:var(--fg); }
-
-.btn-stop {
-  background:rgba(248,113,113,.12); color:var(--er);
-  border:1px solid rgba(248,113,113,.25); border-radius:var(--rs);
-  padding:12px 15px; font-size:13px; font-weight:600;
-  font-family:inherit; cursor:pointer; transition:background .15s;
-  display:flex; align-items:center; gap:6px;
-}
-.btn-stop:hover { background:rgba(248,113,113,.2); }
-
-.btn-ghost {
-  display:inline-flex; align-items:center; gap:6px;
-  background:var(--acd2); color:var(--ac); border:1px solid var(--bda);
-  border-radius:var(--rs); padding:8px 14px;
-  font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s;
-}
-.btn-ghost:hover { background:var(--acd); }
-
-.btn-wa {
-  display:flex; align-items:center; gap:5px;
-  background:var(--acd); color:var(--ac); border:1px solid var(--bda);
-  border-radius:var(--rs); padding:7px 12px;
-  font-size:12px; font-weight:600; font-family:inherit;
-  cursor:pointer; text-decoration:none; white-space:nowrap;
-  transition:background .15s; flex-shrink:0;
-}
-.btn-wa:hover { background:var(--bda); }
-
-/* ── Info box ─────────────────────────────────────────── */
-.info-box {
-  background:var(--acd2); border:1px solid rgba(37,211,102,.12);
-  border-radius:var(--rs); padding:11px 14px;
-  font-size:12.5px; color:var(--fg2); line-height:1.65; margin-bottom:14px;
-}
-
-/* ── Country pills ────────────────────────────────────── */
-.pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+/* Pays filter pills */
+.pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
 .pill {
   background:var(--sf2); border:1px solid var(--bd); border-radius:100px;
-  padding:5px 12px; font-size:12px; font-weight:500; color:var(--fg2);
+  padding:6px 14px; font-size:12.5px; font-weight:500; color:var(--fg2);
   cursor:pointer; transition:all .15s; white-space:nowrap;
 }
 .pill:hover { border-color:var(--bda); color:var(--fg); background:var(--sf3); }
 .pill.active { background:var(--acd); border-color:var(--bda); color:var(--ac); font-weight:600; }
 
-/* ── Progress ─────────────────────────────────────────── */
-.progress-wrap {
-  display:none; background:var(--sf); border:1px solid var(--bd);
-  border-radius:var(--r); padding:18px 20px; margin-bottom:20px;
-}
-.progress-top { display:flex; justify-content:space-between; margin-bottom:10px; align-items:center; }
-.progress-lbl { font-size:13px; color:var(--fg2); }
-.progress-pct { font-size:14px; font-weight:700; color:var(--ac); }
-.progress-track { height:8px; background:var(--sf3); border-radius:4px; overflow:hidden; }
-.progress-fill {
-  height:100%; background:linear-gradient(90deg,var(--ac),var(--acl));
-  border-radius:4px; transition:width .4s cubic-bezier(.4,0,.2,1); width:0%;
-  position:relative;
-}
-.progress-fill::after {
-  content:""; position:absolute; right:0; top:0; bottom:0; width:20px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2));
-}
-
-/* ── Results ──────────────────────────────────────────── */
-.results-hdr {
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px;
-}
-.results-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
-
-.filter-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
-.ftab {
-  padding:6px 15px; border-radius:100px; font-size:13px; font-weight:500;
-  border:1px solid var(--bd); background:var(--sf); color:var(--fg2);
-  cursor:pointer; transition:all .15s; white-space:nowrap;
-}
-.ftab.active { background:var(--acd); border-color:var(--bda); color:var(--ac); font-weight:600; }
-.ftab:not(.active):hover { background:var(--sf2); color:var(--fg); }
-
-.result-list { display:flex; flex-direction:column; gap:8px; }
-.ri {
-  background:var(--sf); border:1px solid var(--bd); border-radius:var(--r);
-  padding:14px 16px; display:flex; align-items:center; gap:14px;
-  transition:border-color .15s, background .15s;
-}
-.ri.wa-yes {
-  border-color:rgba(37,211,102,.25); background:rgba(37,211,102,.03);
-}
-.ri.wa-no {
-  border-color:rgba(248,113,113,.18); background:rgba(248,113,113,.02);
-}
-.ri:hover { border-color:var(--bda); }
-
-.ri-flag { font-size:24px; line-height:1; flex-shrink:0; }
-.ri-body { flex:1; min-width:0; }
-.ri-phone { font-size:14px; font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--fg); margin-bottom:3px; }
-.ri-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.ri-country { font-size:12px; color:var(--fg2); }
-.ri-badge {
-  font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:100px;
-}
-.ri-badge.yes  { background:rgba(37,211,102,.12); color:var(--ok); }
-.ri-badge.no   { background:rgba(248,113,113,.10); color:var(--er); }
-.ri-badge.check { background:rgba(96,165,250,.10); color:var(--blue); }
-.ri-badge.pending { background:rgba(251,191,36,.10); color:var(--warn); }
-
-.ri-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
-.btn-yn {
-  display:flex; align-items:center; gap:4px;
-  border-radius:var(--rs); padding:6px 11px;
-  font-size:12px; font-weight:600; font-family:inherit;
-  cursor:pointer; border:1px solid; transition:background .15s, transform .1s;
-  white-space:nowrap;
-}
-.btn-yn:active { transform:scale(.95); }
-.btn-yn.yes { background:rgba(37,211,102,.12); color:var(--ok); border-color:rgba(37,211,102,.3); }
-.btn-yn.yes:hover { background:rgba(37,211,102,.22); }
-.btn-yn.no  { background:rgba(248,113,113,.08); color:var(--er); border-color:rgba(248,113,113,.25); }
-.btn-yn.no:hover  { background:rgba(248,113,113,.18); }
-
-/* ── Empty state ──────────────────────────────────────── */
-.empty {
-  text-align:center; padding:70px 24px;
-  display:flex; flex-direction:column; align-items:center; gap:14px;
-}
-.empty-icon {
-  width:76px; height:76px; background:var(--sf2); border-radius:50%;
-  display:grid; place-items:center; font-size:32px; border:1px solid var(--bd);
-}
-.empty-h { font-size:18px; font-weight:700; color:var(--fg); }
-.empty-p { font-size:14px; color:var(--fg2); max-width:300px; line-height:1.65; text-wrap:balance; }
-
-/* ── Contacts section ─────────────────────────────────── */
-.contacts-wrap {
-  margin-top:40px; padding-top:32px;
-  border-top:1px solid var(--bd);
-}
+/* Contact grid */
 .contact-grid {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:10px; margin-top:16px;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px;
 }
 .ccard {
   background:var(--sf);
   border:1px solid rgba(37,211,102,.20);
   border-radius:var(--r); padding:16px;
   display:flex; align-items:center; gap:14px;
-  transition:border-color .15s, transform .15s;
   background:linear-gradient(135deg,var(--sf) 0%,rgba(37,211,102,.03) 100%);
+  transition:border-color .15s, transform .15s;
 }
 .ccard:hover { border-color:var(--bda); transform:translateY(-1px); }
 .ccard-icon {
@@ -485,6 +179,15 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
 .ccard-meta  { font-size:11.5px; color:var(--fg2); margin-top:3px; }
 .ccard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 
+.btn-wa {
+  display:flex; align-items:center; gap:5px;
+  background:var(--acd); color:var(--ac); border:1px solid var(--bda);
+  border-radius:var(--rs); padding:7px 12px;
+  font-size:12px; font-weight:600; font-family:inherit;
+  cursor:pointer; text-decoration:none; white-space:nowrap; transition:background .15s;
+}
+.btn-wa:hover { background:var(--bda); }
+
 .btn-del {
   background:none; border:none; color:var(--fg3); cursor:pointer;
   padding:5px 7px; border-radius:6px; font-size:17px; line-height:1;
@@ -492,16 +195,29 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
 }
 .btn-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
 
+.btn-ghost {
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--acd2); color:var(--ac); border:1px solid var(--bda);
+  border-radius:var(--rs); padding:8px 14px;
+  font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s;
+}
+.btn-ghost:hover { background:var(--acd); }
+
+.btn-secondary {
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--sf2); color:var(--fg2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:8px 14px;
+  font-size:13px; font-family:inherit; cursor:pointer; transition:background .15s, color .15s;
+}
+.btn-secondary:hover { background:var(--sf3); color:var(--fg); }
+
 .contacts-empty {
-  text-align:center; padding:40px 20px; color:var(--fg2); font-size:14px;
+  text-align:center; padding:60px 24px; color:var(--fg2); font-size:14px;
   background:var(--sf); border:1px dashed var(--bd); border-radius:var(--r);
   line-height:1.65;
 }
 
-/* ── Divider ──────────────────────────────────────────── */
-.divider { height:1px; background:var(--bd); margin:28px 0; }
-
-/* ── Toast ────────────────────────────────────────────── */
+/* Toast */
 .toast {
   position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); left:50%;
   transform:translateX(-50%) translateY(80px);
@@ -511,10 +227,6 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
   white-space:nowrap; pointer-events:none; box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
-
-/* ── Scan form grid ──────────────────────────────────── */
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
-@media (max-width:380px) { .form-row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -522,47 +234,26 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
 <!-- Header -->
 <header class="hdr">
   <div class="hdr-inner">
-    <a class="brand" href="#" onclick="navTo('top',null);return false">
+    <a class="brand" href="#">
       <div class="brand-icon">📱</div>
-      <div class="brand-text">
+      <div>
         <div class="brand-name">WhatsApp Checker Pro</div>
         <div class="brand-sub">Détection automatique</div>
       </div>
     </a>
-
     <nav class="nav">
-      <button class="nav-link active" id="nl-accueil" onclick="navTo('accueil',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        Accueil
-      </button>
-      <button class="nav-link" id="nl-verifier" onclick="navTo('verifier',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Vérifier
-      </button>
-      <button class="nav-link" id="nl-contacts" onclick="navTo('contacts',this)">
+      <button class="nav-link active">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Contacts
         <span class="nav-badge" id="navBadge" style="display:none">0</span>
       </button>
     </nav>
-
-    <div class="nav-right">
-      <button class="btn-menu" onclick="toggleMenu()" id="menuBtn" aria-label="Menu">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-    </div>
+    <button class="btn-menu" onclick="toggleMenu()" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
   </div>
-
   <nav class="nav-mobile" id="navMobile">
-    <button class="nav-link active" onclick="navTo('accueil',this);toggleMenu()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-      Accueil
-    </button>
-    <button class="nav-link" onclick="navTo('verifier',this);toggleMenu()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Vérifier
-    </button>
-    <button class="nav-link" onclick="navTo('contacts',this);toggleMenu()">
+    <button class="nav-link active" onclick="toggleMenu()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       Contacts
       <span class="nav-badge" id="navBadgeMobile" style="display:none">0</span>
@@ -571,208 +262,52 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
 </header>
 
 <!-- Hero -->
-<div id="top"></div>
 <section class="hero">
   <div class="hero-inner">
-    <div class="hero-top">
-      <div class="hero-left">
-        <div class="hero-pill">En ligne · Synchronisation temps réel</div>
-        <h1 class="hero-h">Détectez vos prospects sur<br><span>WhatsApp</span> automatiquement</h1>
-        <p class="hero-p">Vérifiez des centaines de numéros en quelques minutes. Le logiciel Python détecte les numéros actifs et les synchronise automatiquement ici.</p>
-        <div class="hero-stats">
-          <div class="hs"><div class="hs-n" id="hsTotal">0</div><div class="hs-l">Analysés</div></div>
-          <div class="hs-sep"></div>
-          <div class="hs"><div class="hs-n" id="hsActive">0</div><div class="hs-l">Sur WhatsApp</div></div>
-          <div class="hs-sep"></div>
-          <div class="hs"><div class="hs-n" id="hsPending">0</div><div class="hs-l">En attente</div></div>
-        </div>
+    <div class="hero-pill">En ligne · Synchronisation temps réel</div>
+    <h1 class="hero-h">Contacts <span>WhatsApp</span> détectés<br>par le logiciel</h1>
+    <p class="hero-p">Les numéros confirmés sur WhatsApp par le logiciel Python apparaissent ici automatiquement en temps réel.</p>
+    <div class="hero-kpi">
+      <div class="kpi"><div class="kpi-n" id="kpiTotal">0</div><div class="kpi-l">Contacts total</div></div>
+      <div class="kpi-sep"></div>
+      <div class="kpi" id="kpiPaysWrap" style="display:none">
+        <div class="kpi-n" id="kpiPays">0</div>
+        <div class="kpi-l">Pays différents</div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Main -->
 <main class="page">
 
-  <!-- Ancre accueil -->
-  <div id="accueil" style="scroll-margin-top:72px"></div>
-
-  <!-- Stat cards -->
-  <div class="stats-grid">
-    <div class="sc total">
-      <div class="sc-icon">📊</div>
-      <div class="sc-num" id="statTotal">0</div>
-      <div class="sc-lbl">Total analysés</div>
+  <div class="sec-hdr">
+    <div class="sec-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contacts WhatsApp
+      <span class="sec-badge" id="contactsBadge">0</span>
     </div>
-    <div class="sc active">
-      <div class="sc-icon">✅</div>
-      <div class="sc-num" id="statActive">0</div>
-      <div class="sc-lbl">Sur WhatsApp</div>
-    </div>
-    <div class="sc inactive">
-      <div class="sc-icon">❌</div>
-      <div class="sc-num" id="statInactive">0</div>
-      <div class="sc-lbl">Pas sur WA</div>
-    </div>
-    <div class="sc pending">
-      <div class="sc-icon">⏳</div>
-      <div class="sc-num" id="statPending">0</div>
-      <div class="sc-lbl">En attente</div>
-    </div>
-  </div>
-
-  <!-- Ancre vérifier -->
-  <div id="verifier" style="scroll-margin-top:72px"></div>
-
-  <!-- Mode tabs -->
-  <div class="mode-tabs" style="margin-bottom:18px">
-    <button class="mode-tab active" id="modeManuel" onclick="switchMode('manuel')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      Manuel
-    </button>
-    <button class="mode-tab" id="modeScan" onclick="switchMode('scan')">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Scan Auto
-    </button>
-  </div>
-
-  <!-- Tool card (single) -->
-  <div class="card" style="margin-bottom:20px">
-
-    <!-- Mode Manuel -->
-    <div id="panelManuel">
-      <div class="card-label">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Entrer les numéros
-      </div>
-      <textarea id="numbersInput" placeholder="+243812345678&#10;+33612345678&#10;+1234567890&#10;&#10;Un numéro par ligne"></textarea>
-      <div class="btn-row">
-        <button class="btn-primary" id="checkBtn" onclick="startCheck()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Vérifier les numéros
-        </button>
-        <input type="file" id="csvFile" accept=".csv,.txt" style="display:none" onchange="importCSV(event)">
-        <button class="btn-secondary" onclick="clearAll()" title="Effacer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Mode Scan -->
-    <div id="panelScan" style="display:none">
-      <div class="card-label">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Scan automatique continu
-      </div>
-      <label class="field-label">Numéro de départ</label>
-      <input id="scanStart" class="inp" type="text" placeholder="+243812345000" style="margin-bottom:12px;margin-top:6px">
-      <div class="form-row">
-        <div>
-          <label class="field-label">Quantité à scanner</label>
-          <select id="scanCount" class="inp" style="margin-top:4px">
-            <option value="50">50 numéros</option>
-            <option value="100" selected>100 numéros</option>
-            <option value="200">200 numéros</option>
-            <option value="500">500 numéros</option>
-            <option value="1000">1 000 numéros</option>
-          </select>
-        </div>
-        <div>
-          <label class="field-label">Vitesse</label>
-          <select id="scanSpeed" class="inp" style="margin-top:4px">
-            <option value="100">Rapide</option>
-            <option value="300" selected>Normal</option>
-            <option value="600">Lent</option>
-          </select>
-        </div>
-      </div>
-      <div class="info-box">
-        🔄 Le système génère automatiquement les numéros suivants depuis le numéro de départ.
-      </div>
-      <div class="btn-row">
-        <button class="btn-primary" id="scanBtn" onclick="startScan()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          Lancer le scan
-        </button>
-        <button class="btn-stop" id="stopScanBtn" onclick="stopScan()" style="display:none">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-          Stop
-        </button>
-        <button class="btn-secondary" onclick="clearAll()" title="Effacer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Progress -->
-  <div class="progress-wrap" id="progressWrap">
-    <div class="progress-top">
-      <span class="progress-lbl" id="progressLbl">Vérification en cours…</span>
-      <span class="progress-pct" id="progressPct">0%</span>
-    </div>
-    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-  </div>
-
-  <!-- Results -->
-  <div id="resultsSection" hidden>
-    <div class="results-hdr">
-      <div class="results-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--ac)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Résultats
-      </div>
-      <button class="btn-ghost" onclick="exportCSV()">
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="exportContacts()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Exporter CSV
+        Exporter
+      </button>
+      <button class="btn-secondary" onclick="clearContacts()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        Vider
       </button>
     </div>
-    <div class="filter-tabs">
-      <button class="ftab active" onclick="setTab('all',this)">Tous</button>
-      <button class="ftab" onclick="setTab('yes',this)">✅ Sur WhatsApp</button>
-      <button class="ftab" onclick="setTab('no',this)">❌ Pas sur WA</button>
-      <button class="ftab" onclick="setTab('check',this)">🔍 À vérifier</button>
-    </div>
-    <div class="result-list" id="resultList"></div>
   </div>
 
-  <!-- Empty state -->
-  <div class="empty" id="emptyState">
-    <div class="empty-icon">📱</div>
-    <p class="empty-h">Prêt à détecter</p>
-    <p class="empty-p">Entrez vos numéros ou lancez un scan automatique. L'outil détecte le pays et vérifie la présence sur WhatsApp.</p>
+  <!-- Pays filter -->
+  <div class="pill-row" id="paysFilter">
+    <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
   </div>
 
   <!-- Contacts -->
-  <div id="contacts" style="scroll-margin-top:72px"></div>
-  <div class="contacts-wrap">
-    <div class="sec-hdr">
-      <div class="sec-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Contacts WhatsApp
-        <span class="sec-badge" id="contactsBadge">0</span>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-ghost" onclick="exportContacts()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exporter
-        </button>
-        <button class="btn-secondary" onclick="clearContacts()" style="font-size:12.5px;padding:7px 13px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-          Vider
-        </button>
-      </div>
-    </div>
-
-    <!-- Pays filter -->
-    <div class="pill-row" id="paysFilter">
-      <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
-    </div>
-
-    <!-- Contact cards -->
-    <div id="contactsList">
-      <div class="contacts-empty">
-        Aucun contact — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement via le logiciel Python ou en cliquant ✓ Oui.
-      </div>
+  <div id="contactsList">
+    <div class="contacts-empty">
+      Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.
     </div>
   </div>
 
@@ -781,42 +316,6 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Navigation ──────────────────────────────────────────
-function navTo(section, el) {
-  document.querySelectorAll('.nav-link').forEach(function(a){ a.classList.remove('active'); });
-  if (el) {
-    el.classList.add('active');
-    // Sync desktop + mobile
-    var id = el.id;
-    if (id) {
-      var sibling = document.getElementById(id.replace('nl-',''));
-      if (sibling) sibling.classList.add('active');
-    }
-  }
-  // Also sync all nav links pointing to same section
-  document.querySelectorAll('.nav-link').forEach(function(a){
-    if (a.textContent.trim().toLowerCase().includes(section.replace('accueil','accueil').toLowerCase())) {
-      // skip — handled above
-    }
-  });
-  var target = document.getElementById(section);
-  if (target) target.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function toggleMenu() {
-  var m = document.getElementById('navMobile');
-  m.classList.toggle('open');
-}
-function updateNavBadge(n) {
-  ['navBadge','navBadgeMobile'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = n;
-    el.style.display = n > 0 ? '' : 'none';
-  });
-}
-
-// ── Pays data ───────────────────────────────────────────
 var COUNTRIES = [
   {code:'+243',name:'Congo (RDC)',flag:'🇨🇩'},
   {code:'+242',name:'Congo (Brazza)',flag:'🇨🇬'},
@@ -861,20 +360,11 @@ var COUNTRIES = [
   {code:'+91', name:'Inde',flag:'🇮🇳'},
 ];
 
-var results = [];
-var activeTab = 'all';
-var activeCountry = 'ALL';
-var activePays = 'TOUS';
-var toastTimer;
-var checking = false;
-var scanRunning = false;
-var scanStopped = false;
-var currentMode = 'manuel';
-
-// ── Supabase ────────────────────────────────────────────
 var SB_URL = 'https://qbyxezgkmhikfqytiruj.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs';
 var sbContacts = [];
+var activePays = 'TOUS';
+var toastTimer;
 
 function sbFetch(path, opts) {
   return fetch(SB_URL + path, Object.assign({
@@ -882,24 +372,22 @@ function sbFetch(path, opts) {
   }, opts || {}));
 }
 
-// ── Contacts ────────────────────────────────────────────
+function toggleMenu() {
+  document.getElementById('navMobile').classList.toggle('open');
+}
+
+function detectCountryInfo(paysName) {
+  return COUNTRIES.find(function(c){ return c.name === paysName; }) || { flag:'🌍' };
+}
+
 function loadContactsFromDB() {
   sbFetch('/rest/v1/contacts_whatsapp?select=*&order=date_ajout.desc')
     .then(function(r){ return r.json(); })
     .then(function(data){
       sbContacts = Array.isArray(data) ? data : [];
-      renderContacts();
+      renderAll();
     })
-    .catch(function(){ renderContacts(); });
-}
-
-function addContact(phone, pays) {
-  sbFetch('/rest/v1/contacts_whatsapp', {
-    method:'POST',
-    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY,
-              'Content-Type':'application/json', 'Prefer':'resolution=ignore-duplicates' },
-    body:JSON.stringify({ phone:phone, pays:pays })
-  }).then(function(){ loadContactsFromDB(); });
+    .catch(function(){ renderAll(); });
 }
 
 function removeContact(phone) {
@@ -910,11 +398,18 @@ function removeContact(phone) {
 }
 
 function clearContacts() {
-  if (!confirm('Vider tous les contacts Supabase ?')) return;
+  if (!confirm('Vider tous les contacts ?')) return;
   sbFetch('/rest/v1/contacts_whatsapp?id=gt.0', {
     method:'DELETE',
     headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json' }
   }).then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
+}
+
+function filterPays(p, btn) {
+  activePays = p;
+  document.querySelectorAll('.pays-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderList();
 }
 
 function getPaysList() {
@@ -926,26 +421,30 @@ function getPaysList() {
   return pays;
 }
 
-function filterPays(p, btn) {
-  activePays = p;
-  document.querySelectorAll('.pays-btn').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderContactsList();
-}
-
-function renderContacts() {
-  document.getElementById('contactsBadge').textContent = sbContacts.length;
-  updateNavBadge(sbContacts.length);
-  renderPaysFilter();
-  renderContactsList();
-  // Update hero stats
-  document.getElementById('hsTotal').textContent = results.length || sbContacts.length;
-  document.getElementById('hsActive').textContent = sbContacts.length;
-}
-
-function renderPaysFilter() {
-  var pays = getPaysList();
+function renderAll() {
   var total = sbContacts.length;
+  var pays  = getPaysList();
+  var nPays = Object.keys(pays).length;
+
+  // Nav badges
+  ['navBadge','navBadgeMobile'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = total;
+    el.style.display = total > 0 ? '' : 'none';
+  });
+
+  // Hero KPIs
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('contactsBadge').textContent = total;
+  if (nPays > 0) {
+    document.getElementById('kpiPays').textContent = nPays;
+    document.getElementById('kpiPaysWrap').style.display = '';
+  } else {
+    document.getElementById('kpiPaysWrap').style.display = 'none';
+  }
+
+  // Pays pills
   var html = '<button class="pill pays-btn'+(activePays==='TOUS'?' active':'')+'" onclick="filterPays(\'TOUS\',this)">🌍 Tous ('+total+')</button>';
   Object.keys(pays).sort().forEach(function(p){
     var info = detectCountryInfo(p);
@@ -954,37 +453,34 @@ function renderPaysFilter() {
       + '</button>';
   });
   document.getElementById('paysFilter').innerHTML = html;
+
+  renderList();
 }
 
-function detectCountryInfo(paysName) {
-  return COUNTRIES.find(function(c){ return c.name === paysName; }) || { flag:'🌍' };
-}
-
-function renderContactsList() {
+function renderList() {
   var el = document.getElementById('contactsList');
   var list = activePays === 'TOUS'
     ? sbContacts
     : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
 
   if (sbContacts.length === 0) {
-    el.innerHTML = '<div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement en temps réel.</div>';
+    el.innerHTML = '<div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>';
     return;
   }
   if (list.length === 0) {
     el.innerHTML = '<div class="contacts-empty">Aucun numéro pour ce pays.</div>';
     return;
   }
-
   el.innerHTML = '<div class="contact-grid">'
     + list.map(function(c){
-      var phone = (c.phone || '').replace('+','');
+      var phone = (c.phone||'').replace('+','');
       var date  = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
-      var info  = detectCountryInfo(c.pays || '');
+      var info  = detectCountryInfo(c.pays||'');
       return '<div class="ccard">'
         + '<div class="ccard-icon">'+(info.flag||'📱')+'</div>'
         + '<div class="ccard-body">'
         +   '<div class="ccard-phone">'+(c.phone||'')+'</div>'
-        +   '<div class="ccard-meta">'+(c.pays||'')+(date?' · '+date:'')+'</div>'
+        +   '<div class="ccard-meta">'+(c.pays||'Inconnu')+(date?' · '+date:'')+'</div>'
         + '</div>'
         + '<div class="ccard-actions">'
         +   '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬</a>'
@@ -1010,287 +506,17 @@ function exportContacts() {
   showToast('Contacts exportés !');
 }
 
-document.addEventListener('DOMContentLoaded', function(){
-  loadContactsFromDB();
-  setInterval(loadContactsFromDB, 10000);
-});
-
-// ── Détection pays ──────────────────────────────────────
-function detectCountry(phone) {
-  var n = phone.replace(/[\s\-\(\)\.]/g,'');
-  if (!n.startsWith('+')) n = '+' + n;
-  var sorted = [...COUNTRIES].sort(function(a,b){ return b.code.length - a.code.length; });
-  for (var c of sorted) { if (n.startsWith(c.code)) return c; }
-  return { code:'?', name:'Inconnu', flag:'🌍' };
-}
-
-function normalizePhone(p) {
-  var n = p.trim().replace(/[\s\-\(\)\.]/g,'');
-  if (!n.startsWith('+') && n.length > 6) n = '+' + n;
-  return n;
-}
-
-// ── Import CSV ──────────────────────────────────────────
-function importCSV(e) {
-  var file = e.target.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(ev) {
-    var lines = ev.target.result.split(/[\n,;]+/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 5; });
-    var ta = document.getElementById('numbersInput');
-    ta.value = (ta.value ? ta.value + '\n' : '') + lines.join('\n');
-    showToast(lines.length + ' numéros importés');
-  };
-  reader.readAsText(file);
-}
-
-// ── Check ───────────────────────────────────────────────
-function startCheck() {
-  if (checking) return;
-  var raw   = document.getElementById('numbersInput').value;
-  var lines = raw.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 5; });
-  if (lines.length === 0) { showToast('Entrez au moins un numéro'); return; }
-
-  var phones = lines.map(normalizePhone).filter(function(p,i,a){ return a.indexOf(p)===i; });
-
-  checking = true;
-  results  = phones.map(function(p){ return { phone:p, country:detectCountry(p), status:'pending' }; });
-
-  document.getElementById('emptyState').hidden = true;
-  document.getElementById('resultsSection').hidden = false;
-  document.getElementById('progressWrap').style.display = 'block';
-  document.getElementById('checkBtn').disabled = true;
-
-  updateStats(); updateCountryFilter(); renderResults();
-
-  var i = 0;
-  function next() {
-    if (i >= results.length) {
-      checking = false;
-      document.getElementById('checkBtn').disabled = false;
-      document.getElementById('progressLbl').textContent = 'Analyse terminée — confirmez via ✓ Oui / ✗ Non';
-      showToast(results.length + ' numéros analysés — cliquez 💬 Test puis ✓ / ✗ pour chaque');
-      return;
-    }
-    var r = results[i];
-    checkWhatsApp(r, function(status) {
-      r.status = status;
-      i++;
-      var pct = Math.round((i/results.length)*100);
-      document.getElementById('progressFill').style.width = pct+'%';
-      document.getElementById('progressPct').textContent = pct+'%';
-      document.getElementById('progressLbl').textContent = 'Vérification '+i+'/'+results.length+' — '+r.phone;
-      updateStats(); renderResults();
-      setTimeout(next, 300);
-    });
-  }
-  next();
-}
-
-function checkWhatsApp(r, cb) {
-  setTimeout(function(){ cb('check'); }, 150 + Math.random()*200);
-}
-
-// ── Render results ──────────────────────────────────────
-function renderResults() {
-  var list = results.filter(function(r){
-    if (activeTab === 'yes'   && r.status !== 'yes') return false;
-    if (activeTab === 'no'    && r.status !== 'no')  return false;
-    if (activeTab === 'check' && r.status !== 'check' && r.status !== 'unknown') return false;
-    if (activeCountry !== 'ALL' && r.country.code !== activeCountry) return false;
-    return true;
-  });
-
-  if (!list.length) {
-    document.getElementById('resultList').innerHTML = '<div style="text-align:center;padding:36px;color:var(--fg2);font-size:14px">Aucun résultat pour ce filtre.</div>';
-    return;
-  }
-
-  document.getElementById('resultList').innerHTML = list.map(function(r){
-    var badgeHtml = r.status === 'yes'
-      ? '<span class="ri-badge yes">✓ Sur WhatsApp</span>'
-      : r.status === 'no'
-      ? '<span class="ri-badge no">✗ Pas sur WA</span>'
-      : r.status === 'check'
-      ? '<span class="ri-badge check">🔍 À vérifier</span>'
-      : '<span class="ri-badge pending">⏳ En attente</span>';
-
-    var cls = r.status === 'yes' ? 'wa-yes' : r.status === 'no' ? 'wa-no' : '';
-    var phone = r.phone.replace('+','');
-    var idx   = results.indexOf(r);
-
-    var actionsHtml = '';
-    if (r.status === 'yes') {
-      actionsHtml = '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬 Ouvrir</a>';
-    } else {
-      actionsHtml = '<div style="display:flex;gap:5px;align-items:center">'
-        + '<button class="btn-yn yes" onclick="markAs('+idx+',\'yes\')">✓ Oui</button>'
-        + '<button class="btn-yn no"  onclick="markAs('+idx+',\'no\')">✗ Non</button>'
-        + '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬</a>'
-        + '</div>';
-    }
-
-    return '<div class="ri '+cls+'">'
-      + '<div class="ri-flag">'+r.country.flag+'</div>'
-      + '<div class="ri-body">'
-      +   '<div class="ri-phone">'+r.phone+'</div>'
-      +   '<div class="ri-meta"><span class="ri-country">'+r.country.name+'</span>'+badgeHtml+'</div>'
-      + '</div>'
-      + '<div class="ri-actions">'+actionsHtml+'</div>'
-      + '</div>';
-  }).join('');
-}
-
-// ── Mode switch ──────────────────────────────────────────
-function switchMode(mode) {
-  currentMode = mode;
-  document.getElementById('panelManuel').style.display = mode==='manuel' ? '' : 'none';
-  document.getElementById('panelScan').style.display   = mode==='scan'   ? '' : 'none';
-  document.getElementById('modeManuel').classList.toggle('active', mode==='manuel');
-  document.getElementById('modeScan').classList.toggle('active', mode==='scan');
-}
-
-// ── Scan auto ───────────────────────────────────────────
-function startScan() {
-  var base = document.getElementById('scanStart').value.trim();
-  if (!base) { showToast('Entrez un numéro de départ'); return; }
-  base = base.replace(/[\s\-\(\)\.]/g,'');
-  if (!base.startsWith('+')) base = '+' + base;
-  if (base.length < 8) { showToast('Numéro trop court'); return; }
-
-  var count = parseInt(document.getElementById('scanCount').value);
-  var speed = parseInt(document.getElementById('scanSpeed').value);
-
-  var prefix   = base.slice(0, base.length - 4);
-  var startNum = parseInt(base.slice(-4));
-
-  scanStopped = false; scanRunning = true; results = [];
-
-  document.getElementById('scanBtn').disabled = true;
-  document.getElementById('stopScanBtn').style.display = '';
-  document.getElementById('emptyState').hidden = true;
-  document.getElementById('resultsSection').hidden = false;
-  document.getElementById('progressWrap').style.display = 'block';
-  updateCountryFilter(); updateStats();
-
-  var i = 0;
-  function scanNext() {
-    if (scanStopped || i >= count) {
-      scanRunning = false;
-      document.getElementById('scanBtn').disabled = false;
-      document.getElementById('stopScanBtn').style.display = 'none';
-      document.getElementById('progressLbl').textContent = 'Scan terminé — '+results.length+' numéros scannés';
-      showToast('Scan terminé ! '+results.filter(function(r){return r.status==='yes';}).length+' actifs détectés');
-      return;
-    }
-    var num    = startNum + i;
-    var numStr = String(num).padStart(4,'0');
-    var phone  = prefix + numStr;
-    var r = { phone:phone, country:detectCountry(phone), status:'pending' };
-    results.push(r);
-
-    var pct = Math.round(((i+1)/count)*100);
-    document.getElementById('progressFill').style.width = pct+'%';
-    document.getElementById('progressPct').textContent = pct+'%';
-    document.getElementById('progressLbl').textContent = 'Scan '+(i+1)+'/'+count+' → '+phone;
-
-    updateStats(); updateCountryFilter();
-    checkWhatsApp(r, function(status){
-      r.status = status; updateStats(); renderResults(); i++;
-      setTimeout(scanNext, speed);
-    });
-  }
-  scanNext();
-}
-
-function stopScan() {
-  scanStopped = true;
-  showToast('Scan arrêté');
-}
-
-function markAs(idx, status) {
-  if (!results[idx]) return;
-  results[idx].status = status;
-  if (status === 'yes') {
-    addContact(results[idx].phone, results[idx].country.name);
-    showToast(results[idx].phone + ' → Ajouté ✓');
-  } else {
-    showToast(results[idx].phone + ' → Pas sur WhatsApp ✗');
-  }
-  updateStats(); renderResults();
-}
-
-function updateStats() {
-  var total   = results.length;
-  var active  = results.filter(function(r){ return r.status==='yes'; }).length;
-  var inactive= results.filter(function(r){ return r.status==='no'; }).length;
-  var pending = results.filter(function(r){ return r.status==='pending'||r.status==='unknown'||r.status==='check'; }).length;
-  document.getElementById('statTotal').textContent   = total;
-  document.getElementById('statActive').textContent  = active;
-  document.getElementById('statInactive').textContent= inactive;
-  document.getElementById('statPending').textContent = pending;
-  document.getElementById('hsTotal').textContent  = total || sbContacts.length;
-  document.getElementById('hsActive').textContent = active || sbContacts.length;
-  document.getElementById('hsPending').textContent = pending;
-}
-
-function updateCountryFilter() {
-  var codes = {};
-  results.forEach(function(r){ codes[r.country.code] = r.country; });
-  var html = '<button class="pill'+(activeCountry==='ALL'?' active':'')+'" data-code="ALL" onclick="filterCountry(\'ALL\',this)">🌍 Tous ('+results.length+')</button>';
-  Object.values(codes).forEach(function(c){
-    var cnt = results.filter(function(r){ return r.country.code===c.code; }).length;
-    html += '<button class="pill'+(activeCountry===c.code?' active':'')+'" data-code="'+c.code+'" onclick="filterCountry(\''+c.code+'\',this)">'+c.flag+' '+c.name+' ('+cnt+')</button>';
-  });
-  document.getElementById('countryGrid').innerHTML = html;
-}
-
-function filterCountry(code, btn) {
-  activeCountry = code;
-  document.querySelectorAll('#countryGrid .pill').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderResults();
-}
-
-function setTab(tab, btn) {
-  activeTab = tab;
-  document.querySelectorAll('.ftab').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderResults();
-}
-
-function clearAll() {
-  document.getElementById('numbersInput').value = '';
-  results = [];
-  document.getElementById('resultsSection').hidden = true;
-  document.getElementById('progressWrap').style.display = 'none';
-  document.getElementById('emptyState').hidden = false;
-  document.getElementById('progressFill').style.width = '0%';
-  updateStats();
-}
-
-// ── Export CSV ──────────────────────────────────────────
-function exportCSV() {
-  if (!results.length) return;
-  var csv = 'Numéro,Pays,Code Pays,Statut WhatsApp\n';
-  results.forEach(function(r){
-    var s = r.status==='yes' ? 'Actif sur WhatsApp' : r.status==='no' ? 'Pas sur WhatsApp' : 'À vérifier';
-    csv += r.phone+','+r.country.name+','+r.country.code+','+s+'\n';
-  });
-  var blob = new Blob([csv],{type:'text/csv'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href=url; a.download='whatsapp_checker_'+Date.now()+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  showToast('CSV exporté !');
-}
-
-// ── Toast ───────────────────────────────────────────────
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
+
+document.addEventListener('DOMContentLoaded', function(){
+  loadContactsFromDB();
+  setInterval(loadContactsFromDB, 10000);
+});
 </script>
 </body>
 </html>
