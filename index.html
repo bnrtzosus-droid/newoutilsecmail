@@ -291,6 +291,62 @@ body {
 }
 .hist-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
 
+/* ── Login overlay ───────────────────────────────────────── */
+.login-overlay {
+  position:fixed; inset:0; z-index:1000;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+.login-box {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:20px; padding:40px 36px;
+  width:100%; max-width:380px;
+  box-shadow:0 24px 60px rgba(0,0,0,.4);
+}
+.login-icon {
+  width:56px; height:56px; margin:0 auto 20px;
+  background:linear-gradient(135deg,var(--ac),var(--ac2));
+  border-radius:16px; display:grid; place-items:center;
+  font-size:28px; box-shadow:0 6px 20px rgba(37,211,102,.35);
+}
+.login-title { font-size:20px; font-weight:800; text-align:center; color:var(--fg); letter-spacing:-.4px; }
+.login-sub   { font-size:13px; color:var(--fg2); text-align:center; margin-top:4px; margin-bottom:28px; }
+.login-field { margin-bottom:16px; }
+.login-label { display:block; font-size:12.5px; font-weight:600; color:var(--fg2); margin-bottom:6px; }
+.login-input {
+  width:100%; background:var(--bg2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:11px 14px;
+  font-size:14px; color:var(--fg); font-family:inherit;
+  outline:none; transition:border-color .15s;
+}
+.login-input:focus { border-color:var(--bda); }
+.login-input::placeholder { color:var(--fg3); }
+.login-err {
+  background:rgba(248,113,113,.12); border:1px solid rgba(248,113,113,.3);
+  border-radius:var(--rs); padding:9px 12px;
+  font-size:13px; color:var(--er); margin-bottom:14px; text-align:center;
+}
+.login-btn {
+  width:100%; background:var(--ac); color:#fff;
+  border:none; border-radius:var(--rs); padding:12px;
+  font-size:14px; font-weight:700; font-family:inherit;
+  cursor:pointer; transition:background .15s; margin-top:4px;
+}
+.login-btn:hover:not(:disabled) { background:var(--acl); }
+.login-btn:disabled { opacity:.6; cursor:not-allowed; }
+
+/* ── Logout button ───────────────────────────────────────── */
+.sb-logout {
+  display:flex; align-items:center; gap:9px;
+  padding:10px 12px; border-radius:10px;
+  font-size:13px; font-weight:500; color:var(--fg3);
+  border:none; background:none; cursor:pointer;
+  width:100%; font-family:inherit; margin-top:8px;
+  transition:color .15s, background .15s;
+}
+.sb-logout:hover { color:var(--er); background:rgba(248,113,113,.08); }
+
 /* ── Toast ───────────────────────────────────────────────── */
 .toast {
   position:fixed; bottom:28px; left:50%;
@@ -329,6 +385,27 @@ body {
 </head>
 <body>
 
+<!-- Login overlay -->
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-box">
+    <div class="login-icon">📱</div>
+    <div class="login-title">WhatsApp Checker Pro</div>
+    <div class="login-sub">Connexion requise pour accéder</div>
+    <form onsubmit="doLogin(event)">
+      <div class="login-field">
+        <label class="login-label" for="loginEmail">Email</label>
+        <input class="login-input" type="email" id="loginEmail" placeholder="votre@email.com" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label class="login-label" for="loginPass">Mot de passe</label>
+        <input class="login-input" type="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <div id="loginErr" class="login-err" hidden></div>
+      <button type="submit" class="login-btn" id="loginBtn">Se connecter</button>
+    </form>
+  </div>
+</div>
+
 <!-- Sidebar gauche -->
 <aside class="sidebar">
   <div class="sb-brand">
@@ -363,6 +440,10 @@ body {
       <span class="sb-stat-label">Pays différents</span>
       <span class="sb-stat-val" id="kpiPays">0</span>
     </div>
+    <button class="sb-logout" onclick="doLogout()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Déconnexion
+    </button>
   </div>
 </aside>
 
@@ -508,6 +589,7 @@ var COUNTRIES = [
 
 var SB_URL = 'https://qbyxezgkmhikfqytiruj.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs';
+var SB_SESS_KEY = 'wcp_auth_session';
 var sbContacts = [];
 var sbHistory  = [];
 var activePays = 'TOUS';
@@ -515,9 +597,69 @@ var activeHistPays = 'TOUS';
 var currentPage = 'contacts';
 var toastTimer;
 
+/* ── Auth ────────────────────────────────────────────────── */
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SB_SESS_KEY)); } catch(e) { return null; }
+}
+function saveSession(data) {
+  try { localStorage.setItem(SB_SESS_KEY, JSON.stringify(data)); } catch(e) {}
+}
+function clearSession() {
+  try { localStorage.removeItem(SB_SESS_KEY); } catch(e) {}
+}
+function authToken() {
+  var s = getSession();
+  return (s && s.access_token) ? s.access_token : SB_KEY;
+}
+function checkAuth() {
+  var s = getSession();
+  if (!s || !s.access_token) { showLogin(); return false; }
+  if (s.expires_at && Date.now() / 1000 > s.expires_at) { clearSession(); showLogin(); return false; }
+  document.getElementById('loginOverlay').hidden = true;
+  return true;
+}
+function showLogin() {
+  document.getElementById('loginOverlay').hidden = false;
+}
+function doLogin(e) {
+  e.preventDefault();
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass  = document.getElementById('loginPass').value;
+  var btn   = document.getElementById('loginBtn');
+  var err   = document.getElementById('loginErr');
+  btn.disabled = true; btn.textContent = 'Connexion…'; err.hidden = true;
+  fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, password: pass })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if (data.access_token) {
+      saveSession({ access_token: data.access_token, expires_at: data.expires_at || (Date.now()/1000 + 86400) });
+      document.getElementById('loginOverlay').hidden = true;
+      loadContactsFromDB();
+      setInterval(loadContactsFromDB, 10000);
+    } else {
+      err.textContent = data.error_description || 'Email ou mot de passe incorrect.';
+      err.hidden = false;
+    }
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  })
+  .catch(function(){
+    err.textContent = 'Erreur réseau. Réessaie.';
+    err.hidden = false;
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  });
+}
+function doLogout() {
+  clearSession();
+  location.reload();
+}
+
 function sbFetch(path, opts) {
   return fetch(SB_URL + path, Object.assign({
-    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json' }
+    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+authToken(), 'Content-Type':'application/json' }
   }, opts || {}));
 }
 
@@ -818,8 +960,10 @@ function showToast(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  loadContactsFromDB();
-  setInterval(loadContactsFromDB, 10000);
+  if (checkAuth()) {
+    loadContactsFromDB();
+    setInterval(loadContactsFromDB, 10000);
+  }
 });
 
 document.addEventListener('click', function(e){
