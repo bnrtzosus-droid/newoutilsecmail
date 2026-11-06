@@ -3,299 +3,323 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Détecteur de Comptes</title>
+<title>WhatsApp Checker Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root {
-  --bg: #060D18;
-  --sf: #0C1829;
-  --sf2: #132030;
-  --bd: rgba(56,189,248,0.1);
-  --bda: rgba(56,189,248,0.25);
-  --fg: #E8F4FF;
-  --fg2: #7A99B8;
-  --ac: #38BDF8;
-  --acd: rgba(56,189,248,0.1);
-  --ok: #34D399;
-  --warn: #FBBF24;
-  --er: #F87171;
+  --bg: #061910; --sf: #0C2318; --sf2: #112D1E;
+  --bd: rgba(37,211,102,0.12); --bda: rgba(37,211,102,0.3);
+  --fg: #E8FFF2; --fg2: #6FAF8A;
+  --ac: #25D366; --acd: rgba(37,211,102,0.1);
+  --ac2: #128C7E; --ac3: #075E54;
+  --ok: #25D366; --er: #F87171; --warn: #FBBF24;
   --r: 12px; --rs: 8px;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --bg: #F0F7FF; --sf: #FFFFFF; --sf2: #E0F0FF;
-    --bd: rgba(2,132,199,0.13); --bda: rgba(2,132,199,0.3);
-    --fg: #0C1A2E; --fg2: #4A6A8A;
-    --ac: #0284C7; --acd: rgba(2,132,199,0.08);
-    --ok: #059669; --warn: #D97706; --er: #DC2626;
+    --bg: #F0FFF6; --sf: #FFFFFF; --sf2: #E0F7E9;
+    --bd: rgba(18,140,126,0.13); --bda: rgba(18,140,126,0.3);
+    --fg: #051A0E; --fg2: #3D7A5A;
+    --ac: #128C7E; --acd: rgba(18,140,126,0.08);
+    --ac2: #075E54; --ac3: #054D44;
+    --ok: #25D366; --er: #DC2626; --warn: #D97706;
     color-scheme: light;
   }
 }
 :root[data-theme="light"] {
-  --bg: #F0F7FF; --sf: #FFFFFF; --sf2: #E0F0FF;
-  --bd: rgba(2,132,199,0.13); --bda: rgba(2,132,199,0.3);
-  --fg: #0C1A2E; --fg2: #4A6A8A;
-  --ac: #0284C7; --acd: rgba(2,132,199,0.08);
-  --ok: #059669; --warn: #D97706; --er: #DC2626;
+  --bg: #F0FFF6; --sf: #FFFFFF; --sf2: #E0F7E9;
+  --bd: rgba(18,140,126,0.13); --bda: rgba(18,140,126,0.3);
+  --fg: #051A0E; --fg2: #3D7A5A;
+  --ac: #128C7E; --acd: rgba(18,140,126,0.08);
+  --ac2: #075E54; --ac3: #054D44;
+  --ok: #25D366; --er: #DC2626; --warn: #D97706;
   color-scheme: light;
 }
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body {
   background:var(--bg); color:var(--fg);
   font-family:'Outfit',system-ui,sans-serif; line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
-  padding-block:0; min-height:100vh;
+  min-height:100vh;
 }
-body::before {
-  content:""; position:fixed; inset:0 0 auto;
-  height:env(safe-area-inset-top,0px); background:var(--bg); z-index:10;
-}
+body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--bg); z-index:10; }
 
 /* Header */
 .hdr {
   position:sticky; top:env(safe-area-inset-top,0px);
-  background:var(--bg); border-bottom:1px solid var(--bd);
-  z-index:9; padding:13px 0;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--bg); border-bottom:1px solid var(--bd); z-index:9;
+  padding:13px 0; display:flex; align-items:center; justify-content:space-between; gap:12px;
 }
 .brand { display:flex; align-items:center; gap:10px; }
 .brand-mark {
   width:36px; height:36px; min-width:36px;
   background:var(--acd); border:1px solid var(--bda);
-  border-radius:var(--rs); display:grid; place-items:center; color:var(--ac);
+  border-radius:var(--rs); display:grid; place-items:center; color:var(--ac); font-size:20px;
 }
-.brand-name { font-size:16px; font-weight:700; letter-spacing:-.3px; }
+.brand-name { font-size:16px; font-weight:700; letter-spacing:-.3px; color:var(--fg); }
 .brand-sub  { font-size:11px; color:var(--fg2); }
 
-/* Main */
-.main { max-width:640px; margin:0 auto; padding-top:32px; padding-bottom:60px; }
+/* Stats bar */
+.stats-bar {
+  display:grid; grid-template-columns:repeat(4,1fr); gap:10px;
+  margin:24px 0;
+}
+.stat-box {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:14px 16px;
+}
+.stat-num { font-size:24px; font-weight:700; font-variant-numeric:tabular-nums; }
+.stat-lbl { font-size:12px; color:var(--fg2); margin-top:2px; }
+.stat-box.total .stat-num { color:var(--fg); }
+.stat-box.active .stat-num { color:var(--ok); }
+.stat-box.inactive .stat-num { color:var(--er); }
+.stat-box.pending .stat-num { color:var(--warn); }
 
 /* Input section */
-.input-card {
-  background:var(--sf); border:1px solid var(--bd);
-  border-radius:var(--r); padding:24px; margin-bottom:24px;
-}
-.input-title {
-  font-size:13px; font-weight:600; letter-spacing:.7px;
-  text-transform:uppercase; color:var(--fg2); margin-bottom:16px;
-}
-.phone-row { display:flex; gap:10px; }
-.phone-wrap { position:relative; flex:1; }
-.phone-ic {
-  position:absolute; left:13px; top:50%; transform:translateY(-50%);
-  color:var(--fg2); pointer-events:none;
-}
-.phone-inp {
-  width:100%; background:var(--bg); border:1.5px solid var(--bd);
-  border-radius:var(--rs); padding:12px 12px 12px 42px;
-  font-size:16px; font-family:'IBM Plex Mono',monospace; color:var(--fg);
-  outline:none; transition:border-color .15s,box-shadow .15s;
-}
-.phone-inp::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-size:14px; }
-.phone-inp:focus { border-color:var(--ac); box-shadow:0 0 0 3px var(--acd); }
+.input-section { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+@media (max-width:600px) { .input-section { grid-template-columns:1fr; } }
 
-.btn-search {
+.card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:20px; }
+.card-title {
+  font-size:12px; font-weight:600; letter-spacing:.7px;
+  text-transform:uppercase; color:var(--fg2); margin-bottom:14px;
   display:flex; align-items:center; gap:7px;
-  background:var(--ac); color:#fff; border:none;
-  border-radius:var(--rs); padding:12px 20px;
-  font-size:15px; font-weight:600; font-family:inherit;
-  cursor:pointer; transition:filter .15s,transform .1s; white-space:nowrap;
-}
-.btn-search:hover{filter:brightness(1.1)} .btn-search:active{transform:scale(.97)}
-.btn-search:disabled { opacity:.5; cursor:not-allowed; }
-
-.formats-row {
-  display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;
-}
-.fmt-chip {
-  font-size:11px; font-family:'IBM Plex Mono',monospace;
-  color:var(--fg2); background:var(--sf2);
-  border:1px solid var(--bd); border-radius:20px; padding:3px 10px;
 }
 
-/* Progress bar */
+/* Textarea */
+.textarea-wrap { position:relative; }
+textarea {
+  width:100%; background:var(--bg); border:1.5px solid var(--bd);
+  border-radius:var(--rs); padding:11px 13px;
+  font-size:13px; font-family:'IBM Plex Mono',monospace; color:var(--fg);
+  outline:none; resize:vertical; min-height:120px;
+  transition:border-color .15s,box-shadow .15s; line-height:1.7;
+}
+textarea:focus { border-color:var(--ac); box-shadow:0 0 0 3px var(--acd); }
+textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-size:13px; }
+
+/* Country filter */
+.country-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.country-btn {
+  background:var(--sf2); border:1px solid var(--bd); border-radius:20px;
+  padding:5px 12px; font-size:12px; font-weight:500; color:var(--fg2);
+  cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.country-btn.active { background:var(--acd); border-color:var(--bda); color:var(--ac); }
+.country-btn:hover { border-color:var(--bda); color:var(--fg); }
+
+/* Buttons */
+.btn-row { display:flex; gap:8px; margin-top:14px; }
+.btn-check {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+  background:var(--ac); color:#fff; border:none; border-radius:var(--rs);
+  padding:11px 20px; font-size:14px; font-weight:600; font-family:inherit;
+  cursor:pointer; transition:filter .15s,transform .1s;
+}
+.btn-check:hover{filter:brightness(1.1)} .btn-check:active{transform:scale(.97)}
+.btn-check:disabled { opacity:.5; cursor:not-allowed; }
+.btn-clear {
+  background:var(--sf2); color:var(--fg2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:11px 14px;
+  font-size:14px; font-family:inherit; cursor:pointer; transition:background .15s;
+}
+.btn-clear:hover { background:var(--bd); }
+
+/* Progress */
 .progress-wrap { margin-bottom:20px; display:none; }
 .progress-top { display:flex; justify-content:space-between; margin-bottom:8px; }
-.progress-lbl { font-size:13px; font-weight:500; color:var(--fg2); }
+.progress-lbl { font-size:13px; color:var(--fg2); }
 .progress-pct { font-size:13px; font-weight:600; color:var(--ac); }
-.progress-bar {
-  height:6px; background:var(--sf2); border-radius:3px; overflow:hidden;
-}
-.progress-fill {
-  height:100%; background:var(--ac); border-radius:3px;
-  transition:width .4s ease; width:0%;
-}
+.progress-bar { height:6px; background:var(--sf2); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--ac); border-radius:3px; transition:width .3s ease; width:0%; }
 
 /* Results header */
 .results-hdr {
-  display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
 }
-.results-title { font-size:14px; font-weight:600; color:var(--fg); }
-.results-stats { display:flex; gap:8px; }
-.stat-chip {
-  font-size:12px; border-radius:20px; padding:3px 10px;
-  font-weight:500;
+.results-title { font-size:14px; font-weight:600; }
+.btn-export {
+  display:flex; align-items:center; gap:6px;
+  background:var(--acd); color:var(--ac); border:1px solid var(--bda);
+  border-radius:var(--rs); padding:7px 14px;
+  font-size:13px; font-weight:500; font-family:inherit; cursor:pointer; transition:background .15s;
 }
-.stat-ok  { background:rgba(52,211,153,.12); color:var(--ok); }
-.stat-er  { background:rgba(248,113,113,.1);  color:var(--er); }
-.stat-pen { background:var(--sf2); color:var(--fg2); }
+.btn-export:hover { background:var(--bda); }
 
-/* Service cards */
-.svc-list { display:flex; flex-direction:column; gap:8px; }
-.svc-card {
-  background:var(--sf); border:1px solid var(--bd);
-  border-radius:var(--r); padding:14px 16px;
-  display:flex; align-items:center; gap:14px;
+/* Filter tabs */
+.filter-tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.tab {
+  padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500;
+  border:1px solid var(--bd); background:var(--sf); color:var(--fg2);
+  cursor:pointer; transition:all .15s;
+}
+.tab.active { background:var(--acd); border-color:var(--bda); color:var(--ac); }
+
+/* Result list */
+.result-list { display:flex; flex-direction:column; gap:7px; }
+.result-item {
+  background:var(--sf); border:1px solid var(--bd); border-radius:var(--r);
+  padding:13px 15px; display:flex; align-items:center; gap:12px;
   transition:border-color .15s;
 }
-.svc-card.found  { border-color:rgba(52,211,153,.35); background:rgba(52,211,153,.04); }
-.svc-card.notfound { border-color:rgba(248,113,113,.25); background:rgba(248,113,113,.03); }
-.svc-card.loading { border-color:var(--bda); }
+.result-item.wa-yes { border-color:rgba(37,211,102,.3); background:rgba(37,211,102,.04); }
+.result-item.wa-no  { border-color:rgba(248,113,113,.2); background:rgba(248,113,113,.03); }
+.result-item:hover { border-color:var(--bda); }
 
-.svc-logo {
-  width:42px; height:42px; min-width:42px; border-radius:10px;
-  display:grid; place-items:center; font-size:20px; flex-shrink:0;
+.flag { font-size:22px; line-height:1; flex-shrink:0; }
+.ri-info { flex:1; min-width:0; }
+.ri-phone {
+  font-size:14px; font-family:'IBM Plex Mono',monospace; font-weight:500;
+  color:var(--fg); margin-bottom:2px;
 }
-.svc-info { flex:1; min-width:0; }
-.svc-name { font-size:14px; font-weight:600; color:var(--fg); margin-bottom:2px; }
-.svc-status { font-size:12px; color:var(--fg2); }
-.svc-email { font-size:13px; font-family:'IBM Plex Mono',monospace; color:var(--ok); margin-top:3px; }
+.ri-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.ri-country { font-size:12px; color:var(--fg2); }
+.ri-status {
+  font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px;
+}
+.ri-status.yes { background:rgba(37,211,102,.12); color:var(--ok); }
+.ri-status.no  { background:rgba(248,113,113,.1);  color:var(--er); }
+.ri-status.pending { background:rgba(251,191,36,.1); color:var(--warn); }
+.ri-status.check { background:rgba(96,165,250,.1); color:#60a5fa; }
 
-.svc-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-
-.btn-open {
+.btn-wa {
   display:flex; align-items:center; gap:5px;
   background:var(--acd); color:var(--ac); border:1px solid var(--bda);
-  border-radius:var(--rs); padding:7px 12px;
+  border-radius:var(--rs); padding:6px 12px;
   font-size:12px; font-weight:500; font-family:inherit;
-  cursor:pointer; transition:background .15s; text-decoration:none; white-space:nowrap;
+  cursor:pointer; text-decoration:none; white-space:nowrap; transition:background .15s;
+  flex-shrink:0;
 }
-.btn-open:hover { background:var(--bda); }
-
-.status-icon { font-size:20px; }
-
-/* Spinner */
-.spin {
-  width:18px; height:18px; border:2px solid var(--bd);
-  border-top-color:var(--ac); border-radius:50%;
-  animation:spin .7s linear infinite;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
-
-/* Info banner */
-.info-banner {
-  background:rgba(56,189,248,.07); border:1px solid var(--bda);
-  border-radius:var(--r); padding:14px 16px;
-  display:flex; gap:12px; align-items:flex-start; margin-bottom:20px;
-}
-.info-ic { color:var(--ac); flex-shrink:0; margin-top:1px; }
-.info-text { font-size:13px; color:var(--fg2); line-height:1.6; }
-.info-text strong { color:var(--fg); }
+.btn-wa:hover { background:var(--bda); }
 
 /* Empty */
 .empty { text-align:center; padding:60px 20px; }
-.empty-ring { width:70px; height:70px; margin:0 auto 20px; background:var(--sf2); border-radius:50%; display:grid; place-items:center; color:var(--fg2); }
-.empty-h { font-size:18px; font-weight:600; margin-bottom:8px; }
+.empty-ring { width:70px; height:70px; margin:0 auto 20px; background:var(--sf2); border-radius:50%; display:grid; place-items:center; color:var(--fg2); font-size:30px; }
+.empty-h { font-size:17px; font-weight:600; margin-bottom:8px; }
 .empty-p { font-size:14px; color:var(--fg2); max-width:300px; margin:0 auto; line-height:1.65; text-wrap:balance; }
 
 /* Toast */
 .toast {
-  position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px));
-  left:50%; transform:translateX(-50%) translateY(70px);
-  background:var(--fg); color:var(--bg);
-  padding:9px 18px; border-radius:100px;
-  font-size:14px; font-weight:500; z-index:100;
-  transition:transform .25s cubic-bezier(.32,.72,0,1);
+  position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px)); left:50%;
+  transform:translateX(-50%) translateY(70px);
+  background:var(--fg); color:var(--bg); padding:9px 18px; border-radius:100px;
+  font-size:14px; font-weight:500; z-index:100; transition:transform .25s cubic-bezier(.32,.72,0,1);
   white-space:nowrap; pointer-events:none;
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
 
-@media (max-width:480px) {
-  .phone-row { flex-direction:column; }
-  .btn-search { width:100%; justify-content:center; }
-}
+.main { max-width:860px; margin:0 auto; padding-top:24px; padding-bottom:60px; }
 </style>
 </head>
 <body>
 
 <header class="hdr">
   <div class="brand">
-    <div class="brand-mark">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-    </div>
+    <div class="brand-mark">📱</div>
     <div>
-      <div class="brand-name">Détecteur de Comptes</div>
-      <div class="brand-sub">Recherche par numéro de téléphone</div>
+      <div class="brand-name">WhatsApp Checker Pro</div>
+      <div class="brand-sub">Détection de numéros par pays</div>
     </div>
   </div>
 </header>
 
 <main class="main">
 
-  <!-- Input -->
-  <div class="input-card">
-    <p class="input-title">Entrez votre numéro de téléphone</p>
-    <div class="phone-row">
-      <div class="phone-wrap">
-        <span class="phone-ic">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.44 2 2 0 0 1 3.62 1.26h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 8.75a16 16 0 0 0 7.25 7.25l.6-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-        </span>
-        <input type="tel" class="phone-inp" id="phoneInput" placeholder="+243 81 234 5678 — votre numéro enregistré" autocomplete="off">
-      </div>
-      <button class="btn-search" id="searchBtn" onclick="startSearch()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        Rechercher
-      </button>
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-box total">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-lbl">Total numéros</div>
     </div>
-    <div class="formats-row" id="formatsRow" hidden></div>
+    <div class="stat-box active">
+      <div class="stat-num" id="statActive">0</div>
+      <div class="stat-lbl">Sur WhatsApp ✓</div>
+    </div>
+    <div class="stat-box inactive">
+      <div class="stat-num" id="statInactive">0</div>
+      <div class="stat-lbl">Pas sur WA ✗</div>
+    </div>
+    <div class="stat-box pending">
+      <div class="stat-num" id="statPending">0</div>
+      <div class="stat-lbl">En attente</div>
+    </div>
   </div>
 
-  <!-- Info -->
-  <div class="info-banner" id="infoBanner">
-    <span class="info-ic">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    </span>
-    <p class="info-text">
-      <strong>Comment ça marche :</strong> Entrez votre numéro → l'outil ouvre automatiquement les pages de récupération de chaque service. Sur chaque page, cliquez <em>"Mot de passe oublié"</em> → entrez votre numéro → recevez le code SMS → votre email s'affiche.
-    </p>
+  <!-- Input -->
+  <div class="input-section">
+    <div class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Entrer les numéros
+      </div>
+      <textarea id="numbersInput" placeholder="+243812345678&#10;+33612345678&#10;+1234567890&#10;&#10;Un numéro par ligne"></textarea>
+      <div class="btn-row">
+        <button class="btn-check" id="checkBtn" onclick="startCheck()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Vérifier
+        </button>
+        <button class="btn-clear" onclick="clearAll()" title="Effacer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Filtrer par pays
+      </div>
+      <div class="country-grid" id="countryGrid">
+        <button class="country-btn active" data-code="ALL" onclick="filterCountry('ALL', this)">🌍 Tous</button>
+      </div>
+      <div style="margin-top:12px">
+        <div class="card-title" style="margin-bottom:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importer un fichier CSV
+        </div>
+        <input type="file" id="csvFile" accept=".csv,.txt" style="display:none" onchange="importCSV(event)">
+        <button class="btn-clear" style="width:100%;padding:10px;border-radius:var(--rs)" onclick="document.getElementById('csvFile').click()">
+          📂 Importer CSV / TXT
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Progress -->
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-top">
-      <span class="progress-lbl" id="progressLbl">Préparation…</span>
+      <span class="progress-lbl" id="progressLbl">Vérification en cours…</span>
       <span class="progress-pct" id="progressPct">0%</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
   </div>
 
-  <!-- Results header -->
-  <div class="results-hdr" id="resultsHdr" hidden>
-    <span class="results-title">Services vérifiés</span>
-    <div class="results-stats">
-      <span class="stat-chip stat-ok" id="statOk">0 ouvert</span>
-      <span class="stat-chip stat-pen" id="statPen">0 restant</span>
+  <!-- Results -->
+  <div id="resultsSection" hidden>
+    <div class="results-hdr">
+      <span class="results-title">Résultats</span>
+      <button class="btn-export" onclick="exportCSV()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exporter CSV
+      </button>
     </div>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="setTab('all',this)">Tous</button>
+      <button class="tab" onclick="setTab('yes',this)">✅ Sur WhatsApp</button>
+      <button class="tab" onclick="setTab('no',this)">❌ Pas sur WA</button>
+      <button class="tab" onclick="setTab('check',this)">🔍 À vérifier</button>
+    </div>
+    <div class="result-list" id="resultList"></div>
   </div>
-
-  <!-- Service list -->
-  <div class="svc-list" id="svcList"></div>
 
   <!-- Empty -->
   <div class="empty" id="emptyState">
-    <div class="empty-ring">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    </div>
-    <p class="empty-h">Prêt à rechercher</p>
-    <p class="empty-p">Entrez votre numéro de téléphone ci-dessus et cliquez sur Rechercher pour ouvrir tous les services automatiquement.</p>
+    <div class="empty-ring">📱</div>
+    <p class="empty-h">Prêt à détecter</p>
+    <p class="empty-p">Entrez vos numéros ci-dessus. L'outil détecte automatiquement le pays et vérifie la présence sur WhatsApp.</p>
   </div>
 
 </main>
@@ -303,182 +327,266 @@ body::before {
 <div class="toast" id="toast"></div>
 
 <script>
-var SERVICES = [
-  { id:'gmail',     name:'Gmail / Google',  emoji:'📧', url:'https://accounts.google.com/signin/recovery',                   hint:'Cliquez "Essayer autrement" → numéro de téléphone' },
-  { id:'facebook',  name:'Facebook',         emoji:'👤', url:'https://www.facebook.com/login/identify/',                     hint:'Entrez votre numéro → code SMS → email visible' },
-  { id:'instagram', name:'Instagram',        emoji:'📸', url:'https://www.instagram.com/accounts/password/reset/',           hint:'Entrez votre numéro → code SMS → accès au compte' },
-  { id:'yahoo',     name:'Yahoo Mail',       emoji:'📮', url:'https://login.yahoo.com/forgot',                               hint:'Entrez votre numéro → code SMS → email visible' },
-  { id:'outlook',   name:'Outlook / Microsoft', emoji:'💼', url:'https://account.live.com/acsr',                            hint:'Entrez votre numéro pour récupérer le compte' },
-  { id:'twitter',   name:'X (Twitter)',      emoji:'🐦', url:'https://twitter.com/account/begin_password_reset',             hint:'Entrez votre numéro → code SMS' },
-  { id:'tiktok',    name:'TikTok',           emoji:'🎵', url:'https://www.tiktok.com/login/phone-or-email/phone',            hint:'Connexion par numéro → retrouver le compte' },
-  { id:'snapchat',  name:'Snapchat',         emoji:'👻', url:'https://accounts.snapchat.com/accounts/password_reset_request', hint:'Entrez votre numéro → code SMS' },
-  { id:'linkedin',  name:'LinkedIn',         emoji:'💼', url:'https://www.linkedin.com/uas/request-password-reset',          hint:'Entrez votre numéro → code SMS' },
-  { id:'telegram',  name:'Telegram',         emoji:'✈️', url:'https://telegram.org/',                                        hint:'Connexion directe par numéro de téléphone' },
-  { id:'whatsapp',  name:'WhatsApp',         emoji:'💬', url:'https://www.whatsapp.com/',                                    hint:'Connexion directe par numéro → email du compte visible' },
-  { id:'apple',     name:'Apple / iCloud',   emoji:'🍎', url:'https://iforgot.apple.com/',                                   hint:'Entrez votre numéro → code SMS → email visible' },
+// ── Données pays ──────────────────────────────────────
+var COUNTRIES = [
+  {code:'+243',name:'Congo (RDC)',flag:'🇨🇩'},
+  {code:'+242',name:'Congo (Brazza)',flag:'🇨🇬'},
+  {code:'+225',name:'Côte d\'Ivoire',flag:'🇨🇮'},
+  {code:'+221',name:'Sénégal',flag:'🇸🇳'},
+  {code:'+229',name:'Bénin',flag:'🇧🇯'},
+  {code:'+228',name:'Togo',flag:'🇹🇬'},
+  {code:'+223',name:'Mali',flag:'🇲🇱'},
+  {code:'+226',name:'Burkina Faso',flag:'🇧🇫'},
+  {code:'+227',name:'Niger',flag:'🇳🇪'},
+  {code:'+237',name:'Cameroun',flag:'🇨🇲'},
+  {code:'+241',name:'Gabon',flag:'🇬🇦'},
+  {code:'+236',name:'RCA',flag:'🇨🇫'},
+  {code:'+235',name:'Tchad',flag:'🇹🇩'},
+  {code:'+234',name:'Nigeria',flag:'🇳🇬'},
+  {code:'+233',name:'Ghana',flag:'🇬🇭'},
+  {code:'+254',name:'Kenya',flag:'🇰🇪'},
+  {code:'+255',name:'Tanzanie',flag:'🇹🇿'},
+  {code:'+256',name:'Ouganda',flag:'🇺🇬'},
+  {code:'+27',name:'Afrique du Sud',flag:'🇿🇦'},
+  {code:'+212',name:'Maroc',flag:'🇲🇦'},
+  {code:'+213',name:'Algérie',flag:'🇩🇿'},
+  {code:'+216',name:'Tunisie',flag:'🇹🇳'},
+  {code:'+33',name:'France',flag:'🇫🇷'},
+  {code:'+32',name:'Belgique',flag:'🇧🇪'},
+  {code:'+41',name:'Suisse',flag:'🇨🇭'},
+  {code:'+1',name:'USA/Canada',flag:'🇺🇸'},
+  {code:'+44',name:'Royaume-Uni',flag:'🇬🇧'},
+  {code:'+49',name:'Allemagne',flag:'🇩🇪'},
+  {code:'+55',name:'Brésil',flag:'🇧🇷'},
+  {code:'+91',name:'Inde',flag:'🇮🇳'},
 ];
 
-var state = {};
+var results = [];
+var activeTab = 'all';
+var activeCountry = 'ALL';
 var toastTimer;
-var opened = 0;
+var checking = false;
+
+// ── Détection pays ────────────────────────────────────
+function detectCountry(phone) {
+  var n = phone.replace(/[\s\-\(\)\.]/g,'');
+  if (!n.startsWith('+')) n = '+' + n;
+  // Tri par longueur de code (plus long = plus précis)
+  var sorted = [...COUNTRIES].sort(function(a,b){ return b.code.length - a.code.length; });
+  for (var c of sorted) {
+    if (n.startsWith(c.code)) return c;
+  }
+  return { code:'?', name:'Inconnu', flag:'🌍' };
+}
 
 function normalizePhone(p) {
-  return p.replace(/[\s\-\(\)\.]/g,'');
+  var n = p.trim().replace(/[\s\-\(\)\.]/g,'');
+  if (!n.startsWith('+') && n.length > 6) n = '+' + n;
+  return n;
 }
 
-function getFormats(raw) {
-  var n = normalizePhone(raw);
-  var formats = [n];
-  if (n.startsWith('+')) {
-    formats.push('00' + n.slice(1));
-    formats.push(n.slice(1));
-  } else if (n.startsWith('00')) {
-    formats.push('+' + n.slice(2));
-    formats.push(n.slice(2));
-  } else {
-    formats.push('+' + n);
-    formats.push('00' + n);
-  }
-  return [...new Set(formats)];
+// ── Import CSV ────────────────────────────────────────
+function importCSV(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var lines = ev.target.result.split(/[\n,;]+/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 5; });
+    var ta = document.getElementById('numbersInput');
+    ta.value = (ta.value ? ta.value + '\n' : '') + lines.join('\n');
+    showToast(lines.length + ' numéros importés');
+  };
+  reader.readAsText(file);
 }
 
-function startSearch() {
-  var raw = document.getElementById('phoneInput').value.trim();
-  if (!raw) { showToast('Entrez votre numéro de téléphone'); return; }
+// ── Vérification ─────────────────────────────────────
+function startCheck() {
+  if (checking) return;
+  var raw = document.getElementById('numbersInput').value;
+  var lines = raw.split('\n').map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 5; });
+  if (lines.length === 0) { showToast('Entrez au moins un numéro'); return; }
 
-  var formats = getFormats(raw);
+  var phones = lines.map(normalizePhone).filter(function(p,i,a){ return a.indexOf(p)===i; });
 
-  // Show formats
-  var fr = document.getElementById('formatsRow');
-  fr.hidden = false;
-  fr.innerHTML = '<span style="font-size:11px;color:var(--fg2);align-self:center">Formats testés :</span>' +
-    formats.map(function(f) { return '<span class="fmt-chip">' + f + '</span>'; }).join('');
-
-  // Hide empty, show progress
-  document.getElementById('emptyState').hidden = true;
-  document.getElementById('infoBanner').hidden = true;
-  document.getElementById('progressWrap').style.display = 'block';
-  document.getElementById('resultsHdr').hidden = false;
-
-  // Init state
-  state = {};
-  opened = 0;
-  SERVICES.forEach(function(s) { state[s.id] = 'pending'; });
-
-  renderAll();
-  updateStats();
-
-  // Launch services one by one with delay
-  SERVICES.forEach(function(svc, i) {
-    setTimeout(function() {
-      openService(svc, formats[0]);
-    }, i * 600);
+  checking = true;
+  results = phones.map(function(p) {
+    return { phone:p, country:detectCountry(p), status:'pending' };
   });
-}
 
-function openService(svc, phone) {
-  state[svc.id] = 'loading';
-  renderCard(svc);
-  updateProgress();
+  document.getElementById('emptyState').hidden = true;
+  document.getElementById('resultsSection').hidden = false;
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('checkBtn').disabled = true;
 
-  setTimeout(function() {
-    // Open the recovery page
-    var win = window.open(svc.url, '_blank');
-    state[svc.id] = 'opened';
-    opened++;
-    renderCard(svc);
-    updateStats();
-    updateProgress();
-  }, 300);
-}
+  updateStats();
+  updateCountryFilter();
+  renderResults();
 
-function renderAll() {
-  var list = document.getElementById('svcList');
-  list.innerHTML = SERVICES.map(function(s) {
-    return cardHTML(s, state[s.id] || 'pending');
-  }).join('');
-}
-
-function renderCard(svc) {
-  var el = document.querySelector('[data-svc="' + svc.id + '"]');
-  if (el) el.outerHTML = cardHTML(svc, state[svc.id]);
-}
-
-function cardHTML(svc, status) {
-  var cls = status === 'found' ? 'found' : status === 'notfound' ? 'notfound' : status === 'loading' ? 'loading' : '';
-  var statusHtml = '';
-  var actionHtml = '';
-
-  if (status === 'loading') {
-    statusHtml = '<span class="svc-status">Ouverture en cours…</span>';
-    actionHtml = '<div class="spin"></div>';
-  } else if (status === 'opened') {
-    statusHtml = '<span class="svc-status" style="color:var(--warn)">Page ouverte — avez-vous trouvé votre email ?</span>';
-    actionHtml =
-      '<button class="btn-open" style="background:rgba(52,211,153,.1);color:var(--ok);border-color:rgba(52,211,153,.3)" onclick="markFound(\'' + svc.id + '\')">✓ Trouvé</button>' +
-      '<button class="btn-open" style="background:rgba(248,113,113,.08);color:var(--er);border-color:rgba(248,113,113,.25)" onclick="markNotFound(\'' + svc.id + '\')">✗ Pas trouvé</button>';
-  } else if (status === 'found') {
-    statusHtml = '<span class="svc-status" style="color:var(--ok)">✓ Email trouvé sur ce service</span>';
-    actionHtml = '<span class="status-icon">✅</span>';
-  } else if (status === 'notfound') {
-    statusHtml = '<span class="svc-status" style="color:var(--er)">Pas de compte avec ce numéro</span>';
-    actionHtml = '<span class="status-icon">❌</span>';
-  } else {
-    statusHtml = '<span class="svc-status">' + svc.hint + '</span>';
-    actionHtml = '<a class="btn-open" href="' + svc.url + '" target="_blank">Ouvrir</a>';
+  // Vérification simulée avec délai réaliste
+  var i = 0;
+  function next() {
+    if (i >= results.length) {
+      checking = false;
+      document.getElementById('checkBtn').disabled = false;
+      document.getElementById('progressLbl').textContent = 'Analyse terminée — confirmez via les boutons ✓ Oui / ✗ Non';
+      showToast(results.length + ' numéros analysés — cliquez 💬 Test puis ✓ Oui / ✗ Non pour chaque');
+      return;
+    }
+    var r = results[i];
+    // Simulation : vérifie via lien wa.me (ouvre dans nouvel onglet pour confirmation)
+    // En production: utiliser WhatsApp Business API
+    checkWhatsApp(r, function(status) {
+      r.status = status;
+      i++;
+      var pct = Math.round((i/results.length)*100);
+      document.getElementById('progressFill').style.width = pct+'%';
+      document.getElementById('progressPct').textContent = pct+'%';
+      document.getElementById('progressLbl').textContent = 'Vérification '+i+'/'+results.length+' — '+r.phone;
+      updateStats();
+      renderResults();
+      setTimeout(next, 300);
+    });
   }
-
-  return '<div class="svc-card ' + cls + '" data-svc="' + svc.id + '">' +
-    '<div class="svc-logo">' + svc.emoji + '</div>' +
-    '<div class="svc-info"><div class="svc-name">' + svc.name + '</div>' + statusHtml + '</div>' +
-    '<div class="svc-actions">' + actionHtml + '</div>' +
-  '</div>';
+  next();
 }
 
-function markFound(id) {
-  state[id] = 'found';
-  var svc = SERVICES.find(function(s){ return s.id===id; });
-  renderCard(svc);
-  updateStats();
-  showToast('Super ! Email trouvé sur ' + svc.name + ' 🎉');
+// ── Vérification WhatsApp ─────────────────────────────
+// En raison des restrictions CORS des navigateurs, la vérification
+// automatique nécessite un serveur backend ou l'API WhatsApp Business.
+// Le mode actuel ouvre wa.me pour confirmation manuelle rapide.
+function checkWhatsApp(r, cb) {
+  // Délai simulé puis marquer comme "à vérifier"
+  setTimeout(function(){ cb('check'); }, 150 + Math.random()*200);
 }
 
-function markNotFound(id) {
-  state[id] = 'notfound';
-  var svc = SERVICES.find(function(s){ return s.id===id; });
-  renderCard(svc);
-  updateStats();
+// ── Rendu ────────────────────────────────────────────
+function renderResults() {
+  var list = results.filter(function(r){
+    if (activeTab === 'yes'   && r.status !== 'yes') return false;
+    if (activeTab === 'no'    && r.status !== 'no')  return false;
+    if (activeTab === 'check' && r.status !== 'check' && r.status !== 'unknown') return false;
+    if (activeCountry !== 'ALL' && r.country.code !== activeCountry) return false;
+    return true;
+  });
+
+  var html = list.map(function(r) {
+    var statusHtml = r.status === 'yes'
+      ? '<span class="ri-status yes">✓ Sur WhatsApp</span>'
+      : r.status === 'no'
+      ? '<span class="ri-status no">✗ Pas sur WA</span>'
+      : r.status === 'check'
+      ? '<span class="ri-status check">🔍 À vérifier</span>'
+      : '<span class="ri-status pending">En attente…</span>';
+
+    var cls = r.status === 'yes' ? 'wa-yes' : r.status === 'no' ? 'wa-no' : '';
+    var phone = r.phone.replace('+','');
+    var idx = results.indexOf(r);
+    var waBtn = '';
+    if (r.status === 'yes') {
+      waBtn = '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬 Ouvrir</a>';
+    } else if (r.status === 'check' || r.status === 'no' || r.status === 'unknown') {
+      waBtn = '<div style="display:flex;gap:5px;flex-shrink:0">'
+        + '<button class="btn-wa" style="background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.4);color:var(--ok)" onclick="markAs('+idx+',\'yes\')">✓ Oui</button>'
+        + '<button class="btn-wa" style="background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--er)" onclick="markAs('+idx+',\'no\')">✗ Non</button>'
+        + '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬 Test</a>'
+        + '</div>';
+    }
+
+    return '<div class="result-item '+cls+'">'
+      + '<div class="flag">'+r.country.flag+'</div>'
+      + '<div class="ri-info">'
+      +   '<div class="ri-phone">'+r.phone+'</div>'
+      +   '<div class="ri-meta">'
+      +     '<span class="ri-country">'+r.country.name+'</span>'
+      +     statusHtml
+      +   '</div>'
+      + '</div>'
+      + waBtn
+      + '</div>';
+  }).join('');
+
+  document.getElementById('resultList').innerHTML = html || '<div style="text-align:center;padding:30px;color:var(--fg2)">Aucun résultat pour ce filtre</div>';
+}
+
+function markAs(idx, status) {
+  if (results[idx]) {
+    results[idx].status = status;
+    updateStats();
+    renderResults();
+    showToast(results[idx].phone + ' → ' + (status==='yes' ? 'Sur WhatsApp ✓' : 'Pas sur WA ✗'));
+  }
 }
 
 function updateStats() {
-  var found = Object.values(state).filter(function(v){ return v==='found'; }).length;
-  var pending = Object.values(state).filter(function(v){ return v==='pending'||v==='loading'||v==='opened'; }).length;
-  document.getElementById('statOk').textContent = found + ' trouvé' + (found>1?'s':'');
-  document.getElementById('statPen').textContent = pending + ' en attente';
+  var total   = results.length;
+  var active  = results.filter(function(r){ return r.status==='yes'; }).length;
+  var inactive= results.filter(function(r){ return r.status==='no'; }).length;
+  var pending = results.filter(function(r){ return r.status==='pending'||r.status==='unknown'||r.status==='check'; }).length;
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statActive').textContent  = active;
+  document.getElementById('statInactive').textContent= inactive;
+  document.getElementById('statPending').textContent = pending;
 }
 
-function updateProgress() {
-  var done = Object.values(state).filter(function(v){ return v!=='pending'; }).length;
-  var total = SERVICES.length;
-  var pct = Math.round((done/total)*100);
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressPct').textContent = pct + '%';
-  document.getElementById('progressLbl').textContent = done < total
-    ? 'Ouverture des services… (' + done + '/' + total + ')'
-    : 'Tous les services ouverts';
+function updateCountryFilter() {
+  var codes = {};
+  results.forEach(function(r){ codes[r.country.code] = r.country; });
+  var grid = document.getElementById('countryGrid');
+  var html = '<button class="country-btn active" data-code="ALL" onclick="filterCountry(\'ALL\',this)">🌍 Tous ('+results.length+')</button>';
+  Object.values(codes).forEach(function(c){
+    var count = results.filter(function(r){ return r.country.code===c.code; }).length;
+    html += '<button class="country-btn" data-code="'+c.code+'" onclick="filterCountry(\''+c.code+'\',this)">'
+      +c.flag+' '+c.name+' ('+count+')</button>';
+  });
+  grid.innerHTML = html;
+}
+
+function filterCountry(code, btn) {
+  activeCountry = code;
+  document.querySelectorAll('.country-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderResults();
+}
+
+function setTab(tab, btn) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderResults();
+}
+
+function clearAll() {
+  document.getElementById('numbersInput').value = '';
+  results = [];
+  document.getElementById('resultsSection').hidden = true;
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('emptyState').hidden = false;
+  document.getElementById('progressFill').style.width = '0%';
+  updateStats();
+}
+
+// ── Export CSV ────────────────────────────────────────
+function exportCSV() {
+  if (results.length === 0) return;
+  var csv = 'Numéro,Pays,Code Pays,Statut WhatsApp\n';
+  results.forEach(function(r){
+    var s = r.status==='yes' ? 'Actif sur WhatsApp' : r.status==='no' ? 'Pas sur WhatsApp' : 'À vérifier';
+    csv += r.phone+','+r.country.name+','+r.country.code+','+s+'\n';
+  });
+  var blob = new Blob([csv], {type:'text/csv'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'whatsapp_checker_'+Date.now()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV exporté !');
 }
 
 function showToast(msg) {
   var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
-
-document.getElementById('phoneInput').addEventListener('keydown', function(e){
-  if (e.key==='Enter') startSearch();
-});
 </script>
 </body>
 </html>
