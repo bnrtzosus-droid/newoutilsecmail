@@ -628,12 +628,20 @@ function doLogin(e) {
   var btn   = document.getElementById('loginBtn');
   var err   = document.getElementById('loginErr');
   btn.disabled = true; btn.textContent = 'Connexion…'; err.hidden = true;
-  fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+  var authUrl = SB_URL + '/auth/v1/token?grant_type=password';
+  fetch(authUrl, {
     method: 'POST',
     headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email, password: pass })
   })
-  .then(function(r){ return r.json(); })
+  .then(function(r){
+    if (!r.ok) {
+      return r.text().then(function(t){
+        throw new Error('HTTP ' + r.status + ' — ' + (t||'').slice(0,120));
+      });
+    }
+    return r.json();
+  })
   .then(function(data){
     if (data.access_token) {
       saveSession({ access_token: data.access_token, expires_at: data.expires_at || (Date.now()/1000 + 86400) });
@@ -641,13 +649,13 @@ function doLogin(e) {
       loadContactsFromDB();
       setInterval(loadContactsFromDB, 10000);
     } else {
-      err.textContent = data.error_description || 'Email ou mot de passe incorrect.';
+      err.textContent = data.error_description || data.msg || JSON.stringify(data).slice(0,100);
       err.hidden = false;
+      btn.disabled = false; btn.textContent = 'Se connecter';
     }
-    btn.disabled = false; btn.textContent = 'Se connecter';
   })
-  .catch(function(){
-    err.textContent = 'Erreur réseau. Réessaie.';
+  .catch(function(e){
+    err.textContent = e.message || 'Erreur réseau. Réessaie.';
     err.hidden = false;
     btn.disabled = false; btn.textContent = 'Se connecter';
   });
