@@ -39,6 +39,31 @@ def supabase_insert(phone, pays):
     except Exception:
         return False
 
+def supabase_save_history(last_number, total_checked, whatsapp_found):
+    """Enregistre la fin de session dans l'historique Supabase."""
+    if not HAS_HTTP:
+        return False
+    try:
+        data = json.dumps({
+            "last_number": last_number,
+            "total_checked": total_checked,
+            "session_name": f"{whatsapp_found} WA trouvés"
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/search_history",
+            data=data,
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception:
+        return False
+
 # ── Couleurs terminal ─────────────────────────────────────────────────────────
 GRN = "\033[92m"; RED = "\033[91m"; YLW = "\033[93m"
 BLU = "\033[94m"; CYN = "\033[96m"; GRY = "\033[90m"
@@ -331,6 +356,13 @@ def main():
 
     # Bilan
     afficher_bilan(resultats)
+
+    # Enregistrer dans l'historique Supabase
+    if resultats:
+        oui_count = sum(1 for r in resultats if r['wa'] is True)
+        last_num  = resultats[-1]['phone']
+        if supabase_save_history(last_num, len(resultats), oui_count):
+            print(f"  {CYN}↑ Historique sauvegardé ({last_num}){RST}")
 
     # Export CSV
     sauver = input(f"\n{BLD}Exporter les résultats en CSV ? (o/n) : {RST}").strip().lower()
