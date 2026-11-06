@@ -11,7 +11,7 @@ try:
     HAS_HTTP = True
 except ImportError:
     HAS_HTTP = False
-from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout, Error as PWError
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 SUPABASE_URL = "https://qbyxezgkmhikfqytiruj.supabase.co"
@@ -216,6 +216,12 @@ def verifier_numero(page, phone):
 
         return None  # Vraiment indéterminé
 
+    except KeyboardInterrupt:
+        raise  # Laisser remonter pour arrêt propre
+    except PWError as e:
+        if 'closed' in str(e).lower() or 'target' in str(e).lower():
+            raise KeyboardInterrupt  # Navigateur fermé = arrêt voulu
+        return None
     except PWTimeout:
         return None
     except Exception:
@@ -335,35 +341,46 @@ def main():
 
     # Lancer Playwright + WhatsApp Web
     resultats = []
+    interrompu = False
     with sync_playwright() as pw:
         browser, page = connecter_whatsapp(pw)
 
-        print(f"\n{BLD}Vérification en cours...{RST}\n")
-        for idx, phone in enumerate(phones, 1):
-            pays = detecter_pays(phone)
-            print(f"  [{idx:>3}/{len(phones)}] {phone}  {GRY}{pays}{RST}", end='  ', flush=True)
+        print(f"\n{BLD}Vérification en cours...{RST}  {GRY}(Ctrl+C pour arrêter et sauvegarder){RST}\n")
+        try:
+            for idx, phone in enumerate(phones, 1):
+                pays = detecter_pays(phone)
+                print(f"  [{idx:>3}/{len(phones)}] {phone}  {GRY}{pays}{RST}", end='  ', flush=True)
 
-            wa = verifier_numero(page, phone)
+                wa = verifier_numero(page, phone)
 
-            if wa is True:
-                print(f"{GRN}✓ Sur WhatsApp{RST}", end='')
-                if supabase_insert(phone, pays):
-                    print(f"  {CYN}↑ Supabase{RST}")
+                if wa is True:
+                    print(f"{GRN}✓ Sur WhatsApp{RST}", end='')
+                    if supabase_insert(phone, pays):
+                        print(f"  {CYN}↑ Supabase{RST}")
+                    else:
+                        print()
+                elif wa is False:
+                    print(f"{RED}✗ Pas sur WhatsApp{RST}")
                 else:
-                    print()
-            elif wa is False:
-                print(f"{RED}✗ Pas sur WhatsApp{RST}")
-            else:
-                print(f"{GRY}? Indéterminé{RST}")
+                    print(f"{GRY}? Indéterminé{RST}")
 
-            resultats.append({'phone': phone, 'pays': pays, 'wa': wa})
+                resultats.append({'phone': phone, 'pays': pays, 'wa': wa})
 
-            # Petite pause entre chaque numéro
-            time.sleep(0.8)
+                # Petite pause entre chaque numéro
+                time.sleep(0.8)
 
-        browser.close()
+        except KeyboardInterrupt:
+            interrompu = True
+            print(f"\n\n{YLW}⚠ Arrêt demandé après {len(resultats)}/{len(phones)} numéros.{RST}")
+
+        try:
+            browser.close()
+        except Exception:
+            pass
 
     # Bilan
+    if interrompu and resultats:
+        print(f"{GRY}Sauvegarde des résultats partiels...{RST}")
     afficher_bilan(resultats)
 
     # Enregistrer dans l'historique Supabase
