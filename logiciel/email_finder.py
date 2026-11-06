@@ -34,10 +34,28 @@ def save_creds(creds: dict):
 
 # ── Connexion par réseau ──────────────────────────────────────────────────────
 
+def _accept_cookies(page):
+    """Click cookie accept button if present (Meta / Instagram / Facebook)."""
+    try:
+        btn = page.query_selector(
+            "button:has-text('Autoriser tous les cookies'), "
+            "button:has-text('Allow all cookies'), "
+            "button:has-text('Accept all'), "
+            "button:has-text('Tout accepter'), "
+            "button:has-text('Allow essential and optional cookies')"
+        )
+        if btn:
+            btn.click()
+            pause(1, 2)
+    except Exception:
+        pass
+
+
 def login_instagram(page, email: str, password: str) -> bool:
     try:
         page.goto("https://www.instagram.com/accounts/login/", timeout=20000)
         pause(2, 3)
+        _accept_cookies(page)
         page.fill("input[name='username']", email)
         page.fill("input[name='password']", password)
         page.click("button[type='submit']")
@@ -62,6 +80,7 @@ def login_linkedin(page, email: str, password: str) -> bool:
     try:
         page.goto("https://www.linkedin.com/login", timeout=20000)
         pause(2, 3)
+        _accept_cookies(page)
         page.fill("#username", email)
         page.fill("#password", password)
         page.click("button[type='submit']")
@@ -80,6 +99,7 @@ def login_facebook(page, email: str, password: str) -> bool:
     try:
         page.goto("https://www.facebook.com/login", timeout=20000)
         pause(2, 3)
+        _accept_cookies(page)
         page.fill("#email", email)
         page.fill("#pass", password)
         page.click("button[name='login']")
