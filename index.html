@@ -149,15 +149,53 @@ body {
 .main-body::-webkit-scrollbar-track { background:transparent; }
 .main-body::-webkit-scrollbar-thumb { background:var(--sf3); border-radius:2px; }
 
-/* ── Pays pills ──────────────────────────────────────────── */
-.pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
-.pill {
-  background:var(--sf2); border:1px solid var(--bd); border-radius:100px;
-  padding:6px 14px; font-size:12.5px; font-weight:500; color:var(--fg2);
-  cursor:pointer; transition:all .15s; white-space:nowrap;
+/* ── Country picker ──────────────────────────────────────── */
+.cp-wrap { position:relative; margin-bottom:18px; }
+.cp-btn {
+  display:inline-flex; align-items:center; gap:10px;
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:10px 14px 10px 10px;
+  font-size:14px; font-weight:500; color:var(--fg);
+  cursor:pointer; font-family:inherit; min-width:220px;
+  transition:border-color .15s;
 }
-.pill:hover { border-color:var(--bda); color:var(--fg); background:var(--sf3); }
-.pill.active { background:var(--acd); border-color:var(--bda); color:var(--ac); font-weight:600; }
+.cp-btn:hover { border-color:var(--bda); }
+.cp-btn.open  { border-color:var(--bda); }
+.cp-flag { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-size:19px; background:var(--sf2); flex-shrink:0; }
+.cp-chevron { margin-left:auto; color:var(--fg2); transition:transform .2s; flex-shrink:0; }
+.cp-btn.open .cp-chevron { transform:rotate(180deg); }
+.cp-dropdown {
+  position:absolute; top:calc(100% + 6px); left:0;
+  background:var(--sf); border:1px solid var(--bda);
+  border-radius:var(--r); width:280px; z-index:200;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+  display:none; overflow:hidden;
+}
+.cp-dropdown.open { display:block; }
+.cp-search-wrap { position:relative; padding:12px; border-bottom:1px solid var(--bd); }
+.cp-search-icon { position:absolute; left:22px; top:50%; transform:translateY(-50%); color:var(--fg2); pointer-events:none; }
+.cp-search {
+  width:100%; background:var(--bg2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:9px 12px 9px 36px;
+  font-size:13px; color:var(--fg); font-family:inherit;
+  outline:none; transition:border-color .15s;
+}
+.cp-search::placeholder { color:var(--fg3); }
+.cp-search:focus { border-color:var(--bda); }
+.cp-list { max-height:300px; overflow-y:auto; }
+.cp-list::-webkit-scrollbar { width:4px; }
+.cp-list::-webkit-scrollbar-thumb { background:var(--sf3); border-radius:2px; }
+.cp-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 14px; cursor:pointer;
+  transition:background .12s; font-size:13.5px; color:var(--fg);
+}
+.cp-item:hover { background:var(--sf2); }
+.cp-item.active { background:var(--acd2); color:var(--ac); }
+.cp-item-flag { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-size:21px; background:var(--sf3); flex-shrink:0; }
+.cp-item-info { flex:1; min-width:0; }
+.cp-item-name { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cp-item-code { font-size:11.5px; color:var(--fg2); font-family:'JetBrains Mono',monospace; margin-top:1px; }
 
 /* ── Contact grid ────────────────────────────────────────── */
 .contact-grid {
@@ -351,8 +389,19 @@ body {
       </div>
     </div>
     <div class="main-body" id="bodyContacts">
-      <div class="pill-row" id="paysFilter">
-        <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
+      <div class="cp-wrap" id="cpWrap">
+        <button class="cp-btn" id="cpBtn" onclick="toggleCpDropdown()">
+          <div class="cp-flag" id="cpFlag">🌍</div>
+          <span id="cpLabel">Tous les pays</span>
+          <svg class="cp-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="cp-dropdown" id="cpDropdown">
+          <div class="cp-search-wrap">
+            <svg class="cp-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="cp-search" id="cpSearch" type="text" placeholder="Rechercher..." oninput="filterCpList(this.value)" autocomplete="off">
+          </div>
+          <div class="cp-list" id="cpList"></div>
+        </div>
       </div>
       <div id="contactsList">
         <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
@@ -481,13 +530,6 @@ function clearContacts() {
     .then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
 }
 
-function filterPays(p, btn) {
-  activePays = p;
-  document.querySelectorAll('.pays-btn').forEach(function(b){ b.classList.remove('active'); });
-  btn.classList.add('active');
-  renderList();
-}
-
 function getPaysList() {
   var pays = {};
   sbContacts.forEach(function(c){
@@ -495,6 +537,46 @@ function getPaysList() {
     pays[p] = (pays[p] || 0) + 1;
   });
   return pays;
+}
+
+function buildCpList(query) {
+  var pays = getPaysList();
+  var allItems = [{flag:'🌍',name:'Tous les pays',code:'',key:'TOUS',count:sbContacts.length}]
+    .concat(Object.keys(pays).sort().map(function(p){
+      var info = detectCountryInfo(p);
+      var cnt  = COUNTRIES.find(function(c){ return c.name === p; });
+      return {flag:info.flag||'🌍', name:p, code:cnt?cnt.code:'', key:p, count:pays[p]};
+    }));
+  var q = (query||'').toLowerCase();
+  var filtered = q ? allItems.filter(function(i){ return i.name.toLowerCase().indexOf(q)!==-1 || i.code.indexOf(q)!==-1; }) : allItems;
+  var html = filtered.map(function(i){
+    var label = i.key==='TOUS' ? 'Tous ('+sbContacts.length+')' : i.name+' ('+i.count+')';
+    return '<div class="cp-item'+(activePays===i.key?' active':'')+'" onclick="selectPays(\''+i.key.replace(/'/g,"\\'")+'\',\''+i.flag+'\',\''+label.replace(/'/g,"\\'")+'\')"><div class="cp-item-flag">'+i.flag+'</div><div class="cp-item-info"><div class="cp-item-name">'+label+'</div>'+(i.code?'<div class="cp-item-code">'+i.code+'</div>':'')+'</div></div>';
+  }).join('');
+  document.getElementById('cpList').innerHTML = html || '<div style="padding:16px;text-align:center;color:var(--fg2);font-size:13px;">Aucun résultat</div>';
+}
+
+function toggleCpDropdown() {
+  var btn = document.getElementById('cpBtn');
+  var dd  = document.getElementById('cpDropdown');
+  var open = dd.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  if (open) {
+    buildCpList('');
+    setTimeout(function(){ document.getElementById('cpSearch').focus(); }, 60);
+  }
+}
+
+function filterCpList(q) { buildCpList(q); }
+
+function selectPays(key, flag, label) {
+  activePays = key;
+  document.getElementById('cpFlag').textContent = flag;
+  document.getElementById('cpLabel').textContent = label;
+  document.getElementById('cpBtn').classList.remove('open');
+  document.getElementById('cpDropdown').classList.remove('open');
+  document.getElementById('cpSearch').value = '';
+  renderList();
 }
 
 function renderAll() {
@@ -514,14 +596,9 @@ function renderAll() {
     document.getElementById('kpiPaysWrap').style.display = 'none';
   }
 
-  var html = '<button class="pill pays-btn'+(activePays==='TOUS'?' active':'')+'" onclick="filterPays(\'TOUS\',this)">🌍 Tous ('+total+')</button>';
-  Object.keys(pays).sort().forEach(function(p){
-    var info = detectCountryInfo(p);
-    html += '<button class="pill pays-btn'+(activePays===p?' active':'')+'" onclick="filterPays(\''+p.replace(/'/g,"\\'")+'\',this)">'
-      + (info.flag||'🌍') + ' ' + p + ' (' + pays[p] + ')'
-      + '</button>';
-  });
-  document.getElementById('paysFilter').innerHTML = html;
+  var curLabel = document.getElementById('cpLabel').textContent;
+  if (activePays === 'TOUS') document.getElementById('cpLabel').textContent = 'Tous ('+total+')';
+
   renderList();
 }
 
@@ -648,6 +725,14 @@ function showToast(msg) {
 document.addEventListener('DOMContentLoaded', function(){
   loadContactsFromDB();
   setInterval(loadContactsFromDB, 10000);
+});
+
+document.addEventListener('click', function(e){
+  var wrap = document.getElementById('cpWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('cpBtn').classList.remove('open');
+    document.getElementById('cpDropdown').classList.remove('open');
+  }
 });
 </script>
 </body>
