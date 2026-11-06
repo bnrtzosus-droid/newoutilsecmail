@@ -486,6 +486,9 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
         <button class="btn-clear" onclick="clearContacts()" style="font-size:12px;padding:7px 12px">🗑 Vider</button>
       </div>
     </div>
+    <div class="country-grid" id="paysFilter" style="margin-bottom:14px">
+      <button class="pays-btn country-btn active" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
+    </div>
     <div id="contactsList">
       <div class="contacts-empty">Aucun contact sauvegardé — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement.</div>
     </div>
@@ -605,20 +608,69 @@ function clearContacts() {
   }).then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
 }
 
+var activePays = 'TOUS';
+
+function getPaysList() {
+  var pays = {};
+  sbContacts.forEach(function(c){
+    var p = c.pays || 'Inconnu';
+    pays[p] = (pays[p] || 0) + 1;
+  });
+  return pays;
+}
+
+function filterPays(p, btn) {
+  activePays = p;
+  document.querySelectorAll('.pays-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderContactsList();
+}
+
 function renderContacts() {
-  var list = sbContacts;
+  document.getElementById('contactsBadge').textContent = sbContacts.length;
+  updateNavBadge(sbContacts.length);
+  renderPaysFilter();
+  renderContactsList();
+}
+
+function renderPaysFilter() {
+  var pays = getPaysList();
+  var total = sbContacts.length;
+  var html = '<button class="pays-btn country-btn'+(activePays==='TOUS'?' active':'')+'" onclick="filterPays(\'TOUS\',this)">🌍 Tous ('+total+')</button>';
+  Object.keys(pays).sort().forEach(function(p){
+    var info = detectCountryInfo(p);
+    html += '<button class="pays-btn country-btn'+(activePays===p?' active':'')+'" onclick="filterPays(\''+p.replace(/'/g,"\\'")+'\',this)">'
+      + info.flag + ' ' + p + ' (' + pays[p] + ')'
+      + '</button>';
+  });
+  document.getElementById('paysFilter').innerHTML = html;
+}
+
+function detectCountryInfo(paysName) {
+  var found = COUNTRIES.find(function(c){ return c.name === paysName; });
+  return found || { flag: '🌍' };
+}
+
+function renderContactsList() {
   var el = document.getElementById('contactsList');
-  document.getElementById('contactsBadge').textContent = list.length;
-  updateNavBadge(list.length);
-  if (list.length === 0) {
+  var list = activePays === 'TOUS'
+    ? sbContacts
+    : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
+
+  if (sbContacts.length === 0) {
     el.innerHTML = '<div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement en temps réel.</div>';
+    return;
+  }
+  if (list.length === 0) {
+    el.innerHTML = '<div class="contacts-empty">Aucun numéro pour ce pays.</div>';
     return;
   }
   el.innerHTML = list.map(function(c){
     var phone = (c.phone || '').replace('+','');
     var date  = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
+    var info  = detectCountryInfo(c.pays || '');
     return '<div class="contact-item">'
-      + '<div style="font-size:22px">📱</div>'
+      + '<div style="font-size:22px">'+(info.flag||'📱')+'</div>'
       + '<div style="flex:1;min-width:0">'
       +   '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;font-weight:500">'+(c.phone||'')+'</div>'
       +   '<div class="contact-date">'+(c.pays||'')+(date?' · '+date:'')+'</div>'
