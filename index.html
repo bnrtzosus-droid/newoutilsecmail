@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Coffre-Fort de Comptes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single-column app, sticky header, search hero, card list */
+:root {
+  --bg: #07101E;
+  --sf: #0F1C2E;
+  --sf2: #172338;
+  --bd: rgba(99,160,255,0.11);
+  --bda: rgba(99,160,255,0.28);
+  --fg: #EDF2FF;
+  --fg2: #8A9EBB;
+  --ac: #5BA3FA;
+  --acd: rgba(91,163,250,0.12);
+  --ok: #35D399;
+  --er: #F87171;
+  --r: 12px;
+  --rs: 8px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F3F7FE; --sf: #FFFFFF; --sf2: #EAF0FD;
+    --bd: rgba(59,130,246,0.13); --bda: rgba(59,130,246,0.32);
+    --fg: #0C1A2E; --fg2: #617492;
+    --ac: #3B82F6; --acd: rgba(59,130,246,0.09);
+    --ok: #059669; --er: #DC2626;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F3F7FE; --sf: #FFFFFF; --sf2: #EAF0FD;
+  --bd: rgba(59,130,246,0.13); --bda: rgba(59,130,246,0.32);
+  --fg: #0C1A2E; --fg2: #617492;
+  --ac: #3B82F6; --acd: rgba(59,130,246,0.09);
+  --ok: #059669; --er: #DC2626;
+  color-scheme: light;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Outfit', system-ui, sans-serif;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left,0px));
+  padding-right: max(16px, env(safe-area-inset-right,0px));
+  padding-block: 0;
+  min-height: 100vh;
+}
+
+body::before {
+  content:""; position:fixed; inset:0 0 auto;
+  height:env(safe-area-inset-top,0px);
+  background:var(--bg); z-index:10;
+}
+
+/* Header */
+.hdr {
+  position: sticky; top: env(safe-area-inset-top,0px);
+  background: var(--bg); border-bottom: 1px solid var(--bd);
+  z-index: 9; padding: 13px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.brand { display:flex; align-items:center; gap:10px; }
+.brand-mark {
+  width:34px; height:34px; min-width:34px;
+  background:var(--acd); border:1px solid var(--bda);
+  border-radius:var(--rs); display:grid; place-items:center; color:var(--ac);
+}
+.brand-name { font-size:16px; font-weight:600; letter-spacing:-.2px; color:var(--fg); }
+.brand-sub  { font-size:11px; color:var(--fg2); }
+.btn-add {
+  display:flex; align-items:center; gap:6px;
+  background:var(--ac); color:#fff; border:none;
+  border-radius:var(--rs); padding:8px 14px;
+  font-size:14px; font-weight:500; font-family:inherit;
+  cursor:pointer; transition:filter .15s,transform .1s; white-space:nowrap;
+}
+.btn-add:hover{filter:brightness(1.1)} .btn-add:active{transform:scale(.97)}
+
+/* Main */
+.main { max-width:620px; margin:0 auto; padding-top:28px; padding-bottom:60px; }
+
+/* Search */
+.search-lbl {
+  font-size:11px; font-weight:600; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--fg2); margin-bottom:8px;
+}
+.search-wrap { position:relative; margin-bottom:28px; }
+.search-ic { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--fg2); pointer-events:none; }
+.search-input {
+  width:100%; background:var(--sf); border:1.5px solid var(--bd);
+  border-radius:var(--r); padding:13px 42px 13px 44px;
+  font-size:16px; font-family:'IBM Plex Mono',monospace; color:var(--fg);
+  outline:none; transition:border-color .15s,box-shadow .15s;
+}
+.search-input::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-size:15px; }
+.search-input:focus { border-color:var(--ac); box-shadow:0 0 0 3px var(--acd); }
+.search-clear {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  background:none; border:none; color:var(--fg2); cursor:pointer;
+  padding:4px; border-radius:4px; display:grid; place-items:center; transition:color .1s;
+}
+.search-clear:hover{color:var(--fg)}
+
+/* List header */
+.list-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.list-title { font-size:13px; font-weight:500; color:var(--fg2); }
+.list-badge {
+  font-size:12px; color:var(--fg2); background:var(--sf2);
+  border-radius:20px; padding:2px 10px; font-variant-numeric:tabular-nums;
+}
+
+/* Cards */
+.card-list { display:flex; flex-direction:column; gap:8px; }
+.card {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:15px 16px;
+  display:flex; align-items:flex-start; gap:13px; transition:border-color .15s;
+}
+.card:hover{border-color:var(--bda)}
+.card-ico {
+  width:40px; height:40px; min-width:40px; border-radius:10px;
+  display:grid; place-items:center;
+  font-size:17px; font-weight:700; flex-shrink:0;
+}
+.card-body { flex:1; min-width:0; }
+.card-svc {
+  font-size:15px; font-weight:600; color:var(--fg); margin-bottom:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.card-email-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+.card-email {
+  font-size:13px; font-family:'IBM Plex Mono',monospace; color:var(--ac);
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.btn-copy {
+  flex-shrink:0; background:none; border:none; color:var(--fg2);
+  cursor:pointer; padding:2px; border-radius:4px; display:grid;
+  place-items:center; transition:color .1s;
+}
+.btn-copy:hover{color:var(--ac)} .btn-copy.ok{color:var(--ok)}
+.card-meta { display:flex; flex-wrap:wrap; gap:10px; }
+.meta-item { display:flex; align-items:center; gap:4px; font-size:12px; color:var(--fg2); }
+.card-note {
+  font-size:12px; color:var(--fg2); margin-top:5px;
+  font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.btn-del {
+  flex-shrink:0; background:none; border:none; color:var(--fg2);
+  cursor:pointer; padding:4px; border-radius:6px; display:grid;
+  place-items:center; transition:color .12s,background .12s; align-self:flex-start;
+}
+.btn-del:hover { color:var(--er); background:rgba(248,113,113,.1); }
+
+/* Empty */
+.empty { text-align:center; padding:60px 20px; }
+.empty-ring {
+  width:70px; height:70px; margin:0 auto 20px;
+  background:var(--sf2); border-radius:50%;
+  display:grid; place-items:center; color:var(--fg2);
+}
+.empty-h { font-size:18px; font-weight:600; margin-bottom:8px; text-wrap:balance; }
+.empty-p { font-size:14px; color:var(--fg2); max-width:300px; margin:0 auto 24px; line-height:1.65; text-wrap:balance; }
+.btn-start {
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--ac); color:#fff; border:none;
+  border-radius:var(--rs); padding:10px 20px;
+  font-size:14px; font-weight:500; font-family:inherit; cursor:pointer; transition:filter .15s;
+}
+.btn-start:hover{filter:brightness(1.1)}
+
+/* Modal sheet */
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.55);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+  z-index:50; display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+.sheet {
+  background:var(--sf); border:1px solid var(--bd); border-bottom:none;
+  border-radius:var(--r) var(--r) 0 0;
+  padding:20px 20px max(20px,env(safe-area-inset-bottom,0px));
+  width:100%; max-width:580px;
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.32,.72,0,1);
+}
+.overlay.open .sheet { transform:translateY(0); }
+.sheet-pill {
+  width:36px; height:4px; background:var(--bda);
+  border-radius:2px; margin:0 auto 18px;
+}
+.sheet-title { font-size:17px; font-weight:600; margin-bottom:18px; color:var(--fg); }
+.form { display:flex; flex-direction:column; gap:13px; margin-bottom:18px; }
+.fg-grp { display:flex; flex-direction:column; gap:5px; }
+.fg-lbl { font-size:12px; font-weight:500; color:var(--fg2); }
+.fg-lbl .req { color:var(--er); margin-left:2px; }
+.fg-inp {
+  background:var(--bg); border:1.5px solid var(--bd); border-radius:var(--rs);
+  padding:10px 12px; font-size:14px; font-family:inherit; color:var(--fg);
+  outline:none; transition:border-color .15s,box-shadow .15s; width:100%;
+}
+.fg-inp:focus { border-color:var(--ac); box-shadow:0 0 0 3px var(--acd); }
+.fg-inp::placeholder { color:var(--fg2); }
+.fg-inp.mono { font-family:'IBM Plex Mono',monospace; }
+.f-row { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+@media (max-width:400px) { .f-row { grid-template-columns:1fr; } }
+.f-actions { display:flex; gap:10px; justify-content:flex-end; }
+.btn-cn {
+  background:var(--sf2); color:var(--fg); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:9px 18px;
+  font-size:14px; font-weight:500; font-family:inherit; cursor:pointer; transition:background .15s;
+}
+.btn-cn:hover{background:var(--bda)}
+.btn-sv {
+  background:var(--ac); color:#fff; border:none;
+  border-radius:var(--rs); padding:9px 20px;
+  font-size:14px; font-weight:500; font-family:inherit; cursor:pointer; transition:filter .15s;
+}
+.btn-sv:hover{filter:brightness(1.1)}
+
+/* Toast */
+.toast {
+  position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  left:50%; transform:translateX(-50%) translateY(70px);
+  background:var(--fg); color:var(--bg);
+  padding:9px 18px; border-radius:100px;
+  font-size:14px; font-weight:500; z-index:100;
+  transition:transform .25s cubic-bezier(.32,.72,0,1);
+  white-space:nowrap; pointer-events:none;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Mes Comptes</div>
+      <div class="brand-sub">Coffre-fort personnel</div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="openModal()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Ajouter
+  </button>
+</header>
+
+<!-- Main -->
+<main class="main">
+  <p class="search-lbl">Rechercher par numéro de téléphone</p>
+  <div class="search-wrap">
+    <span class="search-ic">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.44 2 2 0 0 1 3.62 1.26h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8 8.75a16 16 0 0 0 7.25 7.25l.6-.87a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+      </svg>
+    </span>
+    <input type="tel" class="search-input" id="searchInput" placeholder="Ex: +243 81 234 5678" autocomplete="off">
+    <button class="search-clear" id="clearBtn" hidden onclick="clearSearch()" title="Effacer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="list-hdr">
+    <span class="list-title" id="listTitle">Tous les comptes</span>
+    <span class="list-badge" id="listBadge">0</span>
+  </div>
+
+  <div class="card-list" id="cardList"></div>
+  <div class="empty" id="emptyState">
+    <div class="empty-ring">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <p class="empty-h" id="emptyH">Aucun compte enregistré</p>
+    <p class="empty-p" id="emptyP">Ajoutez vos comptes avec l'adresse email et le numéro de téléphone associé. Recherchez ensuite par numéro pour retrouver vos anciens emails.</p>
+    <button class="btn-start" id="emptyBtn" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter mon premier compte
+    </button>
+  </div>
+</main>
+
+<!-- Modal / Bottom Sheet -->
+<div class="overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Ajouter un compte">
+    <div class="sheet-pill"></div>
+    <h2 class="sheet-title">Ajouter un compte</h2>
+    <form class="form" id="accountForm" onsubmit="submitForm(event)">
+      <div class="fg-grp">
+        <label class="fg-lbl" for="f-svc">Service / Application <span class="req">*</span></label>
+        <input type="text" class="fg-inp" id="f-svc" placeholder="Gmail, Facebook, Yahoo…" required autocomplete="off">
+      </div>
+      <div class="fg-grp">
+        <label class="fg-lbl" for="f-email">Adresse email <span class="req">*</span></label>
+        <input type="email" class="fg-inp mono" id="f-email" placeholder="exemple@gmail.com" required autocomplete="off">
+      </div>
+      <div class="fg-grp">
+        <label class="fg-lbl" for="f-phone">Numéro de téléphone <span class="req">*</span></label>
+        <input type="tel" class="fg-inp mono" id="f-phone" placeholder="+243 81 234 5678" required autocomplete="off">
+      </div>
+      <div class="f-row">
+        <div class="fg-grp">
+          <label class="fg-lbl" for="f-user">Nom d'utilisateur</label>
+          <input type="text" class="fg-inp" id="f-user" placeholder="Optionnel" autocomplete="off">
+        </div>
+        <div class="fg-grp">
+          <label class="fg-lbl" for="f-note">Note</label>
+          <input type="text" class="fg-inp" id="f-note" placeholder="Optionnel" autocomplete="off">
+        </div>
+      </div>
+    </form>
+    <div class="f-actions">
+      <button class="btn-cn" type="button" onclick="closeModal()">Annuler</button>
+      <button class="btn-sv" type="button" onclick="submitForm()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+var accounts = [];
+var toastTimer;
+
+/* ── Storage ── */
+function load() {
+  try { accounts = JSON.parse(localStorage.getItem('mc_v1') || '[]'); } catch { accounts = []; }
+}
+function save() {
+  try { localStorage.setItem('mc_v1', JSON.stringify(accounts)); } catch {}
+}
+
+/* ── Helpers ── */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function svcHue(name) {
+  var h = 0;
+  for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+function normalizePhone(p) { return p.replace(/[\s\-\(\)\+]/g,''); }
+
+/* ── Render ── */
+function render(query) {
+  load();
+  var q = (query || '').trim();
+  var list = accounts;
+
+  if (q) {
+    var nq = normalizePhone(q);
+    list = accounts.filter(function(a) { return normalizePhone(a.phone).includes(nq); });
+    document.getElementById('listTitle').textContent = 'Résultats pour "' + q + '"';
+  } else {
+    document.getElementById('listTitle').textContent = 'Tous les comptes';
+  }
+
+  document.getElementById('listBadge').textContent = list.length;
+
+  var empty = document.getElementById('emptyState');
+  var cardList = document.getElementById('cardList');
+
+  if (list.length === 0) {
+    cardList.innerHTML = '';
+    empty.hidden = false;
+    if (q) {
+      document.getElementById('emptyH').textContent = 'Aucun résultat';
+      document.getElementById('emptyP').textContent = 'Aucun compte enregistré avec ce numéro. Vérifiez le numéro ou ajoutez un nouveau compte.';
+      document.getElementById('emptyBtn').hidden = true;
+    } else {
+      document.getElementById('emptyH').textContent = 'Aucun compte enregistré';
+      document.getElementById('emptyP').textContent = 'Ajoutez vos comptes avec l\'adresse email et le numéro de téléphone associé. Recherchez ensuite par numéro pour retrouver vos anciens emails.';
+      document.getElementById('emptyBtn').hidden = false;
+    }
+    return;
+  }
+
+  empty.hidden = true;
+  cardList.innerHTML = list.map(function(a) {
+    var hue = svcHue(a.service);
+    var bg = 'hsla(' + hue + ',65%,55%,.13)';
+    var col = 'hsl(' + hue + ',65%,65%)';
+    return '<div class="card" data-id="' + a.id + '">' +
+      '<div class="card-ico" style="background:' + bg + ';color:' + col + '">' + esc(a.service.charAt(0).toUpperCase()) + '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-svc">' + esc(a.service) + '</div>' +
+        '<div class="card-email-row">' +
+          '<span class="card-email" title="' + esc(a.email) + '">' + esc(a.email) + '</span>' +
+          '<button class="btn-copy" onclick="copyEmail(\'' + a.id + '\',this)" title="Copier l\'email">' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="card-meta">' +
+          '<span class="meta-item">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.44A2 2 0 0 1 3.62 1.26h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 8.75a16 16 0 0 0 7.25 7.25l.6-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
+            esc(a.phone) +
+          '</span>' +
+          (a.username ? '<span class="meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + esc(a.username) + '</span>' : '') +
+        '</div>' +
+        (a.note ? '<div class="card-note">' + esc(a.note) + '</div>' : '') +
+      '</div>' +
+      '<button class="btn-del" onclick="deleteAccount(\'' + a.id + '\')" title="Supprimer">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>' +
+      '</button>' +
+    '</div>';
+  }).join('');
+}
+
+/* ── Actions ── */
+function copyEmail(id, btn) {
+  load();
+  var a = accounts.find(function(x) { return x.id === id; });
+  if (!a) return;
+  navigator.clipboard.writeText(a.email).then(function() {
+    btn.classList.add('ok');
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    showToast('Email copié !');
+    setTimeout(function() {
+      btn.classList.remove('ok');
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    }, 2000);
+  }).catch(function() {
+    // fallback: select text
+    var el = btn.closest('.card-email-row').querySelector('.card-email');
+    var range = document.createRange();
+    range.selectNode(el);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    showToast('Sélectionnez et copiez l\'email');
+  });
+}
+
+function deleteAccount(id) {
+  load();
+  accounts = accounts.filter(function(a) { return a.id !== id; });
+  save();
+  var q = document.getElementById('searchInput').value;
+  render(q);
+  showToast('Compte supprimé');
+}
+
+/* ── Modal ── */
+function openModal() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('f-svc').focus();
+}
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('accountForm').reset();
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+function submitForm(e) {
+  if (e) e.preventDefault();
+  var svc   = document.getElementById('f-svc').value.trim();
+  var email = document.getElementById('f-email').value.trim();
+  var phone = document.getElementById('f-phone').value.trim();
+  var user  = document.getElementById('f-user').value.trim();
+  var note  = document.getElementById('f-note').value.trim();
+
+  if (!svc || !email || !phone) {
+    showToast('Remplissez les champs obligatoires');
+    return;
+  }
+
+  load();
+  accounts.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2), service: svc, email: email, phone: phone, username: user, note: note });
+  save();
+  closeModal();
+  render(document.getElementById('searchInput').value);
+  showToast('Compte enregistré ✓');
+}
+
+/* ── Search ── */
+document.getElementById('searchInput').addEventListener('input', function() {
+  var v = this.value;
+  document.getElementById('clearBtn').hidden = !v;
+  render(v);
+});
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').hidden = true;
+  document.getElementById('searchInput').focus();
+  render('');
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+/* ── Keyboard ── */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+/* ── Init ── */
+render('');
+</script>
+</body>
+</html>
