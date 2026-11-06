@@ -53,13 +53,22 @@ def _accept_cookies(page):
 
 def login_instagram(page, email: str, password: str) -> bool:
     try:
-        page.goto("https://www.instagram.com/accounts/login/", timeout=20000)
+        page.goto("https://www.instagram.com/accounts/login/", timeout=30000)
+        page.wait_for_load_state("domcontentloaded")
         pause(2, 3)
         _accept_cookies(page)
+        pause(1, 2)
+        page.wait_for_selector("input[name='username']", timeout=10000)
+        page.click("input[name='username']")
+        pause(0.3, 0.6)
         page.fill("input[name='username']", email)
+        pause(0.5, 1)
+        page.click("input[name='password']")
+        pause(0.3, 0.6)
         page.fill("input[name='password']", password)
+        pause(0.5, 1)
         page.click("button[type='submit']")
-        pause(3, 5)
+        pause(4, 6)
         # Check success: URL changes away from /login/
         if "/login" not in page.url:
             print("  ✓ Instagram connecté")
@@ -97,17 +106,30 @@ def login_linkedin(page, email: str, password: str) -> bool:
 
 def login_facebook(page, email: str, password: str) -> bool:
     try:
-        page.goto("https://www.facebook.com/login", timeout=20000)
+        page.goto("https://www.facebook.com/login", timeout=30000)
+        # Attendre que la page soit chargée
+        page.wait_for_load_state("domcontentloaded")
         pause(2, 3)
+        # Accepter cookies si popup présente
         _accept_cookies(page)
+        pause(1, 2)
+        # Attendre que le champ email soit visible
+        page.wait_for_selector("#email", timeout=10000)
+        page.click("#email")
+        pause(0.3, 0.6)
         page.fill("#email", email)
+        pause(0.5, 1)
+        page.click("#pass")
+        pause(0.3, 0.6)
         page.fill("#pass", password)
+        pause(0.5, 1)
+        # Cliquer le bouton de connexion
         page.click("button[name='login']")
-        pause(3, 5)
+        pause(4, 6)
         if "facebook.com" in page.url and "/login" not in page.url:
             print("  ✓ Facebook connecté")
             return True
-        print("  ✗ Facebook : connexion échouée")
+        print("  ✗ Facebook : connexion échouée (vérifiez email/mot de passe)")
         return False
     except Exception as e:
         print(f"  ✗ Facebook erreur : {e}")
