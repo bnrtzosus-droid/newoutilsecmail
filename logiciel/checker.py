@@ -88,8 +88,12 @@ PAYS = [
     ('+91','Inde 🇮🇳'),('+1','USA/Canada 🇺🇸'),
     ('+46','Suède 🇸🇪'),('+47','Norvège 🇳🇴'),('+45','Danemark 🇩🇰'),
     ('+358','Finlande 🇫🇮'),('+31','Pays-Bas 🇳🇱'),('+34','Espagne 🇪🇸'),
-    ('+39','Italie 🇮🇹'),('+7','Russie 🇷🇺'),('+86','Chine 🇨🇳'),
+    ('+39','Italie 🇮🇹'),('+351','Portugal 🇵🇹'),('+7','Russie 🇷🇺'),('+86','Chine 🇨🇳'),
     ('+81','Japon 🇯🇵'),('+82','Corée du Sud 🇰🇷'),
+    ('+48','Pologne 🇵🇱'),('+420','Tchéquie 🇨🇿'),('+36','Hongrie 🇭🇺'),
+    ('+40','Roumanie 🇷🇴'),('+380','Ukraine 🇺🇦'),('+48','Pologne 🇵🇱'),
+    ('+90','Turquie 🇹🇷'),('+966','Arabie Saoudite 🇸🇦'),('+971','Émirats Arabes 🇦🇪'),
+    ('+212','Maroc 🇲🇦'),('+20','Égypte 🇪🇬'),
 ]
 
 def detecter_pays(phone):
