@@ -76,22 +76,13 @@ def warn(msg): print(f"  {YLW}!{RST} {msg}")
 
 # ── Détection pays ────────────────────────────────────────────────────────────
 PAYS = [
-    # ── Afrique ──────────────────────────────────────────────────────────────
-    ('+243','Congo RDC 🇨🇩'),('+242','Congo Brazza 🇨🇬'),('+225','Côte d\'Ivoire 🇨🇮'),
-    ('+221','Sénégal 🇸🇳'),('+229','Bénin 🇧🇯'),('+228','Togo 🇹🇬'),('+223','Mali 🇲🇱'),
-    ('+226','Burkina Faso 🇧🇫'),('+227','Niger 🇳🇪'),('+237','Cameroun 🇨🇲'),
-    ('+241','Gabon 🇬🇦'),('+236','RCA 🇨🇫'),('+235','Tchad 🇹🇩'),
-    ('+234','Nigeria 🇳🇬'),('+233','Ghana 🇬🇭'),('+254','Kenya 🇰🇪'),
-    ('+255','Tanzanie 🇹🇿'),('+256','Ouganda 🇺🇬'),('+27','Afrique du Sud 🇿🇦'),
-    ('+212','Maroc 🇲🇦'),('+213','Algérie 🇩🇿'),('+216','Tunisie 🇹🇳'),
-    ('+20','Égypte 🇪🇬'),('+251','Éthiopie 🇪🇹'),('+250','Rwanda 🇷🇼'),
-    ('+258','Mozambique 🇲🇿'),('+260','Zambie 🇿🇲'),('+263','Zimbabwe 🇿🇼'),
     # ── Europe occidentale ────────────────────────────────────────────────────
     ('+33','France 🇫🇷'),('+32','Belgique 🇧🇪'),('+41','Suisse 🇨🇭'),
     ('+44','Royaume-Uni 🇬🇧'),('+353','Irlande 🇮🇪'),('+49','Allemagne 🇩🇪'),
     ('+31','Pays-Bas 🇳🇱'),('+352','Luxembourg 🇱🇺'),('+34','Espagne 🇪🇸'),
-    ('+351','Portugal 🇵🇹'),('+39','Italie 🇮🇹'),('+423','Liechtenstein 🇱🇮'),
-    ('+377','Monaco 🇲🇨'),('+376','Andorre 🇦🇩'),('+43','Autriche 🇦🇹'),
+    ('+351','Portugal 🇵🇹'),('+39','Italie 🇮🇹'),('+43','Autriche 🇦🇹'),
+    ('+423','Liechtenstein 🇱🇮'),('+377','Monaco 🇲🇨'),('+376','Andorre 🇦🇩'),
+    ('+378','Saint-Marin 🇸🇲'),
     # ── Europe du Nord ────────────────────────────────────────────────────────
     ('+46','Suède 🇸🇪'),('+47','Norvège 🇳🇴'),('+45','Danemark 🇩🇰'),
     ('+358','Finlande 🇫🇮'),('+354','Islande 🇮🇸'),
@@ -105,15 +96,9 @@ PAYS = [
     ('+30','Grèce 🇬🇷'),('+357','Chypre 🇨🇾'),('+356','Malte 🇲🇹'),
     ('+373','Moldavie 🇲🇩'),('+375','Biélorussie 🇧🇾'),('+380','Ukraine 🇺🇦'),
     ('+7','Russie 🇷🇺'),('+995','Géorgie 🇬🇪'),('+374','Arménie 🇦🇲'),
-    # ── Moyen-Orient ─────────────────────────────────────────────────────────
-    ('+90','Turquie 🇹🇷'),('+966','Arabie Saoudite 🇸🇦'),('+971','Émirats Arabes 🇦🇪'),
-    ('+965','Koweït 🇰🇼'),('+974','Qatar 🇶🇦'),('+962','Jordanie 🇯🇴'),
-    ('+961','Liban 🇱🇧'),('+964','Irak 🇮🇶'),('+98','Iran 🇮🇷'),
-    # ── Reste du monde ────────────────────────────────────────────────────────
-    ('+55','Brésil 🇧🇷'),('+1','USA/Canada 🇺🇸'),('+91','Inde 🇮🇳'),
-    ('+86','Chine 🇨🇳'),('+81','Japon 🇯🇵'),('+82','Corée du Sud 🇰🇷'),
-    ('+61','Australie 🇦🇺'),('+64','Nouvelle-Zélande 🇳🇿'),
-    ('+52','Mexique 🇲🇽'),('+54','Argentine 🇦🇷'),('+57','Colombie 🇨🇴'),
+    ('+90','Turquie 🇹🇷'),
+    # ── Amérique du Nord ─────────────────────────────────────────────────────
+    ('+1','USA/Canada 🇺🇸'),
 ]
 
 def detecter_pays(phone):
