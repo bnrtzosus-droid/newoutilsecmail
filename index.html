@@ -50,8 +50,12 @@ body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-
 /* Header */
 .hdr {
   position:sticky; top:env(safe-area-inset-top,0px);
-  background:var(--bg); border-bottom:1px solid var(--bd); z-index:9;
-  padding:13px 0; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--bg); border-bottom:1px solid var(--bd); z-index:99;
+  padding:0 0;
+}
+.hdr-top {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:11px 0;
 }
 .brand { display:flex; align-items:center; gap:10px; }
 .brand-mark {
@@ -61,6 +65,43 @@ body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-
 }
 .brand-name { font-size:16px; font-weight:700; letter-spacing:-.3px; color:var(--fg); }
 .brand-sub  { font-size:11px; color:var(--fg2); }
+
+/* Nav desktop */
+.nav-desktop {
+  display:flex; align-items:center; gap:4px;
+}
+.nav-link {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 14px; border-radius:var(--rs);
+  font-size:13px; font-weight:500; color:var(--fg2);
+  text-decoration:none; border:none; background:none;
+  cursor:pointer; transition:all .15s; white-space:nowrap; font-family:inherit;
+}
+.nav-link:hover { background:var(--sf2); color:var(--fg); }
+.nav-link.active { background:var(--acd); color:var(--ac); }
+.nav-link .nav-badge {
+  background:var(--ac); color:#fff;
+  border-radius:20px; padding:1px 7px; font-size:11px; font-weight:700;
+}
+
+/* Hamburger mobile */
+.btn-menu {
+  display:none; background:var(--sf2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:8px 10px; cursor:pointer; color:var(--fg);
+  font-size:18px; line-height:1;
+}
+@media (max-width:640px) {
+  .nav-desktop { display:none; }
+  .btn-menu { display:flex; align-items:center; }
+}
+
+/* Menu mobile drawer */
+.nav-mobile {
+  display:none; flex-direction:column; gap:4px;
+  padding:10px 0 14px; border-top:1px solid var(--bd);
+}
+.nav-mobile.open { display:flex; }
+.nav-mobile .nav-link { justify-content:flex-start; padding:10px 14px; }
 
 /* Stats bar */
 .stats-bar {
@@ -243,18 +284,39 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
 <body>
 
 <header class="hdr">
-  <div class="brand">
-    <div class="brand-mark">📱</div>
-    <div>
-      <div class="brand-name">WhatsApp Checker Pro</div>
-      <div class="brand-sub">Détection de numéros par pays</div>
+  <div class="main" style="padding-top:0;padding-bottom:0;width:100%">
+    <div class="hdr-top">
+      <div class="brand">
+        <div class="brand-mark">📱</div>
+        <div>
+          <div class="brand-name">WhatsApp Checker Pro</div>
+          <div class="brand-sub">Détection automatique par pays</div>
+        </div>
+      </div>
+      <nav class="nav-desktop">
+        <a class="nav-link active" href="#accueil" onclick="navTo('accueil',this)">🏠 Accueil</a>
+        <a class="nav-link" href="#verifier" onclick="navTo('verifier',this)">🔍 Vérifier</a>
+        <a class="nav-link" href="#contacts" onclick="navTo('contacts',this)">
+          📋 Contacts <span class="nav-badge" id="navBadge" style="display:none">0</span>
+        </a>
+      </nav>
+      <button class="btn-menu" onclick="toggleMenu()" id="menuBtn">☰</button>
     </div>
+    <!-- Menu mobile -->
+    <nav class="nav-mobile" id="navMobile">
+      <a class="nav-link active" href="#accueil" onclick="navTo('accueil',this);toggleMenu()">🏠 Accueil</a>
+      <a class="nav-link" href="#verifier" onclick="navTo('verifier',this);toggleMenu()">🔍 Vérifier</a>
+      <a class="nav-link" href="#contacts" onclick="navTo('contacts',this);toggleMenu()">
+        📋 Contacts <span class="nav-badge" id="navBadgeMobile" style="display:none">0</span>
+      </a>
+    </nav>
   </div>
 </header>
 
 <main class="main">
 
-  <!-- Stats -->
+  <!-- Accueil / Stats -->
+  <div id="accueil" style="scroll-margin-top:80px"></div>
   <div class="stats-bar">
     <div class="stat-box total">
       <div class="stat-num" id="statTotal">0</div>
@@ -274,6 +336,8 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
     </div>
   </div>
 
+  <!-- Vérifier -->
+  <div id="verifier" style="scroll-margin-top:80px"></div>
   <!-- Mode tabs -->
   <div style="display:flex;gap:8px;margin-bottom:16px">
     <button class="tab active" id="modeManuel" onclick="switchMode('manuel')">✏️ Manuel</button>
@@ -407,6 +471,7 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
   </div>
 
   <!-- Contacts sauvegardés -->
+  <div id="contacts" style="scroll-margin-top:80px"></div>
   <div class="contacts-section">
     <div class="contacts-hdr">
       <div class="contacts-title">
@@ -431,6 +496,26 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Navigation ───────────────────────────────────────
+function navTo(section, el) {
+  document.querySelectorAll('.nav-link').forEach(function(a){ a.classList.remove('active'); });
+  document.querySelectorAll('.nav-link[href="#'+section+'"]').forEach(function(a){ a.classList.add('active'); });
+  var target = document.getElementById(section);
+  if (target) target.scrollIntoView({behavior:'smooth'});
+}
+function toggleMenu() {
+  var m = document.getElementById('navMobile');
+  m.classList.toggle('open');
+}
+function updateNavBadge(n) {
+  ['navBadge','navBadgeMobile'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n;
+    el.style.display = n > 0 ? '' : 'none';
+  });
+}
+
 // ── Données pays ──────────────────────────────────────
 var COUNTRIES = [
   {code:'+243',name:'Congo (RDC)',flag:'🇨🇩'},
@@ -503,6 +588,7 @@ function renderContacts() {
   var list = loadContacts();
   var el = document.getElementById('contactsList');
   document.getElementById('contactsBadge').textContent = list.length;
+  updateNavBadge(list.length);
   if (list.length === 0) {
     el.innerHTML = '<div class="contacts-empty">Aucun contact sauvegardé — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement.</div>';
     return;
