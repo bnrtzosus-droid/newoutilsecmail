@@ -264,6 +264,30 @@ body {
   line-height:1.65;
 }
 
+/* ── Contacts search bar ─────────────────────────────────── */
+.contacts-search-wrap {
+  position:relative; display:flex; align-items:center;
+  margin-bottom:14px;
+}
+.contacts-search-icon {
+  position:absolute; left:12px; color:var(--fg2); pointer-events:none; flex-shrink:0;
+}
+.contacts-search {
+  width:100%; background:var(--sf); border:1px solid var(--bd);
+  border-radius:10px; padding:9px 36px 9px 36px;
+  font-size:13px; font-family:inherit; color:var(--fg);
+  outline:none; transition:border-color .15s;
+}
+.contacts-search::placeholder { color:var(--fg3); }
+.contacts-search:focus { border-color:var(--bda); }
+.contacts-search-clear {
+  position:absolute; right:10px;
+  background:none; border:none; color:var(--fg2); cursor:pointer;
+  font-size:17px; line-height:1; padding:4px 6px; border-radius:6px;
+  transition:color .15s;
+}
+.contacts-search-clear:hover { color:var(--er); }
+
 /* ── History ─────────────────────────────────────────────── */
 .hist-list { display:flex; flex-direction:column; gap:8px; }
 .hist-card {
@@ -544,6 +568,11 @@ body {
           <div class="cp-list" id="cpList"></div>
         </div>
       </div>
+      <div class="contacts-search-wrap">
+        <svg class="contacts-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="contacts-search" id="contactsSearch" type="text" placeholder="Rechercher un numéro…" oninput="filterContacts(this.value)" autocomplete="off">
+        <button class="contacts-search-clear" id="contactsSearchClear" onclick="clearContactsSearch()" title="Effacer" hidden>×</button>
+      </div>
       <div id="contactsList">
         <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
       </div>
@@ -702,6 +731,7 @@ var SB_URL = 'https://qbyxezgkmhikfqytiruj.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs';
 var SB_SESS_KEY = 'wcp_auth_session';
 var sbContacts = [];
+var contactsSearchQuery = '';
 var sbHistory  = [];
 var activePays = 'TOUS';
 var activeHistPays = 'TOUS';
@@ -877,18 +907,38 @@ function renderAll() {
   renderList();
 }
 
+function filterContacts(val) {
+  contactsSearchQuery = (val||'').trim().toLowerCase();
+  var btn = document.getElementById('contactsSearchClear');
+  if (btn) btn.hidden = !contactsSearchQuery;
+  renderList();
+}
+function clearContactsSearch() {
+  contactsSearchQuery = '';
+  var inp = document.getElementById('contactsSearch');
+  if (inp) inp.value = '';
+  var btn = document.getElementById('contactsSearchClear');
+  if (btn) btn.hidden = true;
+  renderList();
+}
+
 function renderList() {
   var el = document.getElementById('contactsList');
   var list = activePays === 'TOUS'
     ? sbContacts
     : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
 
+  if (contactsSearchQuery) {
+    list = list.filter(function(c){ return (c.phone||'').toLowerCase().includes(contactsSearchQuery); });
+  }
+
   if (sbContacts.length === 0) {
     el.innerHTML = '<div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>';
     return;
   }
   if (list.length === 0) {
-    el.innerHTML = '<div class="contacts-empty">Aucun numéro pour ce pays.</div>';
+    var msg = contactsSearchQuery ? 'Aucun numéro trouvé pour « '+contactsSearchQuery+' ».' : 'Aucun numéro pour ce pays.';
+    el.innerHTML = '<div class="contacts-empty">'+msg+'</div>';
     return;
   }
   el.innerHTML = '<div class="contact-grid">'
