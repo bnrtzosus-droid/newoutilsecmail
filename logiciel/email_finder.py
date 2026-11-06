@@ -704,6 +704,62 @@ SITE_QUERIES = {
 }
 
 
+def search_facebook_direct(page, query: str) -> list[str]:
+    """Search Facebook directly (requires login). Returns profile URLs."""
+    try:
+        q = urllib.parse.quote(query)
+        page.goto(f"https://www.facebook.com/search/people/?q={q}", timeout=20000)
+        pause(2, 3)
+        links = page.eval_on_selector_all(
+            "a[href*='facebook.com/']",
+            """els => [...new Set(
+              els.map(e => e.href)
+                 .filter(h => /facebook\\.com\\/(?!search|public|help|login|signup|groups|events|pages\\/create)[a-zA-Z0-9._%\\-]+(\\/|$)/.test(h))
+            )]"""
+        )
+        skip = ["login", "signup", "help", "about", "policies", "search", "public", "groups", "events", "create", "hashtag"]
+        return [l for l in links if not any(s in l.lower() for s in skip)][:8]
+    except Exception as e:
+        print(f"  [!] Facebook direct search error: {e}")
+        return []
+
+
+def search_instagram_direct(page, query: str) -> list[str]:
+    """Search Instagram directly (requires login). Returns profile URLs."""
+    try:
+        q = urllib.parse.quote(query)
+        page.goto(f"https://www.instagram.com/explore/search/keyword/?q={q}", timeout=20000)
+        pause(2, 3)
+        links = page.eval_on_selector_all(
+            "a[href^='/'][href$='/']",
+            "els => [...new Set(els.map(e => 'https://www.instagram.com' + e.getAttribute('href')))]"
+        )
+        skip = ["explore", "accounts", "login", "direct", "stories", "reels", "p/", "tv/"]
+        return [l for l in links if not any(s in l.lower() for s in skip)][:8]
+    except Exception as e:
+        print(f"  [!] Instagram direct search error: {e}")
+        return []
+
+
+def search_linkedin_direct(page, query: str) -> list[str]:
+    """Search LinkedIn directly (requires login). Returns profile URLs."""
+    try:
+        q = urllib.parse.quote(query)
+        page.goto(
+            f"https://www.linkedin.com/search/results/people/?keywords={q}&origin=GLOBAL_SEARCH_HEADER",
+            timeout=20000
+        )
+        pause(2, 3)
+        links = page.eval_on_selector_all(
+            "a.app-aware-link[href*='/in/']",
+            "els => [...new Set(els.map(e => e.href.split('?')[0]))]"
+        )
+        return links[:8]
+    except Exception as e:
+        print(f"  [!] LinkedIn direct search error: {e}")
+        return []
+
+
 def google_search_profiles(page, query: str, network: str) -> list[str]:
     """Search Google for a query on a specific network, return profile URLs."""
     site = SITE_QUERIES.get(network, "")
@@ -789,14 +845,34 @@ def scrape_profile_url(page, url: str, network: str, query: str, country: str) -
         return None
 
 
-def search_by_query(page, query: str, networks: list, country: str) -> int:
+def search_by_query(page, query: str, networks: list, country: str, logged_in: set = None) -> int:
     """Search all networks for a name or phone number."""
+    if logged_in is None:
+        logged_in = set()
     total = 0
     for net in networks:
         print(f"\n  [{net.upper()}] Recherche : {query}")
-        profile_urls = google_search_profiles(page, query, net)
+
+        # Recherche directe si connecté (bien plus efficace que Google)
+        profile_urls = []
+        if net == "facebook" and "facebook" in logged_in:
+            print(f"  → Recherche directe Facebook (connecté)...")
+            profile_urls = search_facebook_direct(page, query)
+        elif net == "instagram" and "instagram" in logged_in:
+            print(f"  → Recherche directe Instagram (connecté)...")
+            profile_urls = search_instagram_direct(page, query)
+        elif net == "linkedin" and "linkedin" in logged_in:
+            print(f"  → Recherche directe LinkedIn (connecté)...")
+            profile_urls = search_linkedin_direct(page, query)
+
+        # Fallback Google si pas connecté ou aucun résultat
         if not profile_urls:
-            print(f"  → Aucun profil trouvé sur Google")
+            if net in logged_in:
+                print(f"  → Aucun résultat direct, essai Google...")
+            profile_urls = google_search_profiles(page, query, net)
+
+        if not profile_urls:
+            print(f"  → Aucun profil trouvé")
             continue
         for url in profile_urls:
             contact = scrape_profile_url(page, url, net, query, country)
@@ -1059,7 +1135,7 @@ def main():
                             continue
                         print(f"\n  [{i+1}/{len(numbers)}] {phone} ({pays})")
                         try:
-                            n = search_by_query(page, phone, networks, pays or country)
+                            n = search_by_query(page, phone, networks, pays or country, logged_in)
                             total += n
                         except KeyboardInterrupt:
                             print(f"\n  [!] Arrêt — reprendre avec --skip {skip + i}")
@@ -1067,7 +1143,7 @@ def main():
 
             # ── Mode recherche par nom / numéro ──
             elif mode in ("name", "phone"):
-                total = search_by_query(page, query, networks, country)
+                total = search_by_query(page, query, networks, country, logged_in)
 
             # ── Mode hashtag par pays ──
             else:
