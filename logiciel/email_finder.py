@@ -781,20 +781,15 @@ def search_linkedin_direct(page, query: str) -> list[str]:
 
 
 def google_search_profiles(page, query: str, network: str) -> list[str]:
-    """Search Google for a query on a specific network, return profile URLs."""
+    """Search DuckDuckGo for a query on a specific network, return profile URLs.
+    DuckDuckGo is used instead of Google to avoid CAPTCHA blocks."""
     site = SITE_QUERIES.get(network, "")
     q = urllib.parse.quote(f'"{query}" {site}')
+    skip = ["login", "signup", "help", "about", "policies", "terms", "search", "hashtag", "explore", "duckduckgo"]
     try:
-        page.goto(f"https://www.google.com/search?q={q}&num=10", timeout=20000)
-        pause(1.5, 3)
-        # Accept cookies if needed
-        try:
-            btn = page.query_selector("button:has-text('Tout accepter'), button:has-text('Accept all')")
-            if btn:
-                btn.click()
-                pause(0.5, 1)
-        except Exception:
-            pass
+        # DuckDuckGo HTML version — no JS required, never blocks bots
+        page.goto(f"https://html.duckduckgo.com/html/?q={q}&kl=fr-fr", timeout=20000)
+        pause(1.5, 2.5)
         links = page.eval_on_selector_all(
             "a[href]",
             """els => [...new Set(
@@ -805,11 +800,29 @@ def google_search_profiles(page, query: str, network: str) -> list[str]:
                               h.includes('facebook.com/'))
             )]"""
         )
-        # Filter out generic pages
-        skip = ["login", "signup", "help", "about", "policies", "terms", "search", "hashtag", "explore"]
+        results = [l for l in links if not any(s in l.lower() for s in skip)][:8]
+        if results:
+            return results
+    except Exception as e:
+        print(f"  [!] DuckDuckGo search error: {e}")
+
+    # Fallback Bing (si DuckDuckGo échoue)
+    try:
+        page.goto(f"https://www.bing.com/search?q={q}&count=10", timeout=20000)
+        pause(1.5, 2.5)
+        links = page.eval_on_selector_all(
+            "a[href]",
+            """els => [...new Set(
+              els.map(e => e.href)
+                 .filter(h => h.includes('instagram.com/') || h.includes('tiktok.com/@') ||
+                              h.includes('x.com/') || h.includes('twitter.com/') ||
+                              h.includes('linkedin.com/in/') || h.includes('youtube.com/') ||
+                              h.includes('facebook.com/'))
+            )]"""
+        )
         return [l for l in links if not any(s in l.lower() for s in skip)][:8]
     except Exception as e:
-        print(f"  [!] Google search error: {e}")
+        print(f"  [!] Bing search error: {e}")
         return []
 
 
