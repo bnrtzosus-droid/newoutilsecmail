@@ -55,6 +55,24 @@ NICHE_TAGS = {
 
 # ── Supabase helper ───────────────────────────────────────────────────────────
 
+def fetch_whatsapp_numbers() -> list[dict]:
+    """Fetch all phone numbers from contacts_whatsapp table."""
+    url = f"{SUPABASE_URL}/rest/v1/contacts_whatsapp?select=phone,pays&order=date_ajout.desc"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(resp.read().decode())
+    except Exception as e:
+        print(f"  [!] Erreur lecture WhatsApp: {e}")
+        return []
+
+
 def save_contact(contact: dict) -> bool:
     """Insert a contact into contacts_email via Supabase REST."""
     url = f"{SUPABASE_URL}/rest/v1/contacts_email"
@@ -630,6 +648,10 @@ def main():
     # Recherche par nom / numéro
     parser.add_argument("--search", "-s", type=str, default=None,
                         help='Recherche par nom, prénom ou numéro. Ex: --search "Jean Dupont" ou --search "+33612345678"')
+    parser.add_argument("--from-whatsapp", action="store_true", default=False,
+                        help="Prend tous les numéros WhatsApp de la base et cherche leur profil sur les réseaux sociaux")
+    parser.add_argument("--skip", type=int, default=0,
+                        help="Ignorer les N premiers numéros (pour reprendre où on s'est arrêté)")
     args = parser.parse_args()
 
     networks = list(SCRAPERS) if args.network == "all" else [args.network]
@@ -639,7 +661,12 @@ def main():
     print(f"\n{'='*60}")
     print(f"  Email Finder — WhatsApp Checker Pro")
     print(f"{'='*60}")
-    if args.search:
+    if args.from_whatsapp:
+        print(f"  Mode    : Numéros WhatsApp → profils réseaux sociaux")
+        print(f"  Réseaux : {', '.join(networks)}")
+        if args.skip:
+            print(f"  Skip    : {args.skip} premiers numéros ignorés")
+    elif args.search:
         print(f"  Mode    : Recherche par identité")
         print(f"  Requête : {args.search}")
         print(f"  Réseaux : {', '.join(networks)}")
@@ -665,6 +692,31 @@ def main():
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         try:
+            # ── Mode numéros WhatsApp ──
+            if args.from_whatsapp:
+                numbers = fetch_whatsapp_numbers()
+                if not numbers:
+                    print("  [!] Aucun numéro dans contacts_whatsapp.")
+                else:
+                    numbers = numbers[args.skip:]
+                    print(f"  {len(numbers)} numéro(s) à traiter...\n")
+                    for i, row in enumerate(numbers):
+                        phone = row.get("phone", "")
+                        pays  = row.get("pays", country)
+                        if not phone:
+                            continue
+                        print(f"\n  [{i+1}/{len(numbers)}] {phone} ({pays})")
+                        try:
+                            n = search_by_query(page, phone, networks, pays or country)
+                            total += n
+                        except KeyboardInterrupt:
+                            print(f"\n  [!] Arrêt — reprendre avec --skip {args.skip + i}")
+                            break
+                print(f"\n{'='*60}")
+                print(f"  TOTAL : {total} contact(s) enregistré(s)")
+                print(f"{'='*60}\n")
+                return
+
             # ── Mode recherche par identité ──
             if args.search:
                 total = search_by_query(page, args.search, networks, country)
