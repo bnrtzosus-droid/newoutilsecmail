@@ -9,9 +9,96 @@ import json
 import time
 import random
 import argparse
+import os
+import getpass
 import urllib.request
 import urllib.parse
+from pathlib import Path
 from playwright.sync_api import sync_playwright, Error as PWError
+
+# ── Credentials (fichier local, jamais commité) ───────────────────────────────
+CREDS_FILE = Path(__file__).parent / "comptes.json"
+
+
+def load_creds() -> dict:
+    try:
+        return json.loads(CREDS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def save_creds(creds: dict):
+    CREDS_FILE.write_text(json.dumps(creds, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"  → Identifiants sauvegardés dans {CREDS_FILE.name}")
+
+
+# ── Connexion par réseau ──────────────────────────────────────────────────────
+
+def login_instagram(page, email: str, password: str) -> bool:
+    try:
+        page.goto("https://www.instagram.com/accounts/login/", timeout=20000)
+        pause(2, 3)
+        page.fill("input[name='username']", email)
+        page.fill("input[name='password']", password)
+        page.click("button[type='submit']")
+        pause(3, 5)
+        # Check success: URL changes away from /login/
+        if "/login" not in page.url:
+            print("  ✓ Instagram connecté")
+            return True
+        # Check for error message
+        err = page.query_selector("#slfErrorAlert, [data-testid='login-error-message']")
+        if err:
+            print(f"  ✗ Instagram : {err.inner_text().strip()}")
+        else:
+            print("  ✗ Instagram : connexion échouée")
+        return False
+    except Exception as e:
+        print(f"  ✗ Instagram erreur : {e}")
+        return False
+
+
+def login_linkedin(page, email: str, password: str) -> bool:
+    try:
+        page.goto("https://www.linkedin.com/login", timeout=20000)
+        pause(2, 3)
+        page.fill("#username", email)
+        page.fill("#password", password)
+        page.click("button[type='submit']")
+        pause(3, 5)
+        if "feed" in page.url or "checkpoint" not in page.url:
+            print("  ✓ LinkedIn connecté")
+            return True
+        print("  ✗ LinkedIn : connexion échouée (vérification manuelle peut-être nécessaire)")
+        return False
+    except Exception as e:
+        print(f"  ✗ LinkedIn erreur : {e}")
+        return False
+
+
+def login_facebook(page, email: str, password: str) -> bool:
+    try:
+        page.goto("https://www.facebook.com/login", timeout=20000)
+        pause(2, 3)
+        page.fill("#email", email)
+        page.fill("#pass", password)
+        page.click("button[name='login']")
+        pause(3, 5)
+        if "facebook.com" in page.url and "/login" not in page.url:
+            print("  ✓ Facebook connecté")
+            return True
+        print("  ✗ Facebook : connexion échouée")
+        return False
+    except Exception as e:
+        print(f"  ✗ Facebook erreur : {e}")
+        return False
+
+
+LOGIN_FUNCS = {
+    "instagram": login_instagram,
+    "linkedin":  login_linkedin,
+    "facebook":  login_facebook,
+}
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 SUPABASE_URL = "https://qbyxezgkmhikfqytiruj.supabase.co"
@@ -750,6 +837,38 @@ def interactive_menu() -> dict:
     print(f"  Email Finder — WhatsApp Checker Pro")
     print(f"{SEP}\n")
 
+    # ── Comptes connectés ─────────────────────────────────────────────────────
+    creds = load_creds()
+    nets_login = ["instagram", "linkedin", "facebook"]
+    already_cfg = [n for n in nets_login if creds.get(n, {}).get("email")]
+    if already_cfg:
+        print(f"  Comptes enregistrés : {', '.join(already_cfg)}")
+    else:
+        print("  Aucun compte enregistré (Instagram / LinkedIn / Facebook).")
+    print()
+
+    print("  Voulez-vous configurer vos comptes ?\n")
+    if ask("Comptes", ["Continuer sans connexion", "Configurer mes comptes"]) == "Configurer mes comptes":
+        for net in nets_login:
+            print(f"\n  — {net.capitalize()} —")
+            existing = creds.get(net, {})
+            if existing.get("email"):
+                print(f"  Compte actuel : {existing['email']}")
+                if ask("Garder ce compte ?", ["Oui", "Non, changer"]) == "Oui":
+                    continue
+            email = ask(f"Email / identifiant {net.capitalize()}", default="")
+            if not email:
+                print(f"  → {net.capitalize()} ignoré.")
+                continue
+            password = getpass.getpass(f"  Mot de passe {net.capitalize()} : ")
+            if password:
+                creds[net] = {"email": email, "password": password}
+                print(f"  ✓ {net.capitalize()} enregistré.")
+            else:
+                print(f"  → {net.capitalize()} ignoré (mot de passe vide).")
+        save_creds(creds)
+        print()
+
     print("  Quelle méthode de recherche souhaitez-vous utiliser ?\n")
     MODE_OPTS = [
         "Recherche par pays + niche  (parcourir les hashtags)",
@@ -909,6 +1028,20 @@ def main():
         )
         page = context.new_page()
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+        # ── Connexion aux réseaux ──────────────────────────────────────────────
+        creds = load_creds()
+        logged_in = set()
+        for net in ["instagram", "linkedin", "facebook"]:
+            if net in networks and creds.get(net, {}).get("email"):
+                c = creds[net]
+                print(f"  Connexion {net.capitalize()}...")
+                if LOGIN_FUNCS[net](page, c["email"], c["password"]):
+                    logged_in.add(net)
+                else:
+                    print(f"  ⚠ {net.capitalize()} : non connecté, scraping limité")
+        if logged_in:
+            print(f"  → Connecté sur : {', '.join(logged_in)}\n")
 
         try:
             # ── Mode numéros WhatsApp ──

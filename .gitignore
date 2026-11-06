@@ -1,0 +1,7 @@
+# Credentials — never commit
+logiciel/comptes.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
