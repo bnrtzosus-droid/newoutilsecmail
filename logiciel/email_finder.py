@@ -705,23 +705,43 @@ SITE_QUERIES = {
 
 
 def search_facebook_direct(page, query: str) -> list[str]:
-    """Search Facebook directly (requires login). Returns profile URLs."""
-    try:
-        q = urllib.parse.quote(query)
-        page.goto(f"https://www.facebook.com/search/people/?q={q}", timeout=20000)
-        pause(2, 3)
-        links = page.eval_on_selector_all(
-            "a[href*='facebook.com/']",
-            """els => [...new Set(
-              els.map(e => e.href)
-                 .filter(h => /facebook\\.com\\/(?!search|public|help|login|signup|groups|events|pages\\/create)[a-zA-Z0-9._%\\-]+(\\/|$)/.test(h))
-            )]"""
-        )
-        skip = ["login", "signup", "help", "about", "policies", "search", "public", "groups", "events", "create", "hashtag"]
-        return [l for l in links if not any(s in l.lower() for s in skip)][:8]
-    except Exception as e:
-        print(f"  [!] Facebook direct search error: {e}")
-        return []
+    """Search Facebook directly (requires login). Returns profile URLs.
+    Tries multiple phone formats to maximize chances of finding a profile."""
+    skip_words = ["login", "signup", "help", "about", "policies", "search",
+                  "public", "groups", "events", "create", "hashtag", "marketplace"]
+    found = []
+
+    # Build query variants (phone number formats)
+    variants = [query]
+    # Remove leading + or 00
+    digits = re.sub(r"^(\+|00)", "", query).replace(" ", "").replace("-", "").replace(".", "")
+    if digits != query:
+        variants.append(digits)
+    # Try without country code (last 9 digits for European numbers)
+    if len(digits) > 9:
+        variants.append(digits[-9:])
+        variants.append("0" + digits[-9:])
+
+    for variant in variants:
+        try:
+            q = urllib.parse.quote(variant)
+            page.goto(f"https://www.facebook.com/search/people/?q={q}", timeout=20000)
+            pause(2, 3)
+            links = page.eval_on_selector_all(
+                "a[href*='facebook.com/']",
+                """els => [...new Set(
+                  els.map(e => e.href)
+                     .filter(h => /facebook\\.com\\/(?!search|public|help|login|signup|groups|events|pages\\/create)[a-zA-Z0-9._%\\-]+(\\/|$)/.test(h))
+                )]"""
+            )
+            new_links = [l for l in links if not any(s in l.lower() for s in skip_words)]
+            found.extend(new_links)
+            if found:
+                break  # On a trouvé, pas besoin d'essayer les autres formats
+        except Exception as e:
+            print(f"  [!] Facebook search ({variant}): {e}")
+
+    return list(dict.fromkeys(found))[:8]  # déduplique et limite à 8
 
 
 def search_instagram_direct(page, query: str) -> list[str]:
