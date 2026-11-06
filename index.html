@@ -201,6 +201,32 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
 .empty-h { font-size:17px; font-weight:600; margin-bottom:8px; }
 .empty-p { font-size:14px; color:var(--fg2); max-width:300px; margin:0 auto; line-height:1.65; text-wrap:balance; }
 
+/* Contacts section */
+.contacts-section { margin-top:36px; }
+.contacts-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--bd);
+}
+.contacts-title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.contacts-badge {
+  background:var(--acd); color:var(--ac); border:1px solid var(--bda);
+  border-radius:20px; padding:2px 10px; font-size:12px; font-weight:600;
+}
+.contact-item {
+  background:var(--sf); border:1px solid rgba(37,211,102,.25);
+  border-radius:var(--r); padding:12px 15px;
+  display:flex; align-items:center; gap:12px; margin-bottom:7px;
+  background:rgba(37,211,102,.04);
+}
+.contact-date { font-size:11px; color:var(--fg2); margin-top:2px; }
+.btn-del {
+  background:none; border:none; color:var(--fg2); cursor:pointer;
+  padding:4px 8px; border-radius:6px; font-size:16px; margin-left:auto;
+  transition:color .15s, background .15s; flex-shrink:0;
+}
+.btn-del:hover { color:var(--er); background:rgba(248,113,113,.1); }
+.contacts-empty { text-align:center; padding:30px; color:var(--fg2); font-size:13px; }
+
 /* Toast */
 .toast {
   position:fixed; bottom:calc(20px + env(safe-area-inset-bottom,0px)); left:50%;
@@ -380,6 +406,26 @@ textarea::placeholder { color:var(--fg2); font-family:'Outfit',sans-serif; font-
     <p class="empty-p">Entrez vos numéros ci-dessus. L'outil détecte automatiquement le pays et vérifie la présence sur WhatsApp.</p>
   </div>
 
+  <!-- Contacts sauvegardés -->
+  <div class="contacts-section">
+    <div class="contacts-hdr">
+      <div class="contacts-title">
+        📋 Contacts WhatsApp
+        <span class="contacts-badge" id="contactsBadge">0</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-export" onclick="exportContacts()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter
+        </button>
+        <button class="btn-clear" onclick="clearContacts()" style="font-size:12px;padding:7px 12px">🗑 Vider</button>
+      </div>
+    </div>
+    <div id="contactsList">
+      <div class="contacts-empty">Aucun contact sauvegardé — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement.</div>
+    </div>
+  </div>
+
 </main>
 
 <div class="toast" id="toast"></div>
@@ -427,6 +473,69 @@ var checking = false;
 var scanRunning = false;
 var scanStopped = false;
 var currentMode = 'manuel';
+
+// ── Contacts (localStorage) ───────────────────────────
+function loadContacts() {
+  try { return JSON.parse(localStorage.getItem('wa_contacts') || '[]'); } catch(e) { return []; }
+}
+function saveContacts(list) {
+  try { localStorage.setItem('wa_contacts', JSON.stringify(list)); } catch(e) {}
+}
+function addContact(phone, pays) {
+  var list = loadContacts();
+  if (list.find(function(c){ return c.phone === phone; })) return; // déjà présent
+  list.unshift({ phone:phone, pays:pays, date: new Date().toLocaleDateString('fr-FR') });
+  saveContacts(list);
+  renderContacts();
+}
+function removeContact(phone) {
+  var list = loadContacts().filter(function(c){ return c.phone !== phone; });
+  saveContacts(list);
+  renderContacts();
+}
+function clearContacts() {
+  if (!confirm('Vider tous les contacts ?')) return;
+  saveContacts([]);
+  renderContacts();
+  showToast('Contacts vidés');
+}
+function renderContacts() {
+  var list = loadContacts();
+  var el = document.getElementById('contactsList');
+  document.getElementById('contactsBadge').textContent = list.length;
+  if (list.length === 0) {
+    el.innerHTML = '<div class="contacts-empty">Aucun contact sauvegardé — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement.</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(c){
+    var phone = c.phone.replace('+','');
+    return '<div class="contact-item">'
+      + '<div style="font-size:22px">📱</div>'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;font-weight:500">'+c.phone+'</div>'
+      +   '<div class="contact-date">'+c.pays+' · Ajouté le '+c.date+'</div>'
+      + '</div>'
+      + '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬 Écrire</a>'
+      + '<button class="btn-del" onclick="removeContact(\''+c.phone+'\')" title="Supprimer">×</button>'
+      + '</div>';
+  }).join('');
+}
+function exportContacts() {
+  var list = loadContacts();
+  if (!list.length) { showToast('Aucun contact à exporter'); return; }
+  var csv = 'Numéro,Pays,Date ajout,Lien WhatsApp\n';
+  list.forEach(function(c){
+    csv += c.phone+','+c.pays+','+c.date+',https://wa.me/'+c.phone.replace('+','')+'\n';
+  });
+  var blob = new Blob([csv],{type:'text/csv'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href=url; a.download='contacts_whatsapp_'+Date.now()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Contacts exportés !');
+}
+// Charger les contacts au démarrage
+document.addEventListener('DOMContentLoaded', renderContacts);
 
 // ── Détection pays ────────────────────────────────────
 function detectCountry(phone) {
@@ -651,9 +760,14 @@ function stopScan() {
 function markAs(idx, status) {
   if (results[idx]) {
     results[idx].status = status;
+    if (status === 'yes') {
+      addContact(results[idx].phone, results[idx].country.name);
+      showToast(results[idx].phone + ' → Ajouté aux contacts ✓');
+    } else {
+      showToast(results[idx].phone + ' → Pas sur WhatsApp ✗');
+    }
     updateStats();
     renderResults();
-    showToast(results[idx].phone + ' → ' + (status==='yes' ? 'Sur WhatsApp ✓' : 'Pas sur WA ✗'));
   }
 }
 
