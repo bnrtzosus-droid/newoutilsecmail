@@ -288,6 +288,36 @@ body {
 }
 .contacts-search-clear:hover { color:var(--er); }
 
+/* ── Trash card ──────────────────────────────────────────── */
+.trash-grid { display:flex; flex-direction:column; gap:7px; }
+.tcard {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  transition:border-color .15s;
+}
+.tcard:hover { border-color:var(--bda); }
+.tcard-num { font-size:10px; font-weight:700; color:var(--fg2); background:var(--sf3); border-radius:5px; min-width:22px; height:20px; padding:0 4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.tcard-icon { width:34px; height:34px; background:rgba(248,113,113,.10); border-radius:9px; display:grid; place-items:center; font-size:16px; flex-shrink:0; }
+.tcard-body { flex:1; min-width:0; }
+.tcard-phone { font-size:12.5px; font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tcard-meta { font-size:10.5px; color:var(--fg3); margin-top:1px; }
+.tcard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.btn-restore {
+  display:flex; align-items:center; gap:5px;
+  background:var(--acd); color:var(--ac); border:1px solid var(--bda);
+  border-radius:8px; padding:5px 10px; font-size:11.5px; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:background .15s;
+}
+.btn-restore:hover { background:var(--bda); }
+.btn-del-forever {
+  background:none; border:none; color:var(--fg3); cursor:pointer;
+  width:28px; height:28px; border-radius:6px; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  transition:color .15s, background .15s;
+}
+.btn-del-forever:hover { color:var(--er); background:rgba(248,113,113,.10); }
+
 /* ── History ─────────────────────────────────────────────── */
 .hist-list { display:flex; flex-direction:column; gap:8px; }
 .hist-card {
@@ -513,6 +543,11 @@ body {
       Email Finder
       <span class="sb-badge" id="navBadgeEmail" style="display:none">0</span>
     </button>
+    <button class="sb-link" id="navCorbeille" onclick="showPage('corbeille')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      Corbeille
+      <span class="sb-badge" id="navBadgeCorbeille" style="display:none">0</span>
+    </button>
   </nav>
 
   <div class="sb-stats">
@@ -666,6 +701,32 @@ body {
     </div>
   </div>
 
+  <!-- Page Corbeille -->
+  <div id="pageCorbeille" style="display:none">
+    <div class="main-hdr">
+      <div class="main-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Corbeille
+        <span class="sec-badge" id="corbBadge">0</span>
+      </div>
+      <div class="main-actions">
+        <button class="btn-ghost" id="btnRestoreAll" onclick="restoreAll()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Tout restaurer
+        </button>
+        <button class="btn-secondary" id="btnEmptyTrash" onclick="emptyTrash()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Vider la corbeille
+        </button>
+      </div>
+    </div>
+    <div class="main-body" id="bodyCorbeille">
+      <div id="corbeilleList">
+        <div class="contacts-empty">La corbeille est vide.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -732,6 +793,7 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var SB_SESS_KEY = 'wcp_auth_session';
 var sbContacts = [];
 var contactsSearchQuery = '';
+var trashContacts = (function(){ try { return JSON.parse(localStorage.getItem('trash_contacts')||'[]'); } catch(e){ return []; } })();
 var sbHistory  = [];
 var activePays = 'TOUS';
 var activeHistPays = 'TOUS';
@@ -777,6 +839,7 @@ function doLogin(e) {
     document.getElementById('loginOverlay').style.display = 'none';
     loadContactsFromDB();
     setInterval(loadContactsFromDB, 10000);
+    updateTrashBadge();
   } else {
     err.textContent = 'Mot de passe incorrect.';
     err.hidden = false; btn.disabled = false; btn.textContent = 'Se connecter';
@@ -797,12 +860,15 @@ function showPage(page) {
   currentPage = page;
   document.getElementById('pageContacts').style.display = page === 'contacts' ? 'contents' : 'none';
   document.getElementById('pageHistoire').style.display = page === 'histoire' ? '' : 'none';
-  document.getElementById('pageEmail').style.display    = page === 'email'    ? '' : 'none';
+  document.getElementById('pageEmail').style.display      = page === 'email'      ? '' : 'none';
+  document.getElementById('pageCorbeille').style.display  = page === 'corbeille'  ? '' : 'none';
   document.getElementById('navContacts').classList.toggle('active', page === 'contacts');
   document.getElementById('navHistoire').classList.toggle('active', page === 'histoire');
   document.getElementById('navEmail').classList.toggle('active', page === 'email');
+  document.getElementById('navCorbeille').classList.toggle('active', page === 'corbeille');
   if (page === 'histoire') loadHistory();
   if (page === 'email') loadEmailsFromDB();
+  if (page === 'corbeille') renderTrash();
 }
 
 function detectCountryInfo(paysName) {
@@ -823,16 +889,105 @@ function loadContactsFromDB() {
     .catch(function(){ renderAll(); });
 }
 
+function saveTrash() {
+  try { localStorage.setItem('trash_contacts', JSON.stringify(trashContacts)); } catch(e){}
+  updateTrashBadge();
+}
+function updateTrashBadge() {
+  var n = trashContacts.length;
+  var b = document.getElementById('navBadgeCorbeille');
+  if (b) { b.textContent = n; b.style.display = n > 0 ? '' : 'none'; }
+  var cb = document.getElementById('corbBadge');
+  if (cb) cb.textContent = n;
+}
+
 function removeContact(phone) {
+  var c = sbContacts.find(function(x){ return x.phone === phone; });
+  if (c) { trashContacts.unshift(Object.assign({}, c, {deleted_at: new Date().toISOString()})); saveTrash(); }
   sbFetch('/rest/v1/contacts_whatsapp?phone=eq.'+encodeURIComponent(phone), {
     method:'DELETE'
-  }).then(function(){ loadContactsFromDB(); showToast('Contact supprimé'); });
+  }).then(function(){ loadContactsFromDB(); showToast('Déplacé dans la corbeille'); });
 }
 
 function clearContacts() {
-  if (!confirm('Vider tous les contacts ?')) return;
+  if (!confirm('Vider tous les contacts ? Ils iront dans la corbeille.')) return;
+  sbContacts.forEach(function(c){ trashContacts.unshift(Object.assign({}, c, {deleted_at: new Date().toISOString()})); });
+  saveTrash();
   sbFetch('/rest/v1/contacts_whatsapp?id=gt.0', { method:'DELETE' })
-    .then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
+    .then(function(){ loadContactsFromDB(); showToast('Contacts déplacés dans la corbeille'); });
+}
+
+function renderTrash() {
+  var el = document.getElementById('corbeilleList');
+  if (!el) return;
+  updateTrashBadge();
+  if (trashContacts.length === 0) {
+    el.innerHTML = '<div class="contacts-empty">La corbeille est vide.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="trash-grid">'
+    + trashContacts.map(function(c, idx){
+      var info = detectCountryInfo(c.pays||'');
+      var date = c.deleted_at ? new Date(c.deleted_at).toLocaleDateString('fr-FR') : '';
+      return '<div class="tcard">'
+        + '<div class="tcard-num">'+(idx+1)+'</div>'
+        + '<div class="tcard-icon">'+(info.flag||'📱')+'</div>'
+        + '<div class="tcard-body">'
+        +   '<div class="tcard-phone">'+(c.phone||'')+'</div>'
+        +   (date ? '<div class="tcard-meta">Supprimé le '+date+'</div>' : '')
+        + '</div>'
+        + '<div class="tcard-actions">'
+        +   '<button class="btn-restore" onclick="restoreContact('+idx+')">↩ Restaurer</button>'
+        +   '<button class="btn-del-forever" onclick="deleteForever('+idx+')" title="Supprimer définitivement">×</button>'
+        + '</div>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+}
+
+function restoreContact(idx) {
+  var c = trashContacts.splice(idx, 1)[0];
+  if (!c) return;
+  saveTrash();
+  delete c.deleted_at;
+  sbFetch('/rest/v1/contacts_whatsapp', {
+    method:'POST',
+    headers:{'Content-Type':'application/json', 'Prefer':'return=minimal'},
+    body:JSON.stringify(c)
+  }).then(function(){ loadContactsFromDB(); renderTrash(); showToast('Contact restauré !'); });
+}
+
+function restoreAll() {
+  if (!trashContacts.length) { showToast('La corbeille est déjà vide'); return; }
+  var items = trashContacts.splice(0);
+  saveTrash();
+  var promises = items.map(function(c){
+    var d = Object.assign({}, c);
+    delete d.deleted_at;
+    return sbFetch('/rest/v1/contacts_whatsapp', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Prefer':'return=minimal'},
+      body:JSON.stringify(d)
+    });
+  });
+  Promise.all(promises).then(function(){ loadContactsFromDB(); renderTrash(); showToast(items.length+' contact(s) restauré(s)'); });
+}
+
+function deleteForever(idx) {
+  if (!confirm('Supprimer définitivement ce contact ? Action irréversible.')) return;
+  trashContacts.splice(idx, 1);
+  saveTrash();
+  renderTrash();
+  showToast('Supprimé définitivement');
+}
+
+function emptyTrash() {
+  if (!trashContacts.length) { showToast('La corbeille est déjà vide'); return; }
+  if (!confirm('Vider définitivement la corbeille ('+trashContacts.length+' contact(s)) ? Cette action est irréversible.')) return;
+  trashContacts.length = 0;
+  saveTrash();
+  renderTrash();
+  showToast('Corbeille vidée');
 }
 
 function getPaysList() {
