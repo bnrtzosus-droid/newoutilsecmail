@@ -217,6 +217,45 @@ body::before {
   line-height:1.65;
 }
 
+/* History */
+.hist-list { display:flex; flex-direction:column; gap:8px; }
+.hist-card {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:16px 20px;
+  display:flex; align-items:center; gap:16px;
+  transition:border-color .15s;
+}
+.hist-card:hover { border-color:var(--bda); }
+.hist-idx {
+  width:36px; height:36px; border-radius:10px;
+  background:var(--acd2); color:var(--ac);
+  font-size:13px; font-weight:700; font-family:'JetBrains Mono',monospace;
+  display:grid; place-items:center; flex-shrink:0;
+}
+.hist-body { flex:1; min-width:0; }
+.hist-number {
+  font-size:14.5px; font-family:'JetBrains Mono',monospace; font-weight:600;
+  color:var(--fg); letter-spacing:.3px;
+}
+.hist-meta { font-size:12px; color:var(--fg2); margin-top:4px; display:flex; gap:12px; flex-wrap:wrap; }
+.hist-tag {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--acd2); color:var(--ac);
+  border-radius:6px; padding:2px 8px; font-size:11.5px; font-weight:600;
+}
+.hist-copy {
+  background:var(--sf2); border:1px solid var(--bd); color:var(--fg2);
+  border-radius:var(--rs); padding:7px 13px; font-size:12px; font-family:inherit;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+}
+.hist-copy:hover { background:var(--acd); color:var(--ac); border-color:var(--bda); }
+.hist-del {
+  background:none; border:none; color:var(--fg3); cursor:pointer;
+  padding:5px 7px; border-radius:6px; font-size:17px; line-height:1;
+  transition:color .15s, background .15s;
+}
+.hist-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
+
 /* Toast */
 .toast {
   position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); left:50%;
@@ -242,10 +281,15 @@ body::before {
       </div>
     </a>
     <nav class="nav">
-      <button class="nav-link active">
+      <button class="nav-link active" id="navContacts" onclick="showPage('contacts')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Contacts
         <span class="nav-badge" id="navBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-link" id="navHistoire" onclick="showPage('histoire')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Historique
+        <span class="nav-badge" id="navBadgeHist" style="display:none">0</span>
       </button>
     </nav>
     <button class="btn-menu" onclick="toggleMenu()" aria-label="Menu">
@@ -253,10 +297,14 @@ body::before {
     </button>
   </div>
   <nav class="nav-mobile" id="navMobile">
-    <button class="nav-link active" onclick="toggleMenu()">
+    <button class="nav-link active" id="navContactsMob" onclick="showPage('contacts');toggleMenu()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       Contacts
       <span class="nav-badge" id="navBadgeMobile" style="display:none">0</span>
+    </button>
+    <button class="nav-link" id="navHistoireMob" onclick="showPage('histoire');toggleMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Historique
     </button>
   </nav>
 </header>
@@ -281,33 +329,48 @@ body::before {
 <!-- Main -->
 <main class="page">
 
-  <div class="sec-hdr">
-    <div class="sec-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Contacts WhatsApp
-      <span class="sec-badge" id="contactsBadge">0</span>
+  <!-- Page Contacts -->
+  <div id="pageContacts">
+    <div class="sec-hdr">
+      <div class="sec-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Contacts WhatsApp
+        <span class="sec-badge" id="contactsBadge">0</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-ghost" onclick="exportContacts()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter
+        </button>
+        <button class="btn-secondary" onclick="clearContacts()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Vider
+        </button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn-ghost" onclick="exportContacts()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Exporter
-      </button>
-      <button class="btn-secondary" onclick="clearContacts()">
+    <div class="pill-row" id="paysFilter">
+      <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
+    </div>
+    <div id="contactsList">
+      <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
+    </div>
+  </div>
+
+  <!-- Page Historique -->
+  <div id="pageHistoire" style="display:none">
+    <div class="sec-hdr">
+      <div class="sec-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Historique des recherches
+        <span class="sec-badge" id="histBadge">0</span>
+      </div>
+      <button class="btn-secondary" onclick="clearHistory()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        Vider
+        Vider l'historique
       </button>
     </div>
-  </div>
-
-  <!-- Pays filter -->
-  <div class="pill-row" id="paysFilter">
-    <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
-  </div>
-
-  <!-- Contacts -->
-  <div id="contactsList">
-    <div class="contacts-empty">
-      Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.
+    <div id="histList">
+      <div class="contacts-empty">Aucune recherche enregistrée — le dernier numéro de chaque session apparaîtra ici.</div>
     </div>
   </div>
 
@@ -511,6 +574,90 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+var sbHistory = [];
+var currentPage = 'contacts';
+
+function showPage(page) {
+  currentPage = page;
+  document.getElementById('pageContacts').style.display  = page === 'contacts' ? '' : 'none';
+  document.getElementById('pageHistoire').style.display  = page === 'histoire' ? '' : 'none';
+  ['navContacts','navHistoire','navContactsMob','navHistoireMob'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    var isActive = (id.includes('Contacts') && page==='contacts') || (id.includes('Histoire') && page==='histoire');
+    el.classList.toggle('active', isActive);
+  });
+  if (page === 'histoire') loadHistory();
+}
+
+function loadHistory() {
+  sbFetch('/rest/v1/search_history?select=*&order=finished_at.desc&limit=100')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      sbHistory = Array.isArray(data) ? data : [];
+      renderHistory();
+    })
+    .catch(function(){ renderHistory(); });
+}
+
+function renderHistory() {
+  var el = document.getElementById('histList');
+  var badge = document.getElementById('histBadge');
+  var navB  = document.getElementById('navBadgeHist');
+  badge.textContent = sbHistory.length;
+  navB.textContent  = sbHistory.length;
+  navB.style.display = sbHistory.length > 0 ? '' : 'none';
+
+  if (!sbHistory.length) {
+    el.innerHTML = '<div class="contacts-empty">Aucune recherche enregistrée — le dernier numéro de chaque session apparaîtra ici.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="hist-list">' + sbHistory.map(function(h, i){
+    var date = h.finished_at ? new Date(h.finished_at).toLocaleString('fr-FR') : '';
+    var total = h.total_checked > 0 ? h.total_checked.toLocaleString('fr-FR') + ' numéros vérifiés' : '';
+    var session = h.session_name ? h.session_name : '';
+    return '<div class="hist-card">'
+      + '<div class="hist-idx">#'+(i+1)+'</div>'
+      + '<div class="hist-body">'
+      +   '<div class="hist-number">Reprendre à : '+h.last_number+'</div>'
+      +   '<div class="hist-meta">'
+      +     (date ? '<span>🕐 '+date+'</span>' : '')
+      +     (total ? '<span>📊 '+total+'</span>' : '')
+      +     (session ? '<span class="hist-tag">'+session+'</span>' : '')
+      +   '</div>'
+      + '</div>'
+      + '<button class="hist-copy" onclick="copyNumber(\''+h.last_number+'\')">Copier</button>'
+      + '<button class="hist-del" onclick="deleteHistory('+h.id+')" title="Supprimer">×</button>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function copyNumber(num) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(num).then(function(){ showToast('Numéro copié !'); }).catch(function(){
+      fallbackCopy(num);
+    });
+  } else { fallbackCopy(num); }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); showToast('Numéro copié !'); } catch(e) { showToast(text); }
+  document.body.removeChild(ta);
+}
+
+function deleteHistory(id) {
+  sbFetch('/rest/v1/search_history?id=eq.'+id, { method:'DELETE' })
+    .then(function(){ loadHistory(); showToast('Entrée supprimée'); });
+}
+
+function clearHistory() {
+  if (!confirm('Vider tout l\'historique ?')) return;
+  sbFetch('/rest/v1/search_history?id=gt.0', { method:'DELETE' })
+    .then(function(){ loadHistory(); showToast('Historique vidé'); });
 }
 
 document.addEventListener('DOMContentLoaded', function(){
