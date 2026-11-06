@@ -291,6 +291,57 @@ body {
 }
 .hist-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
 
+/* ── Email Finder ────────────────────────────────────────── */
+.ef-filters {
+  display:flex; flex-direction:column; gap:12px; margin-bottom:20px;
+}
+.ef-nets {
+  display:flex; flex-wrap:wrap; gap:8px;
+}
+.ef-net {
+  padding:7px 14px; border-radius:20px; border:1px solid var(--bd);
+  background:var(--sf2); color:var(--fg2); font-size:12px; font-weight:500;
+  cursor:pointer; transition:all .15s;
+}
+.ef-net:hover { border-color:var(--bda); color:var(--fg); }
+.ef-net.active { background:var(--acd); border-color:var(--ac); color:var(--ac); }
+.email-grid {
+  display:flex; flex-direction:column; gap:10px;
+}
+.ecard {
+  display:flex; align-items:center; gap:14px;
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:14px 16px;
+  transition:border-color .15s;
+}
+.ecard:hover { border-color:var(--bda); }
+.ecard-icon {
+  width:38px; height:38px; flex-shrink:0;
+  border-radius:10px; display:grid; place-items:center;
+  font-size:18px; background:var(--acd2);
+}
+.ecard-body { flex:1; min-width:0; }
+.ecard-username { font-size:14px; font-weight:600; color:var(--fg); }
+.ecard-email { font-size:13px; color:var(--ac); margin-top:2px; word-break:break-all; }
+.ecard-phone { font-size:12px; color:var(--fg2); margin-top:1px; }
+.ecard-meta { font-size:11px; color:var(--fg3); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap; }
+.ecard-net-tag {
+  padding:2px 8px; border-radius:10px; background:var(--acd2);
+  color:var(--fg2); font-size:11px; font-weight:500;
+}
+.ecard-actions { display:flex; gap:6px; flex-shrink:0; }
+.btn-copy {
+  background:var(--acd2); border:none; color:var(--ac); border-radius:6px;
+  padding:6px 10px; font-size:12px; cursor:pointer; transition:background .15s;
+}
+.btn-copy:hover { background:var(--acd); }
+.btn-del-em {
+  background:transparent; border:none; color:var(--fg3);
+  font-size:18px; line-height:1; cursor:pointer; border-radius:6px;
+  padding:4px 8px; transition:all .15s;
+}
+.btn-del-em:hover { color:var(--er); background:rgba(248,113,113,.10); }
+
 /* ── Login overlay ───────────────────────────────────────── */
 .login-overlay {
   position:fixed; inset:0; z-index:1000;
@@ -425,6 +476,11 @@ body {
       Historique
       <span class="sb-badge" id="navBadgeHist" style="display:none">0</span>
     </button>
+    <button class="sb-link" id="navEmail" onclick="showPage('email')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+      Email Finder
+      <span class="sb-badge" id="navBadgeEmail" style="display:none">0</span>
+    </button>
   </nav>
 
   <div class="sb-stats">
@@ -522,6 +578,43 @@ body {
     </div>
   </div>
 
+  <!-- Page Email Finder -->
+  <div id="pageEmail" style="display:none">
+    <div class="main-hdr">
+      <div class="main-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+        Email Finder
+        <span class="sec-badge" id="emailBadge">0</span>
+      </div>
+      <div class="main-actions">
+        <button class="btn-ghost" onclick="exportEmails()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exporter
+        </button>
+        <button class="btn-secondary" onclick="clearEmails()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Vider
+        </button>
+      </div>
+    </div>
+    <div class="main-body" id="bodyEmail">
+      <div class="ef-filters">
+        <div class="ef-nets" id="efNets">
+          <button class="ef-net active" data-net="ALL" onclick="selectNet('ALL')">Tous</button>
+          <button class="ef-net" data-net="instagram" onclick="selectNet('instagram')">📸 Instagram</button>
+          <button class="ef-net" data-net="tiktok" onclick="selectNet('tiktok')">🎵 TikTok</button>
+          <button class="ef-net" data-net="twitter" onclick="selectNet('twitter')">𝕏 Twitter</button>
+          <button class="ef-net" data-net="linkedin" onclick="selectNet('linkedin')">💼 LinkedIn</button>
+          <button class="ef-net" data-net="youtube" onclick="selectNet('youtube')">▶ YouTube</button>
+          <button class="ef-net" data-net="facebook" onclick="selectNet('facebook')">📘 Facebook</button>
+        </div>
+      </div>
+      <div id="emailList">
+        <div class="contacts-empty">Aucun email trouvé — lancez le logiciel email_finder.py pour collecter des contacts.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -591,6 +684,8 @@ var sbHistory  = [];
 var activePays = 'TOUS';
 var activeHistPays = 'TOUS';
 var currentPage = 'contacts';
+var sbEmails = [];
+var activeNet = 'ALL';
 var toastTimer;
 
 /* ── Auth (vérification locale SHA-256, pas de réseau) ───── */
@@ -647,12 +742,14 @@ function sbFetch(path, opts) {
 
 function showPage(page) {
   currentPage = page;
-  var isC = page === 'contacts';
-  document.getElementById('pageContacts').style.display = isC ? 'contents' : 'none';
-  document.getElementById('pageHistoire').style.display = isC ? 'none' : '';
-  document.getElementById('navContacts').classList.toggle('active', isC);
-  document.getElementById('navHistoire').classList.toggle('active', !isC);
-  if (!isC) loadHistory();
+  document.getElementById('pageContacts').style.display = page === 'contacts' ? 'contents' : 'none';
+  document.getElementById('pageHistoire').style.display = page === 'histoire' ? '' : 'none';
+  document.getElementById('pageEmail').style.display    = page === 'email'    ? '' : 'none';
+  document.getElementById('navContacts').classList.toggle('active', page === 'contacts');
+  document.getElementById('navHistoire').classList.toggle('active', page === 'histoire');
+  document.getElementById('navEmail').classList.toggle('active', page === 'email');
+  if (page === 'histoire') loadHistory();
+  if (page === 'email') loadEmailsFromDB();
 }
 
 function detectCountryInfo(paysName) {
@@ -932,6 +1029,102 @@ function clearHistory() {
   if (!confirm('Vider tout l\'historique ?')) return;
   sbFetch('/rest/v1/search_history?id=gt.0', { method:'DELETE' })
     .then(function(){ loadHistory(); showToast('Historique vidé'); });
+}
+
+/* ── Email Finder ─────────────────────────────────────────── */
+var NET_ICONS = {instagram:'📸',tiktok:'🎵',twitter:'𝕏',linkedin:'💼',youtube:'▶',facebook:'📘'};
+
+function loadEmailsFromDB() {
+  sbFetch('/rest/v1/contacts_email?select=*&order=created_at.desc&limit=500')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      sbEmails = Array.isArray(data) ? data : [];
+      renderEmails();
+    })
+    .catch(function(){ renderEmails(); });
+}
+
+function selectNet(net) {
+  activeNet = net;
+  document.querySelectorAll('.ef-net').forEach(function(b){
+    b.classList.toggle('active', b.dataset.net === net);
+  });
+  renderEmailList();
+}
+
+function renderEmails() {
+  var total = sbEmails.length;
+  var badge = document.getElementById('navBadgeEmail');
+  badge.textContent = total; badge.style.display = total > 0 ? '' : 'none';
+  document.getElementById('emailBadge').textContent = total;
+  renderEmailList();
+}
+
+function renderEmailList() {
+  var el = document.getElementById('emailList');
+  var list = activeNet === 'ALL' ? sbEmails : sbEmails.filter(function(e){ return e.network === activeNet; });
+  if (!sbEmails.length) {
+    el.innerHTML = '<div class="contacts-empty">Aucun email trouvé — lancez le logiciel email_finder.py pour collecter des contacts.</div>';
+    return;
+  }
+  if (!list.length) {
+    el.innerHTML = '<div class="contacts-empty">Aucun contact pour ce réseau.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="email-grid">' + list.map(function(c){
+    var icon = NET_ICONS[c.network] || '🌐';
+    var date = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '';
+    return '<div class="ecard">'
+      + '<div class="ecard-icon">'+icon+'</div>'
+      + '<div class="ecard-body">'
+      +   '<div class="ecard-username">'+(c.full_name || c.username)+'</div>'
+      +   (c.email ? '<div class="ecard-email">✉ '+c.email+'</div>' : '')
+      +   (c.phone ? '<div class="ecard-phone">📞 '+c.phone+'</div>' : '')
+      +   '<div class="ecard-meta">'
+      +     '<span class="ecard-net-tag">'+c.network+'</span>'
+      +     (c.country ? '<span>🌍 '+c.country+'</span>' : '')
+      +     (date ? '<span>'+date+'</span>' : '')
+      +   '</div>'
+      + '</div>'
+      + '<div class="ecard-actions">'
+      +   (c.email ? '<button class="btn-copy" onclick="copyText(\''+c.email+'\')">Copier</button>' : '')
+      +   '<button class="btn-del-em" onclick="removeEmail('+c.id+')" title="Supprimer">×</button>'
+      + '</div>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function copyText(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){ showToast('Copié !'); }).catch(function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); }
+}
+
+function removeEmail(id) {
+  sbFetch('/rest/v1/contacts_email?id=eq.'+id, { method:'DELETE' })
+    .then(function(){ loadEmailsFromDB(); showToast('Contact supprimé'); });
+}
+
+function clearEmails() {
+  if (!confirm('Vider tous les emails ?')) return;
+  sbFetch('/rest/v1/contacts_email?id=gt.0', { method:'DELETE' })
+    .then(function(){ loadEmailsFromDB(); showToast('Emails vidés'); });
+}
+
+function exportEmails() {
+  if (!sbEmails.length) { showToast('Aucun email à exporter'); return; }
+  var csv = 'Réseau,Username,Nom,Email,Téléphone,Pays,Date\n';
+  sbEmails.forEach(function(c){
+    var date = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '';
+    csv += [c.network||'',c.username||'',c.full_name||'',c.email||'',c.phone||'',c.country||'',date]
+      .map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',') + '\n';
+  });
+  var blob = new Blob([csv],{type:'text/csv'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href=url; a.download='emails_'+Date.now()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Emails exportés !');
 }
 
 function showToast(msg) {
