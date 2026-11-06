@@ -60,14 +60,14 @@ def login_instagram(page, email: str, password: str) -> bool:
         pause(1, 2)
         page.wait_for_selector("input[name='username']", timeout=10000)
         page.click("input[name='username']")
-        pause(0.3, 0.6)
-        page.fill("input[name='username']", email)
+        pause(0.4, 0.7)
+        page.keyboard.type(email, delay=80)
         pause(0.5, 1)
         page.click("input[name='password']")
-        pause(0.3, 0.6)
-        page.fill("input[name='password']", password)
+        pause(0.4, 0.7)
+        page.keyboard.type(password, delay=80)
         pause(0.5, 1)
-        page.click("button[type='submit']")
+        page.keyboard.press("Enter")
         pause(4, 6)
         # Check success: URL changes away from /login/
         if "/login" not in page.url:
@@ -106,26 +106,50 @@ def login_linkedin(page, email: str, password: str) -> bool:
 
 def login_facebook(page, email: str, password: str) -> bool:
     try:
-        page.goto("https://www.facebook.com/login", timeout=30000)
-        # Attendre que la page soit chargée
+        # Page d'accueil Facebook — le formulaire de connexion y est directement
+        page.goto("https://www.facebook.com/", timeout=30000)
         page.wait_for_load_state("domcontentloaded")
         pause(2, 3)
-        # Accepter cookies si popup présente
         _accept_cookies(page)
         pause(1, 2)
-        # Attendre que le champ email soit visible
-        page.wait_for_selector("#email", timeout=10000)
-        page.click("#email")
-        pause(0.3, 0.6)
-        page.fill("#email", email)
+
+        # Chercher le champ email (plusieurs sélecteurs possibles)
+        email_sel = None
+        for sel in ["input[name='email']", "#email", "input[type='email']"]:
+            try:
+                page.wait_for_selector(sel, timeout=5000)
+                email_sel = sel
+                break
+            except Exception:
+                pass
+
+        if not email_sel:
+            # Fallback : page /login
+            page.goto("https://www.facebook.com/login", timeout=20000)
+            page.wait_for_load_state("domcontentloaded")
+            pause(2, 3)
+            _accept_cookies(page)
+            pause(1, 2)
+            page.wait_for_selector("input[name='email']", timeout=8000)
+            email_sel = "input[name='email']"
+
+        # Remplir email
+        page.click(email_sel)
+        pause(0.4, 0.7)
+        page.keyboard.type(email, delay=80)
         pause(0.5, 1)
-        page.click("#pass")
-        pause(0.3, 0.6)
-        page.fill("#pass", password)
+
+        # Remplir mot de passe
+        pass_sel = "input[name='pass']" if page.query_selector("input[name='pass']") else "#pass"
+        page.click(pass_sel)
+        pause(0.4, 0.7)
+        page.keyboard.type(password, delay=80)
         pause(0.5, 1)
-        # Cliquer le bouton de connexion
-        page.click("button[name='login']")
+
+        # Soumettre
+        page.keyboard.press("Enter")
         pause(4, 6)
+
         if "facebook.com" in page.url and "/login" not in page.url:
             print("  ✓ Facebook connecté")
             return True
