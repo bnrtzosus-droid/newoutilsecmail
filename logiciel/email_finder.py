@@ -633,54 +633,184 @@ def search_by_query(page, query: str, networks: list, country: str) -> int:
     return total
 
 
+def ask(prompt: str, options: list[str] | None = None, default: str = "") -> str:
+    """Ask a question in the terminal and return the answer."""
+    if options:
+        for i, opt in enumerate(options, 1):
+            print(f"  {i}. {opt}")
+        while True:
+            try:
+                raw = input(f"\n  Votre choix (1-{len(options)}) : ").strip()
+            except (EOFError, KeyboardInterrupt):
+                raise KeyboardInterrupt
+            if raw.isdigit() and 1 <= int(raw) <= len(options):
+                return options[int(raw) - 1]
+            print(f"  → Entrez un numéro entre 1 et {len(options)}")
+    else:
+        try:
+            raw = input(f"  {prompt} [{default}] : ").strip()
+        except (EOFError, KeyboardInterrupt):
+            raise KeyboardInterrupt
+        return raw if raw else default
+
+
+def interactive_menu() -> dict:
+    """Display interactive menu and return configuration dict."""
+    SEP = "=" * 60
+    print(f"\n{SEP}")
+    print(f"  Email Finder — WhatsApp Checker Pro")
+    print(f"{SEP}\n")
+
+    print("  Quelle méthode de recherche souhaitez-vous utiliser ?\n")
+    MODE_OPTS = [
+        "Recherche par pays + niche  (parcourir les hashtags)",
+        "Recherche par nom / prénom  (trouver une personne)",
+        "Recherche par numéro        (trouver le profil d'un numéro)",
+        "Depuis mes numéros WhatsApp (chercher tous les profils)",
+    ]
+    mode_label = ask("Mode", MODE_OPTS)
+    mode = ["hashtag", "name", "phone", "whatsapp"][MODE_OPTS.index(mode_label)]
+
+    # ── Réseaux ──
+    print(f"\n  Sur quels réseaux sociaux ?\n")
+    NET_OPTS = ["Tous les réseaux"] + [n.capitalize() for n in SCRAPERS]
+    net_label = ask("Réseau", NET_OPTS)
+    if net_label == "Tous les réseaux":
+        networks = list(SCRAPERS)
+    else:
+        networks = [net_label.lower()]
+
+    cfg = {"mode": mode, "networks": networks, "headless": False, "skip": 0}
+
+    # ── Mode spécifique ──
+    if mode == "hashtag":
+        print(f"\n  Pays cible ?\n")
+        pays_opts = [p.capitalize() for p in COUNTRY_TAGS]
+        cfg["country"] = ask("Pays", pays_opts).lower()
+
+        print(f"\n  Niche / secteur ?\n")
+        niche_opts = [n.capitalize() for n in NICHE_TAGS]
+        cfg["niche"] = ask("Niche", niche_opts).lower()
+
+        print(f"\n  Nombre maximum de contacts par réseau ?\n")
+        LIMIT_OPTS = ["10", "20", "50", "100"]
+        cfg["limit"] = int(ask("Limite", LIMIT_OPTS))
+
+    elif mode == "name":
+        print(f"\n  Entrez le nom et prénom à rechercher :")
+        cfg["query"] = ask("Nom prénom", default="")
+        if not cfg["query"]:
+            print("  [!] Nom vide, annulation.")
+            raise SystemExit(0)
+        cfg["country"] = "france"
+
+    elif mode == "phone":
+        print(f"\n  Entrez le numéro de téléphone (avec indicatif, ex: +33612345678) :")
+        cfg["query"] = ask("Numéro", default="")
+        if not cfg["query"]:
+            print("  [!] Numéro vide, annulation.")
+            raise SystemExit(0)
+        cfg["country"] = "france"
+
+    elif mode == "whatsapp":
+        numbers = fetch_whatsapp_numbers()
+        total_nb = len(numbers)
+        if total_nb == 0:
+            print("\n  [!] Aucun numéro dans contacts_whatsapp.")
+            raise SystemExit(0)
+        print(f"\n  {total_nb} numéro(s) disponible(s) dans la base.")
+        print(f"\n  Reprendre depuis le début ou depuis un numéro précis ?\n")
+        SKIP_OPTS = ["Depuis le début", "Choisir à partir de quel numéro"]
+        skip_label = ask("Reprise", SKIP_OPTS)
+        if skip_label == SKIP_OPTS[1]:
+            raw_skip = ask(f"Ignorer les N premiers (0-{total_nb})", default="0")
+            cfg["skip"] = int(raw_skip) if raw_skip.isdigit() else 0
+        else:
+            cfg["skip"] = 0
+        cfg["country"] = "france"
+
+    # ── Mode fenêtre ──
+    print(f"\n  Mode navigateur ?\n")
+    NAV_OPTS = ["Visible (recommandé pour les connexions)", "Silencieux (sans fenêtre)"]
+    nav_label = ask("Navigateur", NAV_OPTS)
+    cfg["headless"] = (nav_label == NAV_OPTS[1])
+
+    # ── Résumé ──
+    print(f"\n{SEP}")
+    print(f"  RÉCAPITULATIF")
+    print(f"{SEP}")
+    print(f"  Mode     : {mode_label}")
+    print(f"  Réseaux  : {', '.join(cfg['networks'])}")
+    if mode == "hashtag":
+        print(f"  Pays     : {cfg['country']}")
+        print(f"  Niche    : {cfg['niche']}")
+        print(f"  Limite   : {cfg['limit']} par réseau")
+    elif mode in ("name", "phone"):
+        print(f"  Requête  : {cfg['query']}")
+    elif mode == "whatsapp":
+        print(f"  Skip     : {cfg.get('skip', 0)}")
+    print(f"  Fenêtre  : {'Non (silencieux)' if cfg['headless'] else 'Oui (visible)'}")
+    print(f"{SEP}\n")
+
+    print("  Appuyez sur Entrée pour démarrer (Ctrl+C pour annuler) ...")
+    try:
+        input()
+    except (EOFError, KeyboardInterrupt):
+        raise SystemExit(0)
+
+    return cfg
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Email Finder — scrape public emails/phones from social media")
-    parser.add_argument("--network", "-n", choices=list(SCRAPERS) + ["all"], default="all",
-                        help="Network to scrape (default: all)")
-    parser.add_argument("--country", "-c", default="france",
-                        help=f"Country (default: france). Options: {', '.join(COUNTRY_TAGS)}")
-    parser.add_argument("--niche", "-ni", default="business",
-                        help=f"Niche (default: business). Options: {', '.join(NICHE_TAGS)}")
-    parser.add_argument("--limit", "-l", type=int, default=20,
-                        help="Max contacts per network (default: 20)")
-    parser.add_argument("--headless", action="store_true", default=False,
-                        help="Run browser in headless mode")
-    # Recherche par nom / numéro
-    parser.add_argument("--search", "-s", type=str, default=None,
-                        help='Recherche par nom, prénom ou numéro. Ex: --search "Jean Dupont" ou --search "+33612345678"')
-    parser.add_argument("--from-whatsapp", action="store_true", default=False,
-                        help="Prend tous les numéros WhatsApp de la base et cherche leur profil sur les réseaux sociaux")
-    parser.add_argument("--skip", type=int, default=0,
-                        help="Ignorer les N premiers numéros (pour reprendre où on s'est arrêté)")
+    parser = argparse.ArgumentParser(description="Email Finder — scrape public emails/phones from social media", add_help=True)
+    parser.add_argument("--network", "-n", choices=list(SCRAPERS) + ["all"], default=None)
+    parser.add_argument("--country", "-c", default=None)
+    parser.add_argument("--niche", "-ni", default=None)
+    parser.add_argument("--limit", "-l", type=int, default=None)
+    parser.add_argument("--headless", action="store_true", default=False)
+    parser.add_argument("--search", "-s", type=str, default=None)
+    parser.add_argument("--from-whatsapp", action="store_true", default=False)
+    parser.add_argument("--skip", type=int, default=0)
     args = parser.parse_args()
 
-    networks = list(SCRAPERS) if args.network == "all" else [args.network]
-    country = args.country.lower()
-    niche = args.niche.lower()
+    # Si aucun argument passé → menu interactif
+    no_args = (args.network is None and args.country is None and args.niche is None
+               and args.limit is None and not args.search and not args.from_whatsapp)
+
+    if no_args:
+        cfg = interactive_menu()
+        mode      = cfg["mode"]
+        networks  = cfg["networks"]
+        country   = cfg.get("country", "france")
+        niche     = cfg.get("niche", "business")
+        limit     = cfg.get("limit", 20)
+        headless  = cfg.get("headless", False)
+        query     = cfg.get("query", "")
+        skip      = cfg.get("skip", 0)
+    else:
+        # Mode ligne de commande (comme avant)
+        networks = list(SCRAPERS) if (args.network is None or args.network == "all") else [args.network]
+        country  = (args.country or "france").lower()
+        niche    = (args.niche or "business").lower()
+        limit    = args.limit or 20
+        headless = args.headless
+        query    = args.search or ""
+        skip     = args.skip
+        if args.from_whatsapp:
+            mode = "whatsapp"
+        elif args.search:
+            mode = "name"
+        else:
+            mode = "hashtag"
 
     print(f"\n{'='*60}")
     print(f"  Email Finder — WhatsApp Checker Pro")
-    print(f"{'='*60}")
-    if args.from_whatsapp:
-        print(f"  Mode    : Numéros WhatsApp → profils réseaux sociaux")
-        print(f"  Réseaux : {', '.join(networks)}")
-        if args.skip:
-            print(f"  Skip    : {args.skip} premiers numéros ignorés")
-    elif args.search:
-        print(f"  Mode    : Recherche par identité")
-        print(f"  Requête : {args.search}")
-        print(f"  Réseaux : {', '.join(networks)}")
-    else:
-        print(f"  Pays    : {country}")
-        print(f"  Niche   : {niche}")
-        print(f"  Réseaux : {', '.join(networks)}")
-        print(f"  Limite  : {args.limit} par réseau")
     print(f"{'='*60}\n")
 
     total = 0
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
-            headless=args.headless,
+            headless=headless,
             args=["--no-sandbox", "--disable-blink-features=AutomationControlled"],
         )
         context = browser.new_context(
@@ -693,12 +823,12 @@ def main():
 
         try:
             # ── Mode numéros WhatsApp ──
-            if args.from_whatsapp:
+            if mode == "whatsapp":
                 numbers = fetch_whatsapp_numbers()
                 if not numbers:
                     print("  [!] Aucun numéro dans contacts_whatsapp.")
                 else:
-                    numbers = numbers[args.skip:]
+                    numbers = numbers[skip:]
                     print(f"  {len(numbers)} numéro(s) à traiter...\n")
                     for i, row in enumerate(numbers):
                         phone = row.get("phone", "")
@@ -710,33 +840,27 @@ def main():
                             n = search_by_query(page, phone, networks, pays or country)
                             total += n
                         except KeyboardInterrupt:
-                            print(f"\n  [!] Arrêt — reprendre avec --skip {args.skip + i}")
+                            print(f"\n  [!] Arrêt — reprendre avec --skip {skip + i}")
                             break
-                print(f"\n{'='*60}")
-                print(f"  TOTAL : {total} contact(s) enregistré(s)")
-                print(f"{'='*60}\n")
-                return
 
-            # ── Mode recherche par identité ──
-            if args.search:
-                total = search_by_query(page, args.search, networks, country)
-                print(f"\n{'='*60}")
-                print(f"  TOTAL : {total} contact(s) enregistré(s)")
-                print(f"{'='*60}\n")
-                return
+            # ── Mode recherche par nom / numéro ──
+            elif mode in ("name", "phone"):
+                total = search_by_query(page, query, networks, country)
 
-            for net in networks:
-                print(f"\n[{net.upper()}]")
-                scraper = SCRAPERS[net]
-                try:
-                    n = scraper(page, country, niche, args.limit)
-                    total += n
-                    print(f"  → {n} contact(s) trouvé(s)")
-                except KeyboardInterrupt:
-                    print("\n[!] Arrêt demandé par l'utilisateur.")
-                    break
-                except Exception as e:
-                    print(f"  [!] Erreur {net}: {e}")
+            # ── Mode hashtag par pays ──
+            else:
+                for net in networks:
+                    print(f"\n[{net.upper()}]")
+                    scraper = SCRAPERS[net]
+                    try:
+                        n = scraper(page, country, niche, limit)
+                        total += n
+                        print(f"  → {n} contact(s) trouvé(s)")
+                    except KeyboardInterrupt:
+                        print("\n[!] Arrêt demandé par l'utilisateur.")
+                        break
+                    except Exception as e:
+                        print(f"  [!] Erreur {net}: {e}")
         finally:
             try:
                 context.close()
