@@ -30,6 +30,10 @@ PAYS = [
     ('+33','France 🇫🇷'),('+32','Belgique 🇧🇪'),('+41','Suisse 🇨🇭'),
     ('+44','Royaume-Uni 🇬🇧'),('+49','Allemagne 🇩🇪'),('+55','Brésil 🇧🇷'),
     ('+91','Inde 🇮🇳'),('+1','USA/Canada 🇺🇸'),
+    ('+46','Suède 🇸🇪'),('+47','Norvège 🇳🇴'),('+45','Danemark 🇩🇰'),
+    ('+358','Finlande 🇫🇮'),('+31','Pays-Bas 🇳🇱'),('+34','Espagne 🇪🇸'),
+    ('+39','Italie 🇮🇹'),('+7','Russie 🇷🇺'),('+86','Chine 🇨🇳'),
+    ('+81','Japon 🇯🇵'),('+82','Corée du Sud 🇰🇷'),
 ]
 
 def detecter_pays(phone):
@@ -92,49 +96,63 @@ def verifier_numero(page, phone):
     """
     Retourne True si le numéro est sur WhatsApp, False sinon.
     Méthode: ouvrir https://web.whatsapp.com/send?phone=NUMERO
-    - Si le numéro existe → la boîte de chat s'ouvre
-    - Si le numéro n'existe pas → message d'erreur affiché
+    - Numéro valide  → boîte de composition apparaît
+    - Numéro invalide → popup / dialog d'erreur apparaît
     """
     num_propre = phone.replace('+', '').replace(' ', '')
-    url = f'https://web.whatsapp.com/send?phone={num_propre}&text=&app_absent=0'
+    url = f'https://web.whatsapp.com/send?phone={num_propre}'
 
     try:
         page.goto(url, timeout=30000, wait_until='domcontentloaded')
 
-        # Attendre un des deux résultats possibles
-        result = page.wait_for_selector(
-            '[data-testid="compose-box-input"], '          # boîte de saisie = numéro valide
-            '[data-testid="send-to-phone-popup-request-otp"], '
-            'div[role="alert"], '                           # popup d'erreur
-            'span[data-testid="intro-text"]',               # page d'erreur WA
-            timeout=15000
-        )
+        # Étape 1 : attendre la boîte de saisie (succès)
+        try:
+            page.wait_for_selector(
+                'div[contenteditable="true"][data-tab="10"], '
+                'div[contenteditable="true"][data-tab="1"], '
+                'footer div[contenteditable="true"], '
+                'div[role="textbox"][contenteditable="true"]',
+                timeout=12000
+            )
+            return True  # Boîte trouvée = numéro sur WhatsApp
+        except PWTimeout:
+            pass
 
-        if result:
-            # Vérifier si c'est une erreur ou un succès
-            # Erreur: "numéro invalide", "phone number shared via url is invalid"
-            page_text = page.inner_text('body').lower()
-            erreurs = [
+        # Étape 2 : vérifier si un dialog d'erreur est apparu
+        try:
+            page.wait_for_selector(
+                'div[data-animate-modal-popup="true"], '
+                'div[role="dialog"], '
+                'div[data-testid="popup-contents"]',
+                timeout=5000
+            )
+            return False  # Dialog = numéro invalide / pas sur WhatsApp
+        except PWTimeout:
+            pass
+
+        # Étape 3 : analyser le texte de la page comme dernier recours
+        try:
+            texte = page.inner_text('body').lower()
+            mots_erreur = [
                 'phone number shared via url is invalid',
-                'numéro de téléphone',
                 'invalid phone',
-                'not a valid',
-                "n'est pas",
+                'numéro invalide',
+                "n'existe pas",
+                'not found',
             ]
-            for e in erreurs:
-                if e in page_text:
+            for mot in mots_erreur:
+                if mot in texte:
                     return False
-
-            # Vérifier la présence de la boîte de composition = numéro valide
-            compose = page.query_selector('[data-testid="compose-box-input"]')
-            if compose:
+            # Si la page contient une zone de saisie visible
+            if page.query_selector('div[contenteditable="true"]'):
                 return True
+        except Exception:
+            pass
 
-            return False
-        return False
+        return None  # Vraiment indéterminé
 
     except PWTimeout:
-        return None  # indéterminé
+        return None
     except Exception:
         return None
 
