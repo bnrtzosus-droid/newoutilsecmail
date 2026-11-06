@@ -1,5 +1,6 @@
-# Credentials — never commit
+# Credentials & sessions — never commit
 logiciel/comptes.json
+logiciel/session.json
 
 # Python
 __pycache__/

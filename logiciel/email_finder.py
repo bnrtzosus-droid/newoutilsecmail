@@ -16,8 +16,9 @@ import urllib.parse
 from pathlib import Path
 from playwright.sync_api import sync_playwright, Error as PWError
 
-# ── Credentials (fichier local, jamais commité) ───────────────────────────────
-CREDS_FILE = Path(__file__).parent / "comptes.json"
+# ── Credentials & session (fichiers locaux, jamais commités) ─────────────────
+CREDS_FILE   = Path(__file__).parent / "comptes.json"
+SESSION_FILE = Path(__file__).parent / "session.json"
 
 
 def load_creds() -> dict:
@@ -165,6 +166,70 @@ LOGIN_FUNCS = {
     "linkedin":  login_linkedin,
     "facebook":  login_facebook,
 }
+
+# URLs de vérification de connexion par réseau
+LOGIN_CHECK = {
+    "facebook":  ("https://www.facebook.com/", lambda p: "facebook.com" in p.url and "/login" not in p.url),
+    "instagram": ("https://www.instagram.com/", lambda p: "/login" not in p.url and "/accounts/login" not in p.url),
+    "linkedin":  ("https://www.linkedin.com/feed/", lambda p: "feed" in p.url or ("linkedin.com" in p.url and "/login" not in p.url)),
+}
+
+
+def is_logged_in(page, net: str) -> bool:
+    """Navigate to the network and check if already logged in."""
+    url, check = LOGIN_CHECK.get(net, ("", lambda p: False))
+    try:
+        page.goto(url, timeout=15000)
+        page.wait_for_load_state("domcontentloaded")
+        pause(2, 3)
+        _accept_cookies(page)
+        pause(0.5, 1)
+        return check(page)
+    except Exception:
+        return False
+
+
+def ensure_logged_in(page, context, net: str) -> bool:
+    """
+    Check session, try auto-login, then fall back to manual login.
+    Saves session to SESSION_FILE after successful login.
+    """
+    print(f"  Vérification {net.capitalize()}...", end=" ", flush=True)
+
+    # 1. Déjà connecté via session sauvegardée
+    if is_logged_in(page, net):
+        print("✓ session active")
+        return True
+
+    # 2. Essai connexion automatique (si identifiants connus)
+    creds = load_creds()
+    c = creds.get(net, {})
+    if c.get("email") and c.get("password"):
+        print("tentative auto-login...")
+        try:
+            if LOGIN_FUNCS[net](page, c["email"], c["password"]):
+                context.storage_state(path=str(SESSION_FILE))
+                return True
+        except Exception:
+            pass
+
+    # 3. Connexion manuelle
+    url = LOGIN_CHECK[net][0]
+    print(f"\n  → Connexion manuelle à {net.capitalize()} requise.")
+    print(f"  → Le navigateur est sur {url}")
+    print(f"  → Connectez-vous dans la fenêtre, puis revenez ici et appuyez sur Entrée.")
+    try:
+        input("  → Entrée quand connecté : ")
+    except (EOFError, KeyboardInterrupt):
+        return False
+
+    if is_logged_in(page, net):
+        print(f"  ✓ {net.capitalize()} connecté — session sauvegardée pour la prochaine fois")
+        context.storage_state(path=str(SESSION_FILE))
+        return True
+
+    print(f"  ✗ {net.capitalize()} : connexion non détectée")
+    return False
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
 SUPABASE_URL = "https://qbyxezgkmhikfqytiruj.supabase.co"
@@ -1231,11 +1296,21 @@ def main():
 
     total = 0
     with sync_playwright() as pw:
+        # Charger la session sauvegardée si elle existe
+        storage_state = None
+        if SESSION_FILE.exists():
+            try:
+                storage_state = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
+                print("  → Session précédente trouvée, restauration...")
+            except Exception:
+                pass
+
         browser = pw.chromium.launch(
             headless=headless,
             args=["--no-sandbox", "--disable-blink-features=AutomationControlled"],
         )
         context = browser.new_context(
+            storage_state=storage_state,
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             viewport={"width": 1366, "height": 768},
             locale="fr-FR",
@@ -1243,19 +1318,16 @@ def main():
         page = context.new_page()
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-        # ── Connexion aux réseaux ──────────────────────────────────────────────
-        creds = load_creds()
+        # ── Connexion aux réseaux (session ou manuelle) ────────────────────────
         logged_in = set()
-        for net in ["instagram", "linkedin", "facebook"]:
-            if net in networks and creds.get(net, {}).get("email"):
-                c = creds[net]
-                print(f"  Connexion {net.capitalize()}...")
-                if LOGIN_FUNCS[net](page, c["email"], c["password"]):
-                    logged_in.add(net)
-                else:
-                    print(f"  ⚠ {net.capitalize()} : non connecté, scraping limité")
+        nets_needing_login = [n for n in ["facebook", "instagram", "linkedin"] if n in networks]
+        for net in nets_needing_login:
+            if ensure_logged_in(page, context, net):
+                logged_in.add(net)
         if logged_in:
-            print(f"  → Connecté sur : {', '.join(logged_in)}\n")
+            print(f"\n  → Connecté sur : {', '.join(logged_in)}\n")
+        else:
+            print(f"\n  ⚠ Aucun réseau connecté — les recherches par numéro ne fonctionneront pas\n")
 
         try:
             # ── Mode numéros WhatsApp ──
