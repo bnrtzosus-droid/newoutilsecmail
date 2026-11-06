@@ -76,6 +76,7 @@ def warn(msg): print(f"  {YLW}!{RST} {msg}")
 
 # ── Détection pays ────────────────────────────────────────────────────────────
 PAYS = [
+    # ── Afrique ──────────────────────────────────────────────────────────────
     ('+243','Congo RDC 🇨🇩'),('+242','Congo Brazza 🇨🇬'),('+225','Côte d\'Ivoire 🇨🇮'),
     ('+221','Sénégal 🇸🇳'),('+229','Bénin 🇧🇯'),('+228','Togo 🇹🇬'),('+223','Mali 🇲🇱'),
     ('+226','Burkina Faso 🇧🇫'),('+227','Niger 🇳🇪'),('+237','Cameroun 🇨🇲'),
@@ -83,17 +84,36 @@ PAYS = [
     ('+234','Nigeria 🇳🇬'),('+233','Ghana 🇬🇭'),('+254','Kenya 🇰🇪'),
     ('+255','Tanzanie 🇹🇿'),('+256','Ouganda 🇺🇬'),('+27','Afrique du Sud 🇿🇦'),
     ('+212','Maroc 🇲🇦'),('+213','Algérie 🇩🇿'),('+216','Tunisie 🇹🇳'),
+    ('+20','Égypte 🇪🇬'),('+251','Éthiopie 🇪🇹'),('+250','Rwanda 🇷🇼'),
+    ('+258','Mozambique 🇲🇿'),('+260','Zambie 🇿🇲'),('+263','Zimbabwe 🇿🇼'),
+    # ── Europe occidentale ────────────────────────────────────────────────────
     ('+33','France 🇫🇷'),('+32','Belgique 🇧🇪'),('+41','Suisse 🇨🇭'),
-    ('+44','Royaume-Uni 🇬🇧'),('+49','Allemagne 🇩🇪'),('+55','Brésil 🇧🇷'),
-    ('+91','Inde 🇮🇳'),('+1','USA/Canada 🇺🇸'),
+    ('+44','Royaume-Uni 🇬🇧'),('+353','Irlande 🇮🇪'),('+49','Allemagne 🇩🇪'),
+    ('+31','Pays-Bas 🇳🇱'),('+352','Luxembourg 🇱🇺'),('+34','Espagne 🇪🇸'),
+    ('+351','Portugal 🇵🇹'),('+39','Italie 🇮🇹'),('+423','Liechtenstein 🇱🇮'),
+    ('+377','Monaco 🇲🇨'),('+376','Andorre 🇦🇩'),('+43','Autriche 🇦🇹'),
+    # ── Europe du Nord ────────────────────────────────────────────────────────
     ('+46','Suède 🇸🇪'),('+47','Norvège 🇳🇴'),('+45','Danemark 🇩🇰'),
-    ('+358','Finlande 🇫🇮'),('+31','Pays-Bas 🇳🇱'),('+34','Espagne 🇪🇸'),
-    ('+39','Italie 🇮🇹'),('+351','Portugal 🇵🇹'),('+7','Russie 🇷🇺'),('+86','Chine 🇨🇳'),
-    ('+81','Japon 🇯🇵'),('+82','Corée du Sud 🇰🇷'),
-    ('+48','Pologne 🇵🇱'),('+420','Tchéquie 🇨🇿'),('+36','Hongrie 🇭🇺'),
-    ('+40','Roumanie 🇷🇴'),('+380','Ukraine 🇺🇦'),('+48','Pologne 🇵🇱'),
+    ('+358','Finlande 🇫🇮'),('+354','Islande 🇮🇸'),
+    ('+372','Estonie 🇪🇪'),('+371','Lettonie 🇱🇻'),('+370','Lituanie 🇱🇹'),
+    # ── Europe centrale & orientale ───────────────────────────────────────────
+    ('+48','Pologne 🇵🇱'),('+420','Tchéquie 🇨🇿'),('+421','Slovaquie 🇸🇰'),
+    ('+36','Hongrie 🇭🇺'),('+40','Roumanie 🇷🇴'),('+359','Bulgarie 🇧🇬'),
+    ('+386','Slovénie 🇸🇮'),('+385','Croatie 🇭🇷'),('+387','Bosnie 🇧🇦'),
+    ('+381','Serbie 🇷🇸'),('+382','Monténégro 🇲🇪'),('+383','Kosovo 🇽🇰'),
+    ('+389','Macédoine du Nord 🇲🇰'),('+355','Albanie 🇦🇱'),
+    ('+30','Grèce 🇬🇷'),('+357','Chypre 🇨🇾'),('+356','Malte 🇲🇹'),
+    ('+373','Moldavie 🇲🇩'),('+375','Biélorussie 🇧🇾'),('+380','Ukraine 🇺🇦'),
+    ('+7','Russie 🇷🇺'),('+995','Géorgie 🇬🇪'),('+374','Arménie 🇦🇲'),
+    # ── Moyen-Orient ─────────────────────────────────────────────────────────
     ('+90','Turquie 🇹🇷'),('+966','Arabie Saoudite 🇸🇦'),('+971','Émirats Arabes 🇦🇪'),
-    ('+212','Maroc 🇲🇦'),('+20','Égypte 🇪🇬'),
+    ('+965','Koweït 🇰🇼'),('+974','Qatar 🇶🇦'),('+962','Jordanie 🇯🇴'),
+    ('+961','Liban 🇱🇧'),('+964','Irak 🇮🇶'),('+98','Iran 🇮🇷'),
+    # ── Reste du monde ────────────────────────────────────────────────────────
+    ('+55','Brésil 🇧🇷'),('+1','USA/Canada 🇺🇸'),('+91','Inde 🇮🇳'),
+    ('+86','Chine 🇨🇳'),('+81','Japon 🇯🇵'),('+82','Corée du Sud 🇰🇷'),
+    ('+61','Australie 🇦🇺'),('+64','Nouvelle-Zélande 🇳🇿'),
+    ('+52','Mexique 🇲🇽'),('+54','Argentine 🇦🇷'),('+57','Colombie 🇨🇴'),
 ]
 
 def detecter_pays(phone):
