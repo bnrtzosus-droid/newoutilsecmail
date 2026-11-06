@@ -505,7 +505,11 @@ function showPage(page) {
 }
 
 function detectCountryInfo(paysName) {
-  return COUNTRIES.find(function(c){ return c.name === paysName; }) || { flag:'🌍' };
+  if (!paysName) return { flag:'🌍' };
+  var exact = COUNTRIES.find(function(c){ return c.name === paysName; });
+  if (exact) return exact;
+  var partial = COUNTRIES.find(function(c){ return paysName.toLowerCase().indexOf(c.name.toLowerCase()) !== -1 || c.name.toLowerCase().indexOf(paysName.toLowerCase()) !== -1; });
+  return partial || { flag:'🌍' };
 }
 
 function loadContactsFromDB() {
