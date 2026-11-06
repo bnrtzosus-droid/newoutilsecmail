@@ -608,6 +608,20 @@ body {
           <button class="ef-net" data-net="youtube" onclick="selectNet('youtube')">▶ YouTube</button>
           <button class="ef-net" data-net="facebook" onclick="selectNet('facebook')">📘 Facebook</button>
         </div>
+        <div class="cp-wrap" id="cpWrapEmail">
+          <button class="cp-btn" id="cpBtnEmail" onclick="toggleCpEmail()">
+            <div class="cp-flag" id="cpFlagEmail">🌍</div>
+            <span id="cpLabelEmail">Tous les pays</span>
+            <svg class="cp-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="cp-dropdown" id="cpDropdownEmail">
+            <div class="cp-search-wrap">
+              <svg class="cp-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="cp-search" id="cpSearchEmail" type="text" placeholder="Rechercher..." oninput="filterCpEmail(this.value)" autocomplete="off">
+            </div>
+            <div class="cp-list" id="cpListEmail"></div>
+          </div>
+        </div>
       </div>
       <div id="emailList">
         <div class="contacts-empty">Aucun email trouvé — lancez le logiciel email_finder.py pour collecter des contacts.</div>
@@ -686,6 +700,7 @@ var activeHistPays = 'TOUS';
 var currentPage = 'contacts';
 var sbEmails = [];
 var activeNet = 'ALL';
+var activeEmailPays = 'TOUS';
 var toastTimer;
 
 /* ── Auth (vérification locale SHA-256, pas de réseau) ───── */
@@ -1057,18 +1072,70 @@ function renderEmails() {
   var badge = document.getElementById('navBadgeEmail');
   badge.textContent = total; badge.style.display = total > 0 ? '' : 'none';
   document.getElementById('emailBadge').textContent = total;
+  if (activeEmailPays === 'TOUS') document.getElementById('cpLabelEmail').textContent = 'Tous ('+total+')';
+  renderEmailList();
+}
+
+function getEmailPaysList() {
+  var pays = {};
+  sbEmails.forEach(function(e){
+    var p = e.country || 'Inconnu';
+    pays[p] = (pays[p] || 0) + 1;
+  });
+  return pays;
+}
+
+function buildCpEmailList(query) {
+  var pays = getEmailPaysList();
+  var total = sbEmails.length;
+  var allItems = [{flag:'🌍', name:'Tous les pays', code:'', key:'TOUS', count:total}]
+    .concat(Object.keys(pays).sort().map(function(p){
+      var info = detectCountryInfo(p);
+      return {flag:info.flag||'🌍', name:p, code:'', key:p, count:pays[p]};
+    }));
+  var q = (query||'').toLowerCase();
+  var filtered = q ? allItems.filter(function(i){ return i.name.toLowerCase().indexOf(q)!==-1; }) : allItems;
+  var html = filtered.map(function(i){
+    var label = i.key==='TOUS' ? 'Tous ('+total+')' : i.name+' ('+i.count+')';
+    return '<div class="cp-item'+(activeEmailPays===i.key?' active':'')+'" onclick="selectEmailPays(\''+i.key.replace(/'/g,"\\'")+'\',\''+i.flag+'\',\''+label.replace(/'/g,"\\'")+'\')"><div class="cp-item-flag">'+i.flag+'</div><div class="cp-item-info"><div class="cp-item-name">'+label+'</div></div></div>';
+  }).join('');
+  document.getElementById('cpListEmail').innerHTML = html || '<div style="padding:16px;text-align:center;color:var(--fg2);font-size:13px;">Aucun résultat</div>';
+}
+
+function toggleCpEmail() {
+  var btn = document.getElementById('cpBtnEmail');
+  var dd  = document.getElementById('cpDropdownEmail');
+  var open = dd.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  if (open) {
+    buildCpEmailList('');
+    setTimeout(function(){ document.getElementById('cpSearchEmail').focus(); }, 60);
+  }
+}
+
+function filterCpEmail(q) { buildCpEmailList(q); }
+
+function selectEmailPays(key, flag, label) {
+  activeEmailPays = key;
+  document.getElementById('cpFlagEmail').textContent = flag;
+  document.getElementById('cpLabelEmail').textContent = label;
+  document.getElementById('cpBtnEmail').classList.remove('open');
+  document.getElementById('cpDropdownEmail').classList.remove('open');
+  document.getElementById('cpSearchEmail').value = '';
   renderEmailList();
 }
 
 function renderEmailList() {
   var el = document.getElementById('emailList');
-  var list = activeNet === 'ALL' ? sbEmails : sbEmails.filter(function(e){ return e.network === activeNet; });
+  var list = sbEmails;
+  if (activeNet !== 'ALL') list = list.filter(function(e){ return e.network === activeNet; });
+  if (activeEmailPays !== 'TOUS') list = list.filter(function(e){ return (e.country||'Inconnu') === activeEmailPays; });
   if (!sbEmails.length) {
     el.innerHTML = '<div class="contacts-empty">Aucun email trouvé — lancez le logiciel email_finder.py pour collecter des contacts.</div>';
     return;
   }
   if (!list.length) {
-    el.innerHTML = '<div class="contacts-empty">Aucun contact pour ce réseau.</div>';
+    el.innerHTML = '<div class="contacts-empty">Aucun contact pour ce filtre.</div>';
     return;
   }
   el.innerHTML = '<div class="email-grid">' + list.map(function(c){
@@ -1151,6 +1218,11 @@ document.addEventListener('click', function(e){
   if (wrapH && !wrapH.contains(e.target)) {
     document.getElementById('cpBtnHist').classList.remove('open');
     document.getElementById('cpDropdownHist').classList.remove('open');
+  }
+  var wrapE = document.getElementById('cpWrapEmail');
+  if (wrapE && !wrapE.contains(e.target)) {
+    document.getElementById('cpBtnEmail').classList.remove('open');
+    document.getElementById('cpDropdownEmail').classList.remove('open');
   }
 });
 </script>
