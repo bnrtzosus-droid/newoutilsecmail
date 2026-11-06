@@ -103,6 +103,87 @@ def extract_contact(text: str) -> tuple[list[str], list[str]]:
     return emails, phones
 
 
+def detect_account_type(page, network: str) -> str:
+    """Return 'entreprise', 'personnel', or 'inconnu'."""
+    try:
+        html = page.evaluate("() => document.documentElement.innerHTML") or ""
+        text = (page.inner_text("body") or "").lower()
+
+        if network == "instagram":
+            # Business/creator indicators
+            biz_keywords = ["compte professionnel", "professional account", "creator",
+                            "créateur", "business", "boutique", "artiste", "musicien",
+                            "marque personnelle", "coach", "entreprise"]
+            if any(k in text for k in biz_keywords):
+                return "entreprise"
+            if '"is_business":true' in html or '"is_business": true' in html:
+                return "entreprise"
+            if '"is_professional_account":true' in html:
+                return "entreprise"
+            return "personnel"
+
+        if network == "linkedin":
+            # /company/ URL = business, /in/ = personal
+            url = page.url
+            if "/company/" in url or "/school/" in url:
+                return "entreprise"
+            return "personnel"
+
+        if network == "facebook":
+            url = page.url
+            # Pages have /pages/ in URL or "Aimer" button
+            if "/pages/" in url.lower():
+                return "entreprise"
+            if "j'aime cette page" in text or "aimer la page" in text or "like page" in text:
+                return "entreprise"
+            if '"page_type"' in html or '"category":' in html:
+                return "entreprise"
+            return "personnel"
+
+        if network == "twitter":
+            if "professional" in text or "entreprise" in text or "business" in text:
+                return "entreprise"
+            if '"professional_type"' in html:
+                return "entreprise"
+            return "personnel"
+
+        if network == "tiktok":
+            if "tiktok for business" in text or "business account" in text:
+                return "entreprise"
+            return "personnel"
+
+        if network == "youtube":
+            # Channels with many subscribers or brand accounts
+            if "marque" in text or "entreprise" in text or "official" in text or "officiel" in text:
+                return "entreprise"
+            return "personnel"
+    except Exception:
+        pass
+    return "inconnu"
+
+
+def extract_full_name(page, network: str) -> str:
+    """Try to extract the full name from a profile page."""
+    selectors = {
+        "instagram": ["h2._aacl", "h1", "span._ap3a._aaco._aacu._aacx._aad7._aade"],
+        "tiktok":    ["h1[data-e2e='user-title']", "h2[data-e2e='user-subtitle']"],
+        "twitter":   ["div[data-testid='UserName'] span", "[data-testid='UserName']"],
+        "linkedin":  ["h1.text-heading-xlarge", "h1.top-card-layout__title"],
+        "youtube":   ["#channel-name yt-formatted-string", "ytd-channel-name yt-formatted-string"],
+        "facebook":  ["h1", "[data-key='profile-name']"],
+    }
+    for sel in selectors.get(network, ["h1"]):
+        try:
+            el = page.query_selector(sel)
+            if el:
+                name = el.inner_text().strip()
+                if name and len(name) > 1:
+                    return name
+        except Exception:
+            pass
+    return ""
+
+
 def get_all_contact_text(page) -> str:
     """
     Collect every piece of text that could contain emails/phones:
@@ -200,19 +281,24 @@ def scrape_instagram(page, country: str, niche: str, limit: int) -> int:
                             pass
                         emails, phones = extract_contact(full_text)
                         if emails or phones:
+                            full_name    = extract_full_name(page, "instagram")
+                            account_type = detect_account_type(page, "instagram")
                             for em in emails or [None]:
                                 contact = {
-                                    "username": username,
-                                    "network": "instagram",
-                                    "profile_url": f"https://www.instagram.com/{username}/",
-                                    "country": country,
-                                    "bio": bio[:500],
-                                    "email": em,
-                                    "phone": phones[0] if phones else None,
+                                    "username":     username,
+                                    "full_name":    full_name or username,
+                                    "network":      "instagram",
+                                    "profile_url":  f"https://www.instagram.com/{username}/",
+                                    "country":      country,
+                                    "bio":          bio[:500],
+                                    "email":        em,
+                                    "phone":        phones[0] if phones else None,
+                                    "account_type": account_type,
                                 }
                                 if save_contact(contact):
                                     found += 1
-                                    print(f"  ✓ Instagram @{username} → {em or phones[0]}")
+                                    label = full_name or username
+                                    print(f"  ✓ Instagram {label} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -252,19 +338,19 @@ def scrape_tiktok(page, country: str, niche: str, limit: int) -> int:
                     full_text = get_all_contact_text(page)
                     emails, phones = extract_contact(full_text)
                     if emails or phones:
+                        full_name    = extract_full_name(page, "tiktok")
+                        account_type = detect_account_type(page, "tiktok")
                         for em in emails or [None]:
                             contact = {
-                                "username": username,
-                                "network": "tiktok",
-                                "profile_url": link,
-                                "country": country,
-                                "bio": bio[:500],
-                                "email": em,
-                                "phone": phones[0] if phones else None,
+                                "username": username, "full_name": full_name or username,
+                                "network": "tiktok", "profile_url": link,
+                                "country": country, "bio": bio[:500],
+                                "email": em, "phone": phones[0] if phones else None,
+                                "account_type": account_type,
                             }
                             if save_contact(contact):
                                 found += 1
-                                print(f"  ✓ TikTok @{username} → {em or phones[0]}")
+                                print(f"  ✓ TikTok {full_name or username} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -307,19 +393,19 @@ def scrape_twitter(page, country: str, niche: str, limit: int) -> int:
                     full_text = get_all_contact_text(page)
                     emails, phones = extract_contact(full_text)
                     if emails or phones:
+                        full_name    = extract_full_name(page, "twitter")
+                        account_type = detect_account_type(page, "twitter")
                         for em in emails or [None]:
                             contact = {
-                                "username": username,
-                                "network": "twitter",
-                                "profile_url": link,
-                                "country": country,
-                                "bio": bio[:500],
-                                "email": em,
-                                "phone": phones[0] if phones else None,
+                                "username": username, "full_name": full_name or username,
+                                "network": "twitter", "profile_url": link,
+                                "country": country, "bio": bio[:500],
+                                "email": em, "phone": phones[0] if phones else None,
+                                "account_type": account_type,
                             }
                             if save_contact(contact):
                                 found += 1
-                                print(f"  ✓ Twitter @{username} → {em or phones[0]}")
+                                print(f"  ✓ Twitter {full_name or username} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -371,19 +457,19 @@ def scrape_linkedin(page, country: str, niche: str, limit: int) -> int:
                     full_text = get_all_contact_text(page)
                     emails, phones = extract_contact(full_text)
                     if emails or phones:
+                        full_name    = extract_full_name(page, "linkedin")
+                        account_type = detect_account_type(page, "linkedin")
                         for em in emails or [None]:
                             contact = {
-                                "username": username,
-                                "network": "linkedin",
-                                "profile_url": link,
-                                "country": country,
-                                "bio": bio[:500],
-                                "email": em,
-                                "phone": phones[0] if phones else None,
+                                "username": username, "full_name": full_name or username,
+                                "network": "linkedin", "profile_url": link,
+                                "country": country, "bio": bio[:500],
+                                "email": em, "phone": phones[0] if phones else None,
+                                "account_type": account_type,
                             }
                             if save_contact(contact):
                                 found += 1
-                                print(f"  ✓ LinkedIn {username} → {em or phones[0]}")
+                                print(f"  ✓ LinkedIn {full_name or username} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -424,19 +510,19 @@ def scrape_youtube(page, country: str, niche: str, limit: int) -> int:
                     full_text = get_all_contact_text(page)
                     emails, phones = extract_contact(full_text)
                     if emails or phones:
+                        full_name    = extract_full_name(page, "youtube")
+                        account_type = detect_account_type(page, "youtube")
                         for em in emails or [None]:
                             contact = {
-                                "username": username,
-                                "network": "youtube",
-                                "profile_url": link,
-                                "country": country,
-                                "bio": bio[:500],
-                                "email": em,
-                                "phone": phones[0] if phones else None,
+                                "username": username, "full_name": full_name or username,
+                                "network": "youtube", "profile_url": link,
+                                "country": country, "bio": bio[:500],
+                                "email": em, "phone": phones[0] if phones else None,
+                                "account_type": account_type,
                             }
                             if save_contact(contact):
                                 found += 1
-                                print(f"  ✓ YouTube @{username} → {em or phones[0]}")
+                                print(f"  ✓ YouTube {full_name or username} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -487,19 +573,19 @@ def scrape_facebook(page, country: str, niche: str, limit: int) -> int:
                     full_text = get_all_contact_text(page)
                     emails, phones = extract_contact(full_text)
                     if emails or phones:
+                        full_name    = extract_full_name(page, "facebook")
+                        account_type = detect_account_type(page, "facebook")
                         for em in emails or [None]:
                             contact = {
-                                "username": username,
-                                "network": "facebook",
-                                "profile_url": link,
-                                "country": country,
-                                "bio": bio[:500],
-                                "email": em,
-                                "phone": phones[0] if phones else None,
+                                "username": username, "full_name": full_name or username,
+                                "network": "facebook", "profile_url": link,
+                                "country": country, "bio": bio[:500],
+                                "email": em, "phone": phones[0] if phones else None,
+                                "account_type": account_type,
                             }
                             if save_contact(contact):
                                 found += 1
-                                print(f"  ✓ Facebook {username} → {em or phones[0]}")
+                                print(f"  ✓ Facebook {full_name or username} [{account_type}] → {em or phones[0]}")
                 except Exception:
                     pass
         except (PWError, KeyboardInterrupt):
@@ -598,16 +684,19 @@ def scrape_profile_url(page, url: str, network: str, query: str, country: str) -
         emails, phones = extract_contact(full_text)
         if not emails and not phones:
             return None
-        # Guess username from URL
-        username = url.rstrip("/").split("/")[-1].split("?")[0]
+        username     = url.rstrip("/").split("/")[-1].split("?")[0]
+        full_name    = extract_full_name(page, network)
+        account_type = detect_account_type(page, network)
         return {
-            "username": username,
-            "network": network,
-            "profile_url": url,
-            "country": country,
-            "bio": query,
-            "email": emails[0] if emails else None,
-            "phone": phones[0] if phones else None,
+            "username":     username,
+            "full_name":    full_name or username,
+            "network":      network,
+            "profile_url":  url,
+            "country":      country,
+            "bio":          query,
+            "email":        emails[0] if emails else None,
+            "phone":        phones[0] if phones else None,
+            "account_type": account_type,
         }
     except Exception:
         return None

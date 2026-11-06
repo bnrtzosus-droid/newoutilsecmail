@@ -1141,20 +1141,26 @@ function renderEmailList() {
   el.innerHTML = '<div class="email-grid">' + list.map(function(c){
     var icon = NET_ICONS[c.network] || '🌐';
     var date = c.created_at ? new Date(c.created_at).toLocaleDateString('fr-FR') : '';
+    var typeColor = c.account_type === 'entreprise' ? 'var(--ac2)' : c.account_type === 'personnel' ? 'var(--fg2)' : 'var(--fg3)';
+    var typeLabel = c.account_type === 'entreprise' ? '🏢 Entreprise' : c.account_type === 'personnel' ? '👤 Personnel' : '❓ Inconnu';
     return '<div class="ecard">'
       + '<div class="ecard-icon">'+icon+'</div>'
       + '<div class="ecard-body">'
-      +   '<div class="ecard-username">'+(c.full_name || c.username)+'</div>'
+      +   '<div class="ecard-username" style="display:flex;align-items:center;gap:8px">'
+      +     (c.full_name && c.full_name !== c.username ? '<span>'+c.full_name+'</span><span style="color:var(--fg3);font-weight:400;font-size:12px">@'+c.username+'</span>' : c.username)
+      +   '</div>'
       +   (c.email ? '<div class="ecard-email">✉ '+c.email+'</div>' : '')
       +   (c.phone ? '<div class="ecard-phone">📞 '+c.phone+'</div>' : '')
       +   '<div class="ecard-meta">'
       +     '<span class="ecard-net-tag">'+c.network+'</span>'
+      +     '<span style="color:'+typeColor+';font-size:11px;font-weight:500">'+typeLabel+'</span>'
       +     (c.country ? '<span>🌍 '+c.country+'</span>' : '')
       +     (date ? '<span>'+date+'</span>' : '')
       +   '</div>'
       + '</div>'
       + '<div class="ecard-actions">'
       +   (c.email ? '<button class="btn-copy" onclick="copyText(\''+c.email+'\')">Copier</button>' : '')
+      +   '<a class="btn-copy" href="'+(c.profile_url||'#')+'" target="_blank" style="text-decoration:none">Profil</a>'
       +   '<button class="btn-del-em" onclick="removeEmail('+c.id+')" title="Supprimer">×</button>'
       + '</div>'
       + '</div>';
