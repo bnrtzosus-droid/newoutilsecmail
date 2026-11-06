@@ -651,9 +651,6 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
           Vérifier les numéros
         </button>
         <input type="file" id="csvFile" accept=".csv,.txt" style="display:none" onchange="importCSV(event)">
-        <button class="btn-secondary" onclick="document.getElementById('csvFile').click()" title="Importer CSV">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </button>
         <button class="btn-secondary" onclick="clearAll()" title="Effacer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
         </button>
@@ -706,16 +703,6 @@ select.inp { cursor:pointer; appearance:none; background-image:url("data:image/s
       </div>
     </div>
 
-    <!-- Country filter (inside card) -->
-    <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--bd)">
-      <div class="card-label" style="margin-bottom:10px">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        Filtrer par pays
-      </div>
-      <div class="pill-row" id="countryGrid">
-        <button class="pill active" data-code="ALL" onclick="filterCountry('ALL',this)">🌍 Tous</button>
-      </div>
-    </div>
   </div>
 
   <!-- Progress -->
