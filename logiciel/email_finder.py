@@ -85,6 +85,51 @@ def extract_contact(text: str) -> tuple[list[str], list[str]]:
     return emails, phones
 
 
+def get_all_contact_text(page) -> str:
+    """
+    Collect every piece of text that could contain emails/phones:
+    - All visible text
+    - All href attributes (mailto: and tel: links reveal contact directly)
+    - All JSON script tags (social networks embed contact info in JSON)
+    """
+    parts = []
+    try:
+        # Visible text
+        parts.append(page.inner_text("body") or "")
+    except Exception:
+        pass
+    try:
+        # mailto: and tel: links — direct gold
+        hrefs = page.eval_on_selector_all(
+            "a[href^='mailto:'], a[href^='tel:']",
+            "els => els.map(e => e.href)"
+        )
+        for h in hrefs:
+            # mailto:contact@example.com → extract cleanly
+            parts.append(h.replace("mailto:", " ").replace("tel:", " "))
+    except Exception:
+        pass
+    try:
+        # JSON in <script> tags (Instagram, Facebook, LinkedIn embed data here)
+        scripts = page.eval_on_selector_all(
+            "script[type='application/ld+json'], script[type='application/json']",
+            "els => els.map(e => e.textContent)"
+        )
+        for s in scripts:
+            parts.append(s or "")
+    except Exception:
+        pass
+    try:
+        # Instagram / Facebook store data in window.__additionalData or similar
+        raw = page.evaluate("() => document.documentElement.innerHTML")
+        # pull out any JSON-looking email fields
+        for match in re.finditer(r'"(?:email|business_email|contact_email|phone|business_phone_number|phone_number)"\s*:\s*"([^"]+)"', raw or ""):
+            parts.append(match.group(1))
+    except Exception:
+        pass
+    return " ".join(parts)
+
+
 def pause(a=1.5, b=3.5):
     time.sleep(random.uniform(a, b))
 
@@ -120,13 +165,22 @@ def scrape_instagram(page, country: str, niche: str, limit: int) -> int:
                     if username:
                         page.goto(f"https://www.instagram.com/{username}/", timeout=15000)
                         pause()
+                        # Try clicking "Contact" button (business accounts)
+                        try:
+                            contact_btn = page.query_selector("a[href^='mailto:'], a[href^='tel:'], button:has-text('Contact'), button:has-text('Email')")
+                            if contact_btn:
+                                contact_btn.click()
+                                pause(0.5, 1)
+                        except Exception:
+                            pass
+                        full_text = get_all_contact_text(page)
                         bio = ""
                         try:
-                            bio_el = page.query_selector("div._aa_c")
+                            bio_el = page.query_selector("div._aa_c") or page.query_selector("span._ap3a")
                             bio = bio_el.inner_text() if bio_el else ""
                         except Exception:
                             pass
-                        emails, phones = extract_contact(bio)
+                        emails, phones = extract_contact(full_text)
                         if emails or phones:
                             for em in emails or [None]:
                                 contact = {
@@ -170,14 +224,15 @@ def scrape_tiktok(page, country: str, niche: str, limit: int) -> int:
                 try:
                     page.goto(link, timeout=15000)
                     pause()
-                    bio = ""
                     username = link.split("/@")[-1].split("?")[0]
+                    bio = ""
                     try:
                         bio_el = page.query_selector("h2[data-e2e='user-bio']") or page.query_selector("span[data-e2e='user-bio']")
                         bio = bio_el.inner_text() if bio_el else ""
                     except Exception:
                         pass
-                    emails, phones = extract_contact(bio)
+                    full_text = get_all_contact_text(page)
+                    emails, phones = extract_contact(full_text)
                     if emails or phones:
                         for em in emails or [None]:
                             contact = {
@@ -222,17 +277,17 @@ def scrape_twitter(page, country: str, niche: str, limit: int) -> int:
                 try:
                     page.goto(link, timeout=15000)
                     pause()
-                    bio = ""
                     username = link.split("x.com/")[-1].split("/")[0]
+                    bio = ""
                     try:
                         bio_el = page.query_selector("[data-testid='UserDescription']")
                         bio = bio_el.inner_text() if bio_el else ""
-                        # also check website field
                         web_el = page.query_selector("[data-testid='UserUrl']")
                         bio += " " + (web_el.inner_text() if web_el else "")
                     except Exception:
                         pass
-                    emails, phones = extract_contact(bio)
+                    full_text = get_all_contact_text(page)
+                    emails, phones = extract_contact(full_text)
                     if emails or phones:
                         for em in emails or [None]:
                             contact = {
@@ -280,17 +335,23 @@ def scrape_linkedin(page, country: str, niche: str, limit: int) -> int:
                 try:
                     page.goto(link, timeout=15000)
                     pause()
-                    bio = ""
                     username = link.split("/in/")[-1].strip("/")
+                    bio = ""
                     try:
                         bio_el = page.query_selector(".pv-about__summary-text") or page.query_selector(".text-body-medium")
                         bio = bio_el.inner_text() if bio_el else ""
-                        # contact info section (sometimes visible without login)
-                        ci = page.query_selector(".pv-contact-info__contact-type")
-                        bio += " " + (ci.inner_text() if ci else "")
                     except Exception:
                         pass
-                    emails, phones = extract_contact(bio)
+                    # Try to open contact info panel
+                    try:
+                        ci_btn = page.query_selector("a[href*='contact-info'], a:has-text('Coordonnées'), a:has-text('Contact info')")
+                        if ci_btn:
+                            ci_btn.click()
+                            pause(0.8, 1.5)
+                    except Exception:
+                        pass
+                    full_text = get_all_contact_text(page)
+                    emails, phones = extract_contact(full_text)
                     if emails or phones:
                         for em in emails or [None]:
                             contact = {
@@ -335,18 +396,15 @@ def scrape_youtube(page, country: str, niche: str, limit: int) -> int:
                 try:
                     page.goto(link + "/about", timeout=15000)
                     pause()
-                    bio = ""
                     username = link.split("/@")[-1] if "/@" in link else link.split("/channel/")[-1]
+                    bio = ""
                     try:
                         bio_el = page.query_selector("#description-container") or page.query_selector("yt-formatted-string#description")
                         bio = bio_el.inner_text() if bio_el else ""
-                        # links section often has contact email
-                        links_el = page.query_selector_all("a.yt-simple-endpoint")
-                        for lnk in links_el:
-                            bio += " " + (lnk.get_attribute("href") or "")
                     except Exception:
                         pass
-                    emails, phones = extract_contact(bio)
+                    full_text = get_all_contact_text(page)
+                    emails, phones = extract_contact(full_text)
                     if emails or phones:
                         for em in emails or [None]:
                             contact = {
@@ -391,22 +449,25 @@ def scrape_facebook(page, country: str, niche: str, limit: int) -> int:
                 try:
                     page.goto(link, timeout=15000)
                     pause()
-                    bio = ""
                     username = link.split("facebook.com/")[-1].split("?")[0]
+                    bio = ""
+                    # Visit About/contact page directly
                     try:
-                        bio_el = page.query_selector("[data-key='about']") or page.query_selector("div[dir='auto']")
+                        page.goto(link.rstrip("/") + "/about_contact_and_basic_info", timeout=12000)
+                        pause(1, 2)
+                    except Exception:
+                        try:
+                            page.goto(link.rstrip("/") + "/about", timeout=10000)
+                            pause(1, 2)
+                        except Exception:
+                            pass
+                    try:
+                        bio_el = page.query_selector("div[data-pagelet='ProfileAppSection_0']") or page.query_selector("div[dir='auto']")
                         bio = bio_el.inner_text() if bio_el else ""
                     except Exception:
                         pass
-                    # also try About page
-                    try:
-                        page.goto(link.rstrip("/") + "/about", timeout=10000)
-                        pause(1, 2)
-                        about_el = page.query_selector("div[data-pagelet='ProfileAppSection_0']")
-                        bio += " " + (about_el.inner_text() if about_el else "")
-                    except Exception:
-                        pass
-                    emails, phones = extract_contact(bio)
+                    full_text = get_all_contact_text(page)
+                    emails, phones = extract_contact(full_text)
                     if emails or phones:
                         for em in emails or [None]:
                             contact = {
