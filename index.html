@@ -880,7 +880,7 @@ function detectCountryInfo(paysName) {
 }
 
 function loadContactsFromDB() {
-  sbFetch('/rest/v1/contacts_whatsapp?select=*&order=date_ajout.desc')
+  sbFetch('/rest/v1/contacts_whatsapp?select=*&order=date_ajout.asc')
     .then(function(r){ return r.json(); })
     .then(function(data){
       sbContacts = Array.isArray(data) ? data : [];
