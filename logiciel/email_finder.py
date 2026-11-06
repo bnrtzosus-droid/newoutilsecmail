@@ -501,6 +501,119 @@ SCRAPERS = {
     "facebook":  scrape_facebook,
 }
 
+# ── Recherche par nom / numéro ────────────────────────────────────────────────
+
+SITE_QUERIES = {
+    "instagram": "site:instagram.com",
+    "tiktok":    "site:tiktok.com",
+    "twitter":   "site:x.com OR site:twitter.com",
+    "linkedin":  "site:linkedin.com/in",
+    "youtube":   "site:youtube.com",
+    "facebook":  "site:facebook.com",
+}
+
+
+def google_search_profiles(page, query: str, network: str) -> list[str]:
+    """Search Google for a query on a specific network, return profile URLs."""
+    site = SITE_QUERIES.get(network, "")
+    q = urllib.parse.quote(f'"{query}" {site}')
+    try:
+        page.goto(f"https://www.google.com/search?q={q}&num=10", timeout=20000)
+        pause(1.5, 3)
+        # Accept cookies if needed
+        try:
+            btn = page.query_selector("button:has-text('Tout accepter'), button:has-text('Accept all')")
+            if btn:
+                btn.click()
+                pause(0.5, 1)
+        except Exception:
+            pass
+        links = page.eval_on_selector_all(
+            "a[href]",
+            """els => [...new Set(
+              els.map(e => e.href)
+                 .filter(h => h.includes('instagram.com/') || h.includes('tiktok.com/@') ||
+                              h.includes('x.com/') || h.includes('twitter.com/') ||
+                              h.includes('linkedin.com/in/') || h.includes('youtube.com/') ||
+                              h.includes('facebook.com/'))
+            )]"""
+        )
+        # Filter out generic pages
+        skip = ["login", "signup", "help", "about", "policies", "terms", "search", "hashtag", "explore"]
+        return [l for l in links if not any(s in l.lower() for s in skip)][:8]
+    except Exception as e:
+        print(f"  [!] Google search error: {e}")
+        return []
+
+
+def scrape_profile_url(page, url: str, network: str, query: str, country: str) -> dict | None:
+    """Visit a profile URL and extract contact info."""
+    try:
+        page.goto(url, timeout=18000)
+        pause(1.5, 3)
+        # LinkedIn: try contact info panel
+        if network == "linkedin":
+            try:
+                ci_btn = page.query_selector("a[href*='contact-info'], a:has-text('Coordonnées')")
+                if ci_btn:
+                    ci_btn.click()
+                    pause(0.8, 1.5)
+            except Exception:
+                pass
+        # Instagram: try contact button
+        if network == "instagram":
+            try:
+                cb = page.query_selector("a[href^='mailto:'], a[href^='tel:']")
+                if cb:
+                    cb.click()
+                    pause(0.5, 1)
+            except Exception:
+                pass
+        # Facebook: go to about page
+        if network == "facebook":
+            try:
+                page.goto(url.rstrip("/") + "/about_contact_and_basic_info", timeout=10000)
+                pause(1, 2)
+            except Exception:
+                pass
+        full_text = get_all_contact_text(page)
+        emails, phones = extract_contact(full_text)
+        if not emails and not phones:
+            return None
+        # Guess username from URL
+        username = url.rstrip("/").split("/")[-1].split("?")[0]
+        return {
+            "username": username,
+            "network": network,
+            "profile_url": url,
+            "country": country,
+            "bio": query,
+            "email": emails[0] if emails else None,
+            "phone": phones[0] if phones else None,
+        }
+    except Exception:
+        return None
+
+
+def search_by_query(page, query: str, networks: list, country: str) -> int:
+    """Search all networks for a name or phone number."""
+    total = 0
+    for net in networks:
+        print(f"\n  [{net.upper()}] Recherche : {query}")
+        profile_urls = google_search_profiles(page, query, net)
+        if not profile_urls:
+            print(f"  → Aucun profil trouvé sur Google")
+            continue
+        for url in profile_urls:
+            contact = scrape_profile_url(page, url, net, query, country)
+            if contact:
+                if save_contact(contact):
+                    total += 1
+                    info = contact.get("email") or contact.get("phone") or "trouvé"
+                    print(f"  ✓ {net} @{contact['username']} → {info}")
+            pause(1, 2)
+    return total
+
 
 def main():
     parser = argparse.ArgumentParser(description="Email Finder — scrape public emails/phones from social media")
@@ -514,6 +627,9 @@ def main():
                         help="Max contacts per network (default: 20)")
     parser.add_argument("--headless", action="store_true", default=False,
                         help="Run browser in headless mode")
+    # Recherche par nom / numéro
+    parser.add_argument("--search", "-s", type=str, default=None,
+                        help='Recherche par nom, prénom ou numéro. Ex: --search "Jean Dupont" ou --search "+33612345678"')
     args = parser.parse_args()
 
     networks = list(SCRAPERS) if args.network == "all" else [args.network]
@@ -523,10 +639,15 @@ def main():
     print(f"\n{'='*60}")
     print(f"  Email Finder — WhatsApp Checker Pro")
     print(f"{'='*60}")
-    print(f"  Pays    : {country}")
-    print(f"  Niche   : {niche}")
-    print(f"  Réseaux : {', '.join(networks)}")
-    print(f"  Limite  : {args.limit} par réseau")
+    if args.search:
+        print(f"  Mode    : Recherche par identité")
+        print(f"  Requête : {args.search}")
+        print(f"  Réseaux : {', '.join(networks)}")
+    else:
+        print(f"  Pays    : {country}")
+        print(f"  Niche   : {niche}")
+        print(f"  Réseaux : {', '.join(networks)}")
+        print(f"  Limite  : {args.limit} par réseau")
     print(f"{'='*60}\n")
 
     total = 0
@@ -541,10 +662,17 @@ def main():
             locale="fr-FR",
         )
         page = context.new_page()
-        # hide webdriver flag
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         try:
+            # ── Mode recherche par identité ──
+            if args.search:
+                total = search_by_query(page, args.search, networks, country)
+                print(f"\n{'='*60}")
+                print(f"  TOTAL : {total} contact(s) enregistré(s)")
+                print(f"{'='*60}\n")
+                return
+
             for net in networks:
                 print(f"\n[{net.upper()}]")
                 scraper = SCRAPERS[net]
