@@ -18,6 +18,7 @@
   --ac2:  #128C7E;
   --er:   #F87171;
   --r: 14px; --rs: 8px;
+  --sb: 260px;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: light) {
@@ -47,106 +48,108 @@
 body {
   background:var(--bg); color:var(--fg);
   font-family:'Inter',system-ui,sans-serif;
-  line-height:1.5; min-height:100vh;
-  padding-left:max(0px,env(safe-area-inset-left,0px));
-  padding-right:max(0px,env(safe-area-inset-right,0px));
-}
-body::before {
-  content:""; position:fixed; inset:0 0 auto;
-  height:env(safe-area-inset-top,0px); background:var(--bg); z-index:200;
+  line-height:1.5; height:100dvh; overflow:hidden;
+  display:flex;
 }
 
-/* Header */
-.hdr {
-  position:sticky; top:env(safe-area-inset-top,0px); z-index:100;
-  background:rgba(8,14,20,.88);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
+/* ── Sidebar ─────────────────────────────────────────────── */
+.sidebar {
+  width:var(--sb); flex-shrink:0;
+  background:var(--sf);
+  border-right:1px solid var(--bd);
+  display:flex; flex-direction:column;
+  height:100dvh; overflow:hidden;
+}
+
+.sb-brand {
+  display:flex; align-items:center; gap:12px;
+  padding:20px 20px 16px;
   border-bottom:1px solid var(--bd);
+  flex-shrink:0;
 }
-.hdr-inner {
-  max-width:1100px; margin:0 auto;
-  padding:0 max(24px,env(safe-area-inset-left,0px));
-  display:flex; align-items:center; justify-content:space-between; gap:16px;
-  height:62px;
-}
-.brand { display:flex; align-items:center; gap:12px; text-decoration:none; flex-shrink:0; }
-.brand-icon {
-  width:40px; height:40px;
+.sb-brand-icon {
+  width:42px; height:42px; flex-shrink:0;
   background:linear-gradient(135deg,var(--ac),var(--ac2));
-  border-radius:11px; display:grid; place-items:center;
-  font-size:20px; box-shadow:0 4px 16px rgba(37,211,102,.35); flex-shrink:0;
+  border-radius:12px; display:grid; place-items:center;
+  font-size:21px; box-shadow:0 4px 14px rgba(37,211,102,.30);
 }
-.brand-name { font-size:15px; font-weight:700; color:var(--fg); letter-spacing:-.3px; }
-.brand-sub  { font-size:11px; color:var(--fg2); }
+.sb-brand-name { font-size:14px; font-weight:700; color:var(--fg); letter-spacing:-.3px; line-height:1.2; }
+.sb-brand-sub  { font-size:11px; color:var(--fg2); margin-top:1px; }
 
-/* Nav */
-.nav { display:flex; align-items:center; gap:2px; }
-.nav-link {
+.sb-sync {
   display:flex; align-items:center; gap:7px;
-  padding:8px 15px; border-radius:var(--rs);
-  font-size:13.5px; font-weight:500; color:var(--fg2);
-  text-decoration:none; border:none; background:none;
-  cursor:pointer; transition:color .15s, background .15s;
-  white-space:nowrap; font-family:inherit;
-}
-.nav-link:hover { color:var(--fg); background:var(--sf2); }
-.nav-link.active { color:var(--ac); background:var(--acd2); }
-.nav-badge {
-  background:var(--ac); color:#fff;
-  border-radius:20px; padding:1px 7px; font-size:11px; font-weight:700; line-height:1.6;
-}
-.btn-menu {
-  display:none; background:var(--sf2); border:1px solid var(--bd);
-  border-radius:var(--rs); padding:9px 11px; cursor:pointer; color:var(--fg); line-height:1;
-}
-@media (max-width:680px) { .nav { display:none; } .btn-menu { display:flex; align-items:center; } }
-
-.nav-mobile {
-  display:none; flex-direction:column; gap:3px;
-  padding:10px max(24px,env(safe-area-inset-left,0px)) 14px;
-  border-top:1px solid var(--bd); background:rgba(8,14,20,.95);
-}
-.nav-mobile.open { display:flex; }
-.nav-mobile .nav-link { justify-content:flex-start; padding:11px 14px; }
-
-/* Hero */
-.hero {
-  background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);
-  border-bottom:1px solid var(--bd);
-  padding:40px max(24px,env(safe-area-inset-left,0px)) 36px;
-}
-.hero-inner { max-width:1100px; margin:0 auto; }
-.hero-pill {
-  display:inline-flex; align-items:center; gap:7px;
+  margin:14px 16px 0;
   background:var(--acd2); border:1px solid var(--bda);
-  border-radius:100px; padding:5px 14px;
-  font-size:12px; font-weight:600; color:var(--ac); margin-bottom:14px;
+  border-radius:10px; padding:8px 12px;
+  font-size:12px; font-weight:500; color:var(--ac);
+  flex-shrink:0;
 }
-.hero-pill::before { content:""; width:7px; height:7px; background:var(--ac); border-radius:50%; animation:pulse 2s infinite; }
+.sb-sync::before {
+  content:""; width:7px; height:7px; background:var(--ac);
+  border-radius:50%; flex-shrink:0; animation:pulse 2s infinite;
+}
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
-.hero-h { font-size:clamp(22px,4vw,32px); font-weight:800; line-height:1.2; letter-spacing:-.6px; text-wrap:balance; }
-.hero-h span { color:var(--ac); }
-.hero-p { font-size:14.5px; color:var(--fg2); margin-top:10px; line-height:1.65; max-width:460px; }
-.hero-kpi { display:flex; align-items:center; gap:24px; margin-top:24px; flex-wrap:wrap; }
-.kpi { text-align:center; }
-.kpi-n { font-size:28px; font-weight:800; color:var(--ac); letter-spacing:-.5px; }
-.kpi-l { font-size:11.5px; color:var(--fg2); font-weight:500; margin-top:2px; }
-.kpi-sep { width:1px; height:40px; background:var(--bd); }
 
-/* Page */
-.page { max-width:1100px; margin:0 auto; padding:32px max(24px,env(safe-area-inset-left,0px)) 80px; }
+.sb-nav {
+  display:flex; flex-direction:column; gap:3px;
+  padding:14px 10px 10px; flex-shrink:0;
+  border-bottom:1px solid var(--bd);
+}
+.sb-link {
+  display:flex; align-items:center; gap:11px;
+  padding:11px 12px; border-radius:10px;
+  font-size:14px; font-weight:500; color:var(--fg2);
+  border:none; background:none; cursor:pointer;
+  text-align:left; width:100%; font-family:inherit;
+  transition:color .15s, background .15s; position:relative;
+}
+.sb-link:hover { color:var(--fg); background:var(--sf2); }
+.sb-link.active { color:var(--ac); background:var(--acd2); font-weight:600; }
+.sb-link svg { flex-shrink:0; }
+.sb-badge {
+  margin-left:auto; background:var(--ac); color:#fff;
+  border-radius:20px; padding:1px 8px; font-size:11px; font-weight:700; line-height:1.6;
+}
 
-/* Section header */
-.sec-hdr { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
-.sec-title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:9px; color:var(--fg); }
-.sec-title svg { color:var(--ac); }
+.sb-stats {
+  padding:16px 20px; margin-top:auto;
+  border-top:1px solid var(--bd); flex-shrink:0;
+}
+.sb-stat { display:flex; align-items:center; justify-content:space-between; padding:5px 0; }
+.sb-stat-label { font-size:12px; color:var(--fg2); }
+.sb-stat-val   { font-size:13px; font-weight:700; color:var(--ac); font-family:'JetBrains Mono',monospace; }
+
+/* ── Main content ────────────────────────────────────────── */
+.main {
+  flex:1; min-width:0;
+  display:flex; flex-direction:column;
+  height:100dvh; overflow:hidden;
+}
+
+.main-hdr {
+  background:var(--bg2); border-bottom:1px solid var(--bd);
+  padding:0 28px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  height:62px; flex-shrink:0; flex-wrap:wrap;
+}
+.main-title {
+  font-size:16px; font-weight:700; display:flex; align-items:center; gap:9px;
+}
+.main-title svg { color:var(--ac); }
 .sec-badge {
   background:var(--acd); color:var(--ac); border:1px solid var(--bda);
   border-radius:100px; padding:2px 10px; font-size:12px; font-weight:700;
 }
+.main-actions { display:flex; gap:8px; }
 
-/* Pays filter pills */
+.main-body {
+  flex:1; overflow-y:auto; padding:24px 28px 40px;
+}
+.main-body::-webkit-scrollbar { width:4px; }
+.main-body::-webkit-scrollbar-track { background:transparent; }
+.main-body::-webkit-scrollbar-thumb { background:var(--sf3); border-radius:2px; }
+
+/* ── Pays pills ──────────────────────────────────────────── */
 .pill-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
 .pill {
   background:var(--sf2); border:1px solid var(--bd); border-radius:100px;
@@ -156,13 +159,12 @@ body::before {
 .pill:hover { border-color:var(--bda); color:var(--fg); background:var(--sf3); }
 .pill.active { background:var(--acd); border-color:var(--bda); color:var(--ac); font-weight:600; }
 
-/* Contact grid */
+/* ── Contact grid ────────────────────────────────────────── */
 .contact-grid {
   display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px;
 }
 .ccard {
-  background:var(--sf);
-  border:1px solid rgba(37,211,102,.20);
+  background:var(--sf); border:1px solid rgba(37,211,102,.20);
   border-radius:var(--r); padding:16px;
   display:flex; align-items:center; gap:14px;
   background:linear-gradient(135deg,var(--sf) 0%,rgba(37,211,102,.03) 100%);
@@ -179,6 +181,7 @@ body::before {
 .ccard-meta  { font-size:11.5px; color:var(--fg2); margin-top:3px; }
 .ccard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 
+/* ── Buttons ─────────────────────────────────────────────── */
 .btn-wa {
   display:flex; align-items:center; gap:5px;
   background:var(--acd); color:var(--ac); border:1px solid var(--bda);
@@ -187,14 +190,12 @@ body::before {
   cursor:pointer; text-decoration:none; white-space:nowrap; transition:background .15s;
 }
 .btn-wa:hover { background:var(--bda); }
-
 .btn-del {
   background:none; border:none; color:var(--fg3); cursor:pointer;
   padding:5px 7px; border-radius:6px; font-size:17px; line-height:1;
   transition:color .15s, background .15s;
 }
 .btn-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
-
 .btn-ghost {
   display:inline-flex; align-items:center; gap:6px;
   background:var(--acd2); color:var(--ac); border:1px solid var(--bda);
@@ -202,7 +203,6 @@ body::before {
   font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; transition:background .15s;
 }
 .btn-ghost:hover { background:var(--acd); }
-
 .btn-secondary {
   display:inline-flex; align-items:center; gap:7px;
   background:var(--sf2); color:var(--fg2); border:1px solid var(--bd);
@@ -211,19 +211,19 @@ body::before {
 }
 .btn-secondary:hover { background:var(--sf3); color:var(--fg); }
 
+/* ── Empty state ─────────────────────────────────────────── */
 .contacts-empty {
   text-align:center; padding:60px 24px; color:var(--fg2); font-size:14px;
   background:var(--sf); border:1px dashed var(--bd); border-radius:var(--r);
   line-height:1.65;
 }
 
-/* History */
+/* ── History ─────────────────────────────────────────────── */
 .hist-list { display:flex; flex-direction:column; gap:8px; }
 .hist-card {
   background:var(--sf); border:1px solid var(--bd);
   border-radius:var(--r); padding:16px 20px;
-  display:flex; align-items:center; gap:16px;
-  transition:border-color .15s;
+  display:flex; align-items:center; gap:16px; transition:border-color .15s;
 }
 .hist-card:hover { border-color:var(--bda); }
 .hist-idx {
@@ -233,10 +233,7 @@ body::before {
   display:grid; place-items:center; flex-shrink:0;
 }
 .hist-body { flex:1; min-width:0; }
-.hist-number {
-  font-size:14.5px; font-family:'JetBrains Mono',monospace; font-weight:600;
-  color:var(--fg); letter-spacing:.3px;
-}
+.hist-number { font-size:14.5px; font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--fg); }
 .hist-meta { font-size:12px; color:var(--fg2); margin-top:4px; display:flex; gap:12px; flex-wrap:wrap; }
 .hist-tag {
   display:inline-flex; align-items:center; gap:4px;
@@ -256,9 +253,9 @@ body::before {
 }
 .hist-del:hover { color:var(--er); background:rgba(248,113,113,.10); }
 
-/* Toast */
+/* ── Toast ───────────────────────────────────────────────── */
 .toast {
-  position:fixed; bottom:calc(24px + env(safe-area-inset-bottom,0px)); left:50%;
+  position:fixed; bottom:28px; left:50%;
   transform:translateX(-50%) translateY(80px);
   background:var(--fg); color:var(--bg); padding:10px 22px; border-radius:100px;
   font-size:14px; font-weight:600; z-index:300;
@@ -266,78 +263,83 @@ body::before {
   white-space:nowrap; pointer-events:none; box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── Mobile ──────────────────────────────────────────────── */
+@media (max-width:680px) {
+  :root { --sb: 100vw; }
+  body { flex-direction:column; overflow:auto; height:auto; }
+  .sidebar {
+    width:100%; height:auto; flex-direction:row; flex-wrap:wrap;
+    border-right:none; border-bottom:1px solid var(--bd);
+    position:sticky; top:0; z-index:100;
+    background:rgba(8,14,20,.92);
+    backdrop-filter:blur(20px);
+  }
+  .sb-brand { border-bottom:none; padding:14px 16px; flex:1; }
+  .sb-sync  { display:none; }
+  .sb-nav   {
+    flex-direction:row; padding:0 10px 10px; border-bottom:none;
+    width:100%; gap:4px;
+  }
+  .sb-link  { flex:1; justify-content:center; padding:9px 8px; font-size:12px; }
+  .sb-stats { display:none; }
+  .main     { height:auto; overflow:visible; }
+  .main-body { overflow:visible; padding:16px 16px 40px; }
+  .main-hdr { padding:0 16px; }
+}
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="hdr">
-  <div class="hdr-inner">
-    <a class="brand" href="#">
-      <div class="brand-icon">📱</div>
-      <div>
-        <div class="brand-name">WhatsApp Checker Pro</div>
-        <div class="brand-sub">Détection automatique</div>
-      </div>
-    </a>
-    <nav class="nav">
-      <button class="nav-link active" id="navContacts" onclick="showPage('contacts')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Contacts
-        <span class="nav-badge" id="navBadge" style="display:none">0</span>
-      </button>
-      <button class="nav-link" id="navHistoire" onclick="showPage('histoire')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Historique
-        <span class="nav-badge" id="navBadgeHist" style="display:none">0</span>
-      </button>
-    </nav>
-    <button class="btn-menu" onclick="toggleMenu()" aria-label="Menu">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
-  </div>
-  <nav class="nav-mobile" id="navMobile">
-    <button class="nav-link active" id="navContactsMob" onclick="showPage('contacts');toggleMenu()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      Contacts
-      <span class="nav-badge" id="navBadgeMobile" style="display:none">0</span>
-    </button>
-    <button class="nav-link" id="navHistoireMob" onclick="showPage('histoire');toggleMenu()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Historique
-    </button>
-  </nav>
-</header>
-
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-pill">En ligne · Synchronisation temps réel</div>
-    <h1 class="hero-h">Contacts <span>WhatsApp</span> détectés<br>par le logiciel</h1>
-    <p class="hero-p">Les numéros confirmés sur WhatsApp par le logiciel Python apparaissent ici automatiquement en temps réel.</p>
-    <div class="hero-kpi">
-      <div class="kpi"><div class="kpi-n" id="kpiTotal">0</div><div class="kpi-l">Contacts total</div></div>
-      <div class="kpi-sep"></div>
-      <div class="kpi" id="kpiPaysWrap" style="display:none">
-        <div class="kpi-n" id="kpiPays">0</div>
-        <div class="kpi-l">Pays différents</div>
-      </div>
+<!-- Sidebar gauche -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-icon">📱</div>
+    <div>
+      <div class="sb-brand-name">WhatsApp Checker Pro</div>
+      <div class="sb-brand-sub">Détection automatique</div>
     </div>
   </div>
-</section>
 
-<!-- Main -->
-<main class="page">
+  <div class="sb-sync">En ligne · Sync temps réel</div>
+
+  <nav class="sb-nav">
+    <button class="sb-link active" id="navContacts" onclick="showPage('contacts')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contacts
+      <span class="sb-badge" id="navBadge" style="display:none">0</span>
+    </button>
+    <button class="sb-link" id="navHistoire" onclick="showPage('histoire')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Historique
+      <span class="sb-badge" id="navBadgeHist" style="display:none">0</span>
+    </button>
+  </nav>
+
+  <div class="sb-stats">
+    <div class="sb-stat">
+      <span class="sb-stat-label">Total contacts</span>
+      <span class="sb-stat-val" id="kpiTotal">0</span>
+    </div>
+    <div class="sb-stat" id="kpiPaysWrap" style="display:none">
+      <span class="sb-stat-label">Pays différents</span>
+      <span class="sb-stat-val" id="kpiPays">0</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Contenu principal -->
+<div class="main">
 
   <!-- Page Contacts -->
-  <div id="pageContacts">
-    <div class="sec-hdr">
-      <div class="sec-title">
+  <div id="pageContacts" style="display:contents">
+    <div class="main-hdr">
+      <div class="main-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Contacts WhatsApp
         <span class="sec-badge" id="contactsBadge">0</span>
       </div>
-      <div style="display:flex;gap:8px">
+      <div class="main-actions">
         <button class="btn-ghost" onclick="exportContacts()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter
@@ -348,33 +350,39 @@ body::before {
         </button>
       </div>
     </div>
-    <div class="pill-row" id="paysFilter">
-      <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
-    </div>
-    <div id="contactsList">
-      <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
+    <div class="main-body" id="bodyContacts">
+      <div class="pill-row" id="paysFilter">
+        <button class="pill active pays-btn" onclick="filterPays('TOUS',this)">🌍 Tous (0)</button>
+      </div>
+      <div id="contactsList">
+        <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
+      </div>
     </div>
   </div>
 
   <!-- Page Historique -->
   <div id="pageHistoire" style="display:none">
-    <div class="sec-hdr">
-      <div class="sec-title">
+    <div class="main-hdr">
+      <div class="main-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         Historique des recherches
         <span class="sec-badge" id="histBadge">0</span>
       </div>
-      <button class="btn-secondary" onclick="clearHistory()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        Vider l'historique
-      </button>
+      <div class="main-actions">
+        <button class="btn-secondary" onclick="clearHistory()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Vider
+        </button>
+      </div>
     </div>
-    <div id="histList">
-      <div class="contacts-empty">Aucune recherche enregistrée — le dernier numéro de chaque session apparaîtra ici.</div>
+    <div class="main-body">
+      <div id="histList">
+        <div class="contacts-empty">Aucune recherche enregistrée — le dernier numéro de chaque session apparaîtra ici.</div>
+      </div>
     </div>
   </div>
 
-</main>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -426,7 +434,9 @@ var COUNTRIES = [
 var SB_URL = 'https://qbyxezgkmhikfqytiruj.supabase.co';
 var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs';
 var sbContacts = [];
+var sbHistory  = [];
 var activePays = 'TOUS';
+var currentPage = 'contacts';
 var toastTimer;
 
 function sbFetch(path, opts) {
@@ -435,8 +445,14 @@ function sbFetch(path, opts) {
   }, opts || {}));
 }
 
-function toggleMenu() {
-  document.getElementById('navMobile').classList.toggle('open');
+function showPage(page) {
+  currentPage = page;
+  var isC = page === 'contacts';
+  document.getElementById('pageContacts').style.display = isC ? 'contents' : 'none';
+  document.getElementById('pageHistoire').style.display = isC ? 'none' : '';
+  document.getElementById('navContacts').classList.toggle('active', isC);
+  document.getElementById('navHistoire').classList.toggle('active', !isC);
+  if (!isC) loadHistory();
 }
 
 function detectCountryInfo(paysName) {
@@ -455,17 +471,14 @@ function loadContactsFromDB() {
 
 function removeContact(phone) {
   sbFetch('/rest/v1/contacts_whatsapp?phone=eq.'+encodeURIComponent(phone), {
-    method:'DELETE',
-    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json' }
+    method:'DELETE'
   }).then(function(){ loadContactsFromDB(); showToast('Contact supprimé'); });
 }
 
 function clearContacts() {
   if (!confirm('Vider tous les contacts ?')) return;
-  sbFetch('/rest/v1/contacts_whatsapp?id=gt.0', {
-    method:'DELETE',
-    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Content-Type':'application/json' }
-  }).then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
+  sbFetch('/rest/v1/contacts_whatsapp?id=gt.0', { method:'DELETE' })
+    .then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
 }
 
 function filterPays(p, btn) {
@@ -489,15 +502,9 @@ function renderAll() {
   var pays  = getPaysList();
   var nPays = Object.keys(pays).length;
 
-  // Nav badges
-  ['navBadge','navBadgeMobile'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = total;
-    el.style.display = total > 0 ? '' : 'none';
-  });
+  var badge = document.getElementById('navBadge');
+  badge.textContent = total; badge.style.display = total > 0 ? '' : 'none';
 
-  // Hero KPIs
   document.getElementById('kpiTotal').textContent = total;
   document.getElementById('contactsBadge').textContent = total;
   if (nPays > 0) {
@@ -507,7 +514,6 @@ function renderAll() {
     document.getElementById('kpiPaysWrap').style.display = 'none';
   }
 
-  // Pays pills
   var html = '<button class="pill pays-btn'+(activePays==='TOUS'?' active':'')+'" onclick="filterPays(\'TOUS\',this)">🌍 Tous ('+total+')</button>';
   Object.keys(pays).sort().forEach(function(p){
     var info = detectCountryInfo(p);
@@ -516,7 +522,6 @@ function renderAll() {
       + '</button>';
   });
   document.getElementById('paysFilter').innerHTML = html;
-
   renderList();
 }
 
@@ -569,28 +574,6 @@ function exportContacts() {
   showToast('Contacts exportés !');
 }
 
-function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
-}
-
-var sbHistory = [];
-var currentPage = 'contacts';
-
-function showPage(page) {
-  currentPage = page;
-  document.getElementById('pageContacts').style.display  = page === 'contacts' ? '' : 'none';
-  document.getElementById('pageHistoire').style.display  = page === 'histoire' ? '' : 'none';
-  ['navContacts','navHistoire','navContactsMob','navHistoireMob'].forEach(function(id){
-    var el = document.getElementById(id); if (!el) return;
-    var isActive = (id.includes('Contacts') && page==='contacts') || (id.includes('Histoire') && page==='histoire');
-    el.classList.toggle('active', isActive);
-  });
-  if (page === 'histoire') loadHistory();
-}
-
 function loadHistory() {
   sbFetch('/rest/v1/search_history?select=*&order=finished_at.desc&limit=100')
     .then(function(r){ return r.json(); })
@@ -602,7 +585,7 @@ function loadHistory() {
 }
 
 function renderHistory() {
-  var el = document.getElementById('histList');
+  var el    = document.getElementById('histList');
   var badge = document.getElementById('histBadge');
   var navB  = document.getElementById('navBadgeHist');
   badge.textContent = sbHistory.length;
@@ -614,17 +597,17 @@ function renderHistory() {
     return;
   }
   el.innerHTML = '<div class="hist-list">' + sbHistory.map(function(h, i){
-    var date = h.finished_at ? new Date(h.finished_at).toLocaleString('fr-FR') : '';
-    var total = h.total_checked > 0 ? h.total_checked.toLocaleString('fr-FR') + ' numéros vérifiés' : '';
-    var session = h.session_name ? h.session_name : '';
+    var date    = h.finished_at ? new Date(h.finished_at).toLocaleString('fr-FR') : '';
+    var total   = h.total_checked > 0 ? h.total_checked.toLocaleString('fr-FR') + ' numéros vérifiés' : '';
+    var session = h.session_name || '';
     return '<div class="hist-card">'
       + '<div class="hist-idx">#'+(i+1)+'</div>'
       + '<div class="hist-body">'
       +   '<div class="hist-number">Reprendre à : '+h.last_number+'</div>'
       +   '<div class="hist-meta">'
       +     (session ? '<span class="hist-tag">'+session+'</span>' : '')
-      +     (total ? '<span>📊 '+total+'</span>' : '')
-      +     (date ? '<span>🕐 '+date+'</span>' : '')
+      +     (total   ? '<span>📊 '+total+'</span>' : '')
+      +     (date    ? '<span>🕐 '+date+'</span>'  : '')
       +   '</div>'
       + '</div>'
       + '<button class="hist-copy" onclick="copyNumber(\''+h.last_number+'\')">Copier</button>'
@@ -635,29 +618,31 @@ function renderHistory() {
 
 function copyNumber(num) {
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(num).then(function(){ showToast('Numéro copié !'); }).catch(function(){
-      fallbackCopy(num);
-    });
+    navigator.clipboard.writeText(num).then(function(){ showToast('Numéro copié !'); }).catch(function(){ fallbackCopy(num); });
   } else { fallbackCopy(num); }
 }
-
 function fallbackCopy(text) {
   var ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
   document.body.appendChild(ta); ta.select();
   try { document.execCommand('copy'); showToast('Numéro copié !'); } catch(e) { showToast(text); }
   document.body.removeChild(ta);
 }
-
 function deleteHistory(id) {
   sbFetch('/rest/v1/search_history?id=eq.'+id, { method:'DELETE' })
     .then(function(){ loadHistory(); showToast('Entrée supprimée'); });
 }
-
 function clearHistory() {
   if (!confirm('Vider tout l\'historique ?')) return;
   sbFetch('/rest/v1/search_history?id=gt.0', { method:'DELETE' })
     .then(function(){ loadHistory(); showToast('Historique vidé'); });
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', function(){
