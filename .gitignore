@@ -1,6 +1,7 @@
 # Credentials & sessions — never commit
 logiciel/comptes.json
 logiciel/session.json
+logiciel/browser_profile/
 
 # Python
 __pycache__/

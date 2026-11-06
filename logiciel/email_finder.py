@@ -1294,23 +1294,17 @@ def main():
     print(f"  Email Finder — WhatsApp Checker Pro")
     print(f"{'='*60}\n")
 
+    # Profil navigateur persistant — sauvegarde les connexions entre les sessions
+    PROFILE_DIR = Path(__file__).parent / "browser_profile"
+    PROFILE_DIR.mkdir(exist_ok=True)
+
     total = 0
     with sync_playwright() as pw:
-        # Charger la session sauvegardée si elle existe
-        storage_state = None
-        if SESSION_FILE.exists():
-            try:
-                storage_state = json.loads(SESSION_FILE.read_text(encoding="utf-8"))
-                print("  → Session précédente trouvée, restauration...")
-            except Exception:
-                pass
-
-        browser = pw.chromium.launch(
+        # Contexte persistant = les cookies/sessions sont sauvegardés automatiquement
+        context = pw.chromium.launch_persistent_context(
+            str(PROFILE_DIR),
             headless=headless,
             args=["--no-sandbox", "--disable-blink-features=AutomationControlled"],
-        )
-        context = browser.new_context(
-            storage_state=storage_state,
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             viewport={"width": 1366, "height": 768},
             locale="fr-FR",
@@ -1318,7 +1312,7 @@ def main():
         page = context.new_page()
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-        # ── Connexion aux réseaux (session ou manuelle) ────────────────────────
+        # ── Vérification / connexion manuelle ─────────────────────────────────
         logged_in = set()
         nets_needing_login = [n for n in ["facebook", "instagram", "linkedin"] if n in networks]
         for net in nets_needing_login:
@@ -1371,8 +1365,7 @@ def main():
                         print(f"  [!] Erreur {net}: {e}")
         finally:
             try:
-                context.close()
-                browser.close()
+                context.close()  # persistent context — ferme browser + sauvegarde profil
             except Exception:
                 pass
 
