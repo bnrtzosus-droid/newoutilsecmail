@@ -622,9 +622,9 @@ function renderHistory() {
       + '<div class="hist-body">'
       +   '<div class="hist-number">Reprendre à : '+h.last_number+'</div>'
       +   '<div class="hist-meta">'
-      +     (date ? '<span>🕐 '+date+'</span>' : '')
-      +     (total ? '<span>📊 '+total+'</span>' : '')
       +     (session ? '<span class="hist-tag">'+session+'</span>' : '')
+      +     (total ? '<span>📊 '+total+'</span>' : '')
+      +     (date ? '<span>🕐 '+date+'</span>' : '')
       +   '</div>'
       + '</div>'
       + '<button class="hist-copy" onclick="copyNumber(\''+h.last_number+'\')">Copier</button>'

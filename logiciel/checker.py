@@ -39,7 +39,7 @@ def supabase_insert(phone, pays):
     except Exception:
         return False
 
-def supabase_save_history(last_number, total_checked, whatsapp_found):
+def supabase_save_history(last_number, total_checked, whatsapp_found, session_name=""):
     """Enregistre la fin de session dans l'historique Supabase."""
     if not HAS_HTTP:
         return False
@@ -47,7 +47,7 @@ def supabase_save_history(last_number, total_checked, whatsapp_found):
         data = json.dumps({
             "last_number": last_number,
             "total_checked": total_checked,
-            "session_name": f"{whatsapp_found} WA trouvés"
+            "session_name": session_name or f"{whatsapp_found} WA trouvés"
         }).encode('utf-8')
         req = urllib.request.Request(
             f"{SUPABASE_URL}/rest/v1/search_history",
@@ -359,9 +359,11 @@ def main():
 
     # Enregistrer dans l'historique Supabase
     if resultats:
-        oui_count = sum(1 for r in resultats if r['wa'] is True)
-        last_num  = resultats[-1]['phone']
-        if supabase_save_history(last_num, len(resultats), oui_count):
+        oui_count  = sum(1 for r in resultats if r['wa'] is True)
+        last_num   = resultats[-1]['phone']
+        last_pays  = resultats[-1]['pays']
+        session_lbl = f"{last_pays} · {oui_count} WA trouvés"
+        if supabase_save_history(last_num, len(resultats), oui_count, session_lbl):
             print(f"  {CYN}↑ Historique sauvegardé ({last_num}){RST}")
 
     # Export CSV
