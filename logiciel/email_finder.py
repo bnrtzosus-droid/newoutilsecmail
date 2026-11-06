@@ -908,6 +908,23 @@ def is_phone_query(query: str) -> bool:
     return digits.isdigit() and len(digits) >= 7
 
 
+def search_on_network(page, query: str, net: str, country: str, logged_in: set) -> list[str]:
+    """Find profile URLs for a name query on a given network."""
+    profile_urls = []
+    if net == "facebook" and "facebook" in logged_in:
+        print(f"  → Recherche directe Facebook (connecté)...")
+        profile_urls = search_facebook_direct(page, query)
+    elif net == "instagram" and "instagram" in logged_in:
+        print(f"  → Recherche directe Instagram (connecté)...")
+        profile_urls = search_instagram_direct(page, query)
+    elif net == "linkedin" and "linkedin" in logged_in:
+        print(f"  → Recherche directe LinkedIn (connecté)...")
+        profile_urls = search_linkedin_direct(page, query)
+    if not profile_urls:
+        profile_urls = google_search_profiles(page, query, net)
+    return profile_urls
+
+
 def search_by_query(page, query: str, networks: list, country: str, logged_in: set = None) -> int:
     """Search all networks for a name or phone number."""
     if logged_in is None:
@@ -915,56 +932,70 @@ def search_by_query(page, query: str, networks: list, country: str, logged_in: s
     is_phone = is_phone_query(query)
     total = 0
 
-    for net in networks:
-        print(f"\n  [{net.upper()}] Recherche : {query}")
-        profile_urls = []
-
-        # ── Recherche par numéro de téléphone ───────────────────────────────
-        if is_phone:
-            if net == "facebook" and "facebook" in logged_in:
-                print(f"  → Recherche directe Facebook (connecté)...")
-                profile_urls = search_facebook_direct(page, query)
-                if not profile_urls:
-                    print(f"  → Aucun profil trouvé sur Facebook")
-            elif net == "facebook":
-                print(f"  → Facebook non connecté — connexion requise pour chercher par numéro")
-            else:
-                # Instagram/Twitter/etc. n'indexent pas les numéros → inutile
-                print(f"  → Recherche par numéro non disponible sur {net} (pas indexé)")
-            # Pas de fallback moteur de recherche pour les numéros — ça ne marche jamais
-            if not profile_urls:
-                continue
-
-        # ── Recherche par nom / prénom ───────────────────────────────────────
+    if is_phone:
+        # ── Étape 1 : numéro → Facebook pour trouver le nom ─────────────────
+        found_name = None
+        print(f"\n  [FACEBOOK] Recherche du numéro : {query}")
+        if "facebook" in logged_in:
+            fb_urls = search_facebook_direct(page, query)
+            for url in fb_urls:
+                contact = scrape_profile_url(page, url, "facebook", query, country)
+                if contact:
+                    if save_contact(contact):
+                        total += 1
+                        info = contact.get("email") or contact.get("phone") or "trouvé"
+                        print(f"  ✓ Facebook @{contact['username']} → {info}")
+                    # Récupérer le nom pour chercher sur les autres réseaux
+                    name = contact.get("full_name", "")
+                    if name and name != contact.get("username", ""):
+                        found_name = name
+                        break
+                pause(1, 2)
         else:
-            if net == "facebook" and "facebook" in logged_in:
-                print(f"  → Recherche directe Facebook (connecté)...")
-                profile_urls = search_facebook_direct(page, query)
-            elif net == "instagram" and "instagram" in logged_in:
-                print(f"  → Recherche directe Instagram (connecté)...")
-                profile_urls = search_instagram_direct(page, query)
-            elif net == "linkedin" and "linkedin" in logged_in:
-                print(f"  → Recherche directe LinkedIn (connecté)...")
-                profile_urls = search_linkedin_direct(page, query)
+            print(f"  → Facebook non connecté — connexion requise pour chercher par numéro")
 
-            # Fallback DuckDuckGo pour la recherche par nom
-            if not profile_urls:
-                if net in logged_in:
-                    print(f"  → Aucun résultat direct, essai DuckDuckGo...")
-                profile_urls = google_search_profiles(page, query, net)
+        # ── Étape 2 : nom trouvé → chercher sur tous les autres réseaux ─────
+        if found_name:
+            print(f"\n  → Nom trouvé : {found_name!r} — recherche sur les autres réseaux...")
+            for net in networks:
+                if net == "facebook":
+                    continue  # Déjà fait
+                print(f"\n  [{net.upper()}] Recherche : {found_name}")
+                profile_urls = search_on_network(page, found_name, net, country, logged_in)
+                if not profile_urls:
+                    print(f"  → Aucun profil trouvé")
+                    continue
+                for url in profile_urls:
+                    contact = scrape_profile_url(page, url, net, found_name, country)
+                    if contact:
+                        # Ajouter le numéro d'origine dans le champ phone si absent
+                        if not contact.get("phone"):
+                            contact["phone"] = query
+                        if save_contact(contact):
+                            total += 1
+                            info = contact.get("email") or contact.get("phone") or "trouvé"
+                            print(f"  ✓ {net} @{contact['username']} → {info}")
+                    pause(1, 2)
+        elif "facebook" in logged_in:
+            print(f"  → Aucun profil Facebook trouvé pour ce numéro")
 
+    else:
+        # ── Recherche par nom sur tous les réseaux ───────────────────────────
+        for net in networks:
+            print(f"\n  [{net.upper()}] Recherche : {query}")
+            profile_urls = search_on_network(page, query, net, country, logged_in)
             if not profile_urls:
                 print(f"  → Aucun profil trouvé")
                 continue
+            for url in profile_urls:
+                contact = scrape_profile_url(page, url, net, query, country)
+                if contact:
+                    if save_contact(contact):
+                        total += 1
+                        info = contact.get("email") or contact.get("phone") or "trouvé"
+                        print(f"  ✓ {net} @{contact['username']} → {info}")
+                pause(1, 2)
 
-        for url in profile_urls:
-            contact = scrape_profile_url(page, url, net, query, country)
-            if contact:
-                if save_contact(contact):
-                    total += 1
-                    info = contact.get("email") or contact.get("phone") or "trouvé"
-                    print(f"  ✓ {net} @{contact['username']} → {info}")
-            pause(1, 2)
     return total
 
 
