@@ -5,8 +5,39 @@ WhatsApp Checker Pro - Détection automatique via WhatsApp Web
 Connexion unique par QR code, vérification automatique de chaque numéro.
 """
 
-import os, sys, csv, time, re
+import os, sys, csv, time, re, json
+try:
+    import urllib.request, urllib.error
+    HAS_HTTP = True
+except ImportError:
+    HAS_HTTP = False
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+
+# ── Supabase ──────────────────────────────────────────────────────────────────
+SUPABASE_URL = "https://qbyxezgkmhikfqytiruj.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs"
+
+def supabase_insert(phone, pays):
+    """Envoie un contact confirmé sur WhatsApp vers Supabase."""
+    if not HAS_HTTP:
+        return False
+    try:
+        data = json.dumps({"phone": phone, "pays": pays}).encode('utf-8')
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/contacts_whatsapp",
+            data=data,
+            headers={
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=ignore-duplicates"
+            },
+            method="POST"
+        )
+        urllib.request.urlopen(req, timeout=10)
+        return True
+    except Exception:
+        return False
 
 # ── Couleurs terminal ─────────────────────────────────────────────────────────
 GRN = "\033[92m"; RED = "\033[91m"; YLW = "\033[93m"
@@ -281,7 +312,11 @@ def main():
             wa = verifier_numero(page, phone)
 
             if wa is True:
-                print(f"{GRN}✓ Sur WhatsApp{RST}")
+                print(f"{GRN}✓ Sur WhatsApp{RST}", end='')
+                if supabase_insert(phone, pays):
+                    print(f"  {CYN}↑ Supabase{RST}")
+                else:
+                    print()
             elif wa is False:
                 print(f"{RED}✗ Pas sur WhatsApp{RST}")
             else:

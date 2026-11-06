@@ -559,59 +559,83 @@ var scanRunning = false;
 var scanStopped = false;
 var currentMode = 'manuel';
 
-// ── Contacts (localStorage) ───────────────────────────
-function loadContacts() {
-  try { return JSON.parse(localStorage.getItem('wa_contacts') || '[]'); } catch(e) { return []; }
+// ── Supabase config ───────────────────────────────────
+var SB_URL = 'https://qbyxezgkmhikfqytiruj.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFieXhlemdrbWhpa2ZxeXRpcnVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODk5NzQsImV4cCI6MjEwOTQ2NTk3NH0.PUgo1DX8cW6fce3PUgaOCWP6kQRiuAYQUkI4SAsKMSs';
+var sbContacts = [];
+
+function sbFetch(path, opts) {
+  return fetch(SB_URL + path, Object.assign({
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }
+  }, opts || {}));
 }
-function saveContacts(list) {
-  try { localStorage.setItem('wa_contacts', JSON.stringify(list)); } catch(e) {}
+
+// ── Contacts (Supabase) ───────────────────────────────
+function loadContactsFromDB() {
+  sbFetch('/rest/v1/contacts_whatsapp?select=*&order=date_ajout.desc')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      sbContacts = Array.isArray(data) ? data : [];
+      renderContacts();
+    })
+    .catch(function(){ renderContacts(); });
 }
+
 function addContact(phone, pays) {
-  var list = loadContacts();
-  if (list.find(function(c){ return c.phone === phone; })) return; // déjà présent
-  list.unshift({ phone:phone, pays:pays, date: new Date().toLocaleDateString('fr-FR') });
-  saveContacts(list);
-  renderContacts();
+  sbFetch('/rest/v1/contacts_whatsapp', {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+               'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates' },
+    body: JSON.stringify({ phone: phone, pays: pays })
+  }).then(function(){ loadContactsFromDB(); });
 }
+
 function removeContact(phone) {
-  var list = loadContacts().filter(function(c){ return c.phone !== phone; });
-  saveContacts(list);
-  renderContacts();
+  sbFetch('/rest/v1/contacts_whatsapp?phone=eq.' + encodeURIComponent(phone), {
+    method: 'DELETE',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }
+  }).then(function(){ loadContactsFromDB(); showToast('Contact supprimé'); });
 }
+
 function clearContacts() {
-  if (!confirm('Vider tous les contacts ?')) return;
-  saveContacts([]);
-  renderContacts();
-  showToast('Contacts vidés');
+  if (!confirm('Vider tous les contacts Supabase ?')) return;
+  sbFetch('/rest/v1/contacts_whatsapp?id=gt.0', {
+    method: 'DELETE',
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' }
+  }).then(function(){ loadContactsFromDB(); showToast('Contacts vidés'); });
 }
+
 function renderContacts() {
-  var list = loadContacts();
+  var list = sbContacts;
   var el = document.getElementById('contactsList');
   document.getElementById('contactsBadge').textContent = list.length;
   updateNavBadge(list.length);
   if (list.length === 0) {
-    el.innerHTML = '<div class="contacts-empty">Aucun contact sauvegardé — les numéros confirmés sur WhatsApp apparaîtront ici automatiquement.</div>';
+    el.innerHTML = '<div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement en temps réel.</div>';
     return;
   }
   el.innerHTML = list.map(function(c){
-    var phone = c.phone.replace('+','');
+    var phone = (c.phone || '').replace('+','');
+    var date  = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
     return '<div class="contact-item">'
       + '<div style="font-size:22px">📱</div>'
       + '<div style="flex:1;min-width:0">'
-      +   '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;font-weight:500">'+c.phone+'</div>'
-      +   '<div class="contact-date">'+c.pays+' · Ajouté le '+c.date+'</div>'
+      +   '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;font-weight:500">'+(c.phone||'')+'</div>'
+      +   '<div class="contact-date">'+(c.pays||'')+(date?' · '+date:'')+'</div>'
       + '</div>'
       + '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬 Écrire</a>'
       + '<button class="btn-del" onclick="removeContact(\''+c.phone+'\')" title="Supprimer">×</button>'
       + '</div>';
   }).join('');
 }
+
 function exportContacts() {
-  var list = loadContacts();
+  var list = sbContacts;
   if (!list.length) { showToast('Aucun contact à exporter'); return; }
   var csv = 'Numéro,Pays,Date ajout,Lien WhatsApp\n';
   list.forEach(function(c){
-    csv += c.phone+','+c.pays+','+c.date+',https://wa.me/'+c.phone.replace('+','')+'\n';
+    var date = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
+    csv += (c.phone||'')+','+(c.pays||'')+','+date+',https://wa.me/'+(c.phone||'').replace('+','')+'\n';
   });
   var blob = new Blob([csv],{type:'text/csv'});
   var url  = URL.createObjectURL(blob);
@@ -620,8 +644,12 @@ function exportContacts() {
   a.click(); URL.revokeObjectURL(url);
   showToast('Contacts exportés !');
 }
-// Charger les contacts au démarrage
-document.addEventListener('DOMContentLoaded', renderContacts);
+
+// Charger au démarrage + rafraîchir toutes les 10 secondes
+document.addEventListener('DOMContentLoaded', function(){
+  loadContactsFromDB();
+  setInterval(loadContactsFromDB, 10000);
+});
 
 // ── Détection pays ────────────────────────────────────
 function detectCountry(phone) {
