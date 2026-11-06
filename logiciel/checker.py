@@ -1,369 +1,291 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-╔══════════════════════════════════════════════════════╗
-║         DÉTECTEUR DE COMPTES - v1.0                  ║
-║   Retrouvez vos emails par numéro de téléphone       ║
-╚══════════════════════════════════════════════════════╝
+WhatsApp Checker Pro - Détection automatique via WhatsApp Web
+Connexion unique par QR code, vérification automatique de chaque numéro.
 """
 
-import asyncio
-import sys
-import os
+import os, sys, csv, time, re
+from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
-try:
-    from playwright.async_api import async_playwright, TimeoutError as PWTimeout
-except ImportError:
-    print("ERREUR: Playwright non installé.")
-    print("Lancez d'abord: pip install playwright && playwright install chromium")
-    sys.exit(1)
+# ── Couleurs terminal ─────────────────────────────────────────────────────────
+GRN = "\033[92m"; RED = "\033[91m"; YLW = "\033[93m"
+BLU = "\033[94m"; CYN = "\033[96m"; GRY = "\033[90m"
+BLD = "\033[1m";  RST = "\033[0m"
 
-# ─── Couleurs terminal ────────────────────────────────
-GRN  = '\033[92m'
-RED  = '\033[91m'
-YLW  = '\033[93m'
-BLU  = '\033[94m'
-CYN  = '\033[96m'
-WHT  = '\033[97m'
-GRY  = '\033[90m'
-BLD  = '\033[1m'
-RST  = '\033[0m'
+def ok(msg):   print(f"  {GRN}✓{RST} {msg}")
+def err(msg):  print(f"  {RED}✗{RST} {msg}")
+def inf(msg):  print(f"  {BLU}→{RST} {msg}")
+def warn(msg): print(f"  {YLW}!{RST} {msg}")
 
-# Windows: activer les couleurs ANSI
-if sys.platform == 'win32':
-    os.system('color')
-
-# ─── Liste des services ───────────────────────────────
-SERVICES = [
-    {
-        'id'      : 'facebook',
-        'name'    : 'Facebook',
-        'emoji'   : '👤',
-        'url'     : 'https://www.facebook.com/login/identify/',
-        'input'   : '#identify_email, input[name="email"]',
-        'submit'  : '#did_submit, button[type="submit"]',
-        'found'   : ['profile_picture', 'account', 'compte', '_5f0v', 'profil'],
-        'notfound': ['no account found', 'aucun compte', 'not find', 'introuvable'],
-        'mode'    : 'auto',
-    },
-    {
-        'id'      : 'gmail',
-        'name'    : 'Gmail / Google',
-        'emoji'   : '📧',
-        'url'     : 'https://accounts.google.com/signin/recovery',
-        'input'   : 'input[type="email"], input[type="tel"]',
-        'submit'  : '#identifierNext, button[type="submit"]',
-        'found'   : ['recovery', 'phone', 'verify', 'code'],
-        'notfound': ['couldn\'t find', 'not found', 'introuvable'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'instagram',
-        'name'    : 'Instagram',
-        'emoji'   : '📸',
-        'url'     : 'https://www.instagram.com/accounts/password/reset/',
-        'input'   : 'input[name="email"]',
-        'submit'  : 'button[type="submit"]',
-        'found'   : ['nous avons envoyé', 'we sent', 'check your', 'code'],
-        'notfound': ['no users found', 'aucun utilisateur', 'not found'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'yahoo',
-        'name'    : 'Yahoo Mail',
-        'emoji'   : '📮',
-        'url'     : 'https://login.yahoo.com/forgot',
-        'input'   : '#username',
-        'submit'  : '#login-signin, button[type="submit"]',
-        'found'   : ['recovery', 'verify', 'code', 'phone'],
-        'notfound': ['invalid', 'invalide', 'not exist', 'n\'existe pas'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'outlook',
-        'name'    : 'Outlook / Microsoft',
-        'emoji'   : '💼',
-        'url'     : 'https://account.live.com/acsr',
-        'input'   : '#ContactEmailAddress, input[type="email"]',
-        'submit'  : '#idSIButton9, input[type="submit"]',
-        'found'   : ['verification', 'code', 'phone', 'confirm'],
-        'notfound': ['doesn\'t exist', 'n\'existe pas', 'not found'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'twitter',
-        'name'    : 'X (Twitter)',
-        'emoji'   : '🐦',
-        'url'     : 'https://twitter.com/account/begin_password_reset',
-        'input'   : 'input[name="account_identifier"]',
-        'submit'  : 'div[data-testid="LoginForm_Login_Button"], button[type="submit"]',
-        'found'   : ['phone', 'email', 'verify', 'code'],
-        'notfound': ['couldn\'t find', 'not found', 'introuvable'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'snapchat',
-        'name'    : 'Snapchat',
-        'emoji'   : '👻',
-        'url'     : 'https://accounts.snapchat.com/accounts/password_reset_request',
-        'input'   : 'input[name="username"], input[type="email"]',
-        'submit'  : 'button[type="submit"]',
-        'found'   : ['email sent', 'envoyé', 'check', 'code'],
-        'notfound': ['not found', 'introuvable', 'invalid'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'tiktok',
-        'name'    : 'TikTok',
-        'emoji'   : '🎵',
-        'url'     : 'https://www.tiktok.com/login/phone-or-email/phone',
-        'input'   : 'input[type="tel"]',
-        'submit'  : 'button[type="submit"]',
-        'found'   : ['verification', 'code', 'phone'],
-        'notfound': ['not registered', 'pas enregistré', 'not found'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'apple',
-        'name'    : 'Apple / iCloud',
-        'emoji'   : '🍎',
-        'url'     : 'https://iforgot.apple.com/',
-        'input'   : '#account_name_text_field, input[type="email"]',
-        'submit'  : '#sign-in, button[type="submit"]',
-        'found'   : ['phone', 'verify', 'code', 'recovery'],
-        'notfound': ['invalid', 'doesn\'t exist', 'not found'],
-        'mode'    : 'assist',
-    },
-    {
-        'id'      : 'linkedin',
-        'name'    : 'LinkedIn',
-        'emoji'   : '💼',
-        'url'     : 'https://www.linkedin.com/uas/request-password-reset',
-        'input'   : '#email-or-phone',
-        'submit'  : 'button[type="submit"]',
-        'found'   : ['email sent', 'envoyé', 'check', 'sent'],
-        'notfound': ['not found', 'introuvable', 'doesn\'t match'],
-        'mode'    : 'assist',
-    },
+# ── Détection pays ────────────────────────────────────────────────────────────
+PAYS = [
+    ('+243','Congo RDC 🇨🇩'),('+242','Congo Brazza 🇨🇬'),('+225','Côte d\'Ivoire 🇨🇮'),
+    ('+221','Sénégal 🇸🇳'),('+229','Bénin 🇧🇯'),('+228','Togo 🇹🇬'),('+223','Mali 🇲🇱'),
+    ('+226','Burkina Faso 🇧🇫'),('+227','Niger 🇳🇪'),('+237','Cameroun 🇨🇲'),
+    ('+241','Gabon 🇬🇦'),('+236','RCA 🇨🇫'),('+235','Tchad 🇹🇩'),
+    ('+234','Nigeria 🇳🇬'),('+233','Ghana 🇬🇭'),('+254','Kenya 🇰🇪'),
+    ('+255','Tanzanie 🇹🇿'),('+256','Ouganda 🇺🇬'),('+27','Afrique du Sud 🇿🇦'),
+    ('+212','Maroc 🇲🇦'),('+213','Algérie 🇩🇿'),('+216','Tunisie 🇹🇳'),
+    ('+33','France 🇫🇷'),('+32','Belgique 🇧🇪'),('+41','Suisse 🇨🇭'),
+    ('+44','Royaume-Uni 🇬🇧'),('+49','Allemagne 🇩🇪'),('+55','Brésil 🇧🇷'),
+    ('+91','Inde 🇮🇳'),('+1','USA/Canada 🇺🇸'),
 ]
 
-results = {}
+def detecter_pays(phone):
+    n = re.sub(r'[\s\-\(\)\.]', '', phone)
+    if not n.startswith('+'): n = '+' + n
+    for code, nom in sorted(PAYS, key=lambda x: -len(x[0])):
+        if n.startswith(code):
+            return nom
+    return 'Inconnu 🌍'
 
-# ─── Affichage ────────────────────────────────────────
-def banner():
-    print(f"""
-{CYN}{BLD}╔══════════════════════════════════════════════════╗
-║        DÉTECTEUR DE COMPTES  v1.0                ║
-║   Retrouvez vos emails par numéro de téléphone   ║
-╚══════════════════════════════════════════════════╝{RST}
-""")
+def normaliser(phone):
+    n = re.sub(r'[\s\-\(\)\.]', '', phone.strip())
+    if not n.startswith('+') and len(n) > 6: n = '+' + n
+    return n
 
-def line():
-    print(f"{GRY}{'─'*52}{RST}")
+# ── Connexion WhatsApp Web ────────────────────────────────────────────────────
+SESSION_DIR = os.path.join(os.path.dirname(__file__), '.wa_session')
 
-def status_icon(s):
-    return {
-        'found'   : f'{GRN}✓ TROUVÉ{RST}',
-        'notfound': f'{RED}✗ Pas trouvé{RST}',
-        'error'   : f'{YLW}⚠ Erreur{RST}',
-        'skip'    : f'{GRY}– Ignoré{RST}',
-        'manual'  : f'{YLW}? Vérification manuelle{RST}',
-    }.get(s, f'{GRY}…{RST}')
-
-# ─── Vérification automatique (Facebook) ─────────────
-async def check_auto(page, svc, phone):
-    """Tente une détection automatique."""
-    try:
-        await page.goto(svc['url'], timeout=20000, wait_until='domcontentloaded')
-        await asyncio.sleep(2)
-
-        inp = await page.query_selector(svc['input'])
-        if not inp:
-            return 'manual'
-
-        await inp.click()
-        await inp.fill(phone)
-        await asyncio.sleep(1)
-
-        btn = await page.query_selector(svc['submit'])
-        if btn:
-            await btn.click()
-            await asyncio.sleep(3)
-
-        content = (await page.content()).lower()
-
-        for kw in svc['notfound']:
-            if kw.lower() in content:
-                return 'notfound'
-
-        for kw in svc['found']:
-            if kw.lower() in content:
-                return 'found'
-
-        return 'manual'
-
-    except PWTimeout:
-        return 'manual'
-    except Exception:
-        return 'manual'
-
-# ─── Mode assisté (ouvre la page, l'utilisateur confirme) ─
-async def check_assist(page, svc, phone):
-    """Ouvre la page et demande à l'utilisateur de confirmer."""
-    try:
-        await page.goto(svc['url'], timeout=20000, wait_until='domcontentloaded')
-        await asyncio.sleep(2)
-
-        # Essayer de pré-remplir le numéro
-        try:
-            inp = await page.query_selector(svc['input'])
-            if inp:
-                await inp.click()
-                await inp.fill(phone)
-        except Exception:
-            pass
-
-        print(f"\n  {YLW}→ La page {svc['name']} est ouverte dans le navigateur.{RST}")
-        print(f"  {WHT}Entrez votre numéro et vérifiez si un compte existe.{RST}")
-        print(f"  Résultat → {GRN}[1] Trouvé{RST}  {RED}[2] Pas trouvé{RST}  {GRY}[3] Ignorer{RST}")
-
-        while True:
-            choix = input(f"  Votre choix: ").strip()
-            if choix == '1': return 'found'
-            if choix == '2': return 'notfound'
-            if choix == '3': return 'skip'
-            print(f"  {YLW}Entrez 1, 2 ou 3{RST}")
-
-    except Exception as e:
-        print(f"\n  {RED}Impossible d'ouvrir {svc['name']}: {e}{RST}")
-        return 'error'
-
-# ─── Vérification d'un service ────────────────────────
-async def check_service(browser, svc, phone):
-    context = await browser.new_context(
-        viewport={'width': 1280, 'height': 800},
-        user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+def connecter_whatsapp(playwright):
+    """Ouvre WhatsApp Web. Si déjà connecté (session sauvegardée), passe direct."""
+    print(f"\n{BLD}{CYN}Connexion à WhatsApp Web...{RST}")
+    browser = playwright.chromium.launch_persistent_context(
+        SESSION_DIR,
+        headless=False,
+        args=['--no-sandbox', '--disable-dev-shm-usage'],
+        viewport={'width': 1100, 'height': 750},
     )
-    page = await context.new_page()
+    page = browser.pages[0] if browser.pages else browser.new_page()
+    page.goto('https://web.whatsapp.com', timeout=60000)
 
-    print(f"\n{BLD}{svc['emoji']}  {svc['name']}{RST}")
+    # Attendre: soit le QR code (première connexion), soit la page d'accueil (déjà connecté)
+    try:
+        page.wait_for_selector('[data-testid="qrcode"], [data-testid="default-user"], canvas[aria-label="Scan this QR code"]', timeout=20000)
+    except PWTimeout:
+        pass
 
-    if svc['mode'] == 'auto':
-        print(f"  {GRY}Détection automatique…{RST}", end='', flush=True)
-        result = await check_auto(page, svc, phone)
-        print(f"\r  {status_icon(result)}              ")
-
-        if result == 'manual':
-            print(f"  {YLW}→ Vérification manuelle nécessaire…{RST}")
-            result = await check_assist(page, svc, phone)
-    else:
-        result = await check_assist(page, svc, phone)
-
-    await context.close()
-    return result
-
-# ─── Résumé final ─────────────────────────────────────
-def show_summary(phone):
-    found    = [s for s in SERVICES if results.get(s['id']) == 'found']
-    notfound = [s for s in SERVICES if results.get(s['id']) == 'notfound']
-
-    print(f"\n{CYN}{BLD}{'═'*52}{RST}")
-    print(f"{BLD}  RÉSULTATS POUR: {YLW}{phone}{RST}")
-    print(f"{CYN}{'═'*52}{RST}\n")
-
-    if found:
-        print(f"{GRN}{BLD}  ✓ COMPTES TROUVÉS ({len(found)}) :{RST}")
-        for s in found:
-            print(f"    {s['emoji']}  {BLD}{s['name']}{RST} {GRN}← email associé à ce numéro{RST}")
-        print()
-
-    if notfound:
-        print(f"{RED}  ✗ Aucun compte ({len(notfound)}) :{RST}")
-        for s in notfound:
-            print(f"    {s['emoji']}  {GRY}{s['name']}{RST}")
-        print()
-
-    if not found:
-        print(f"  {YLW}Aucun compte trouvé avec ce numéro.{RST}")
-        print(f"  {GRY}Essayez avec un autre format de numéro (+XX, 00XX…){RST}")
-
-    print(f"{GRY}{'─'*52}{RST}\n")
-
-# ─── Point d'entrée ───────────────────────────────────
-async def main():
-    banner()
-
-    # Formats du numéro
-    phone_raw = input(f"{CYN}  Entrez votre numéro de téléphone : {RST}").strip()
-    if not phone_raw:
-        print(f"{RED}  Numéro requis.{RST}")
-        return
-
-    # Proposer les formats
-    n = phone_raw.replace(' ','').replace('-','').replace('(','').replace(')','')
-    formats = [n]
-    if n.startswith('+'): formats += ['00'+n[1:], n[1:]]
-    elif n.startswith('00'): formats += ['+'+n[2:], n[2:]]
-    else: formats += ['+'+n, '00'+n]
-    formats = list(dict.fromkeys(formats))
-
-    print(f"\n  {GRY}Formats détectés : {', '.join(formats)}{RST}")
-    print(f"  {YLW}Conseil : choisissez le format avec l'indicatif pays (+XXX){RST}\n")
-
-    if len(formats) > 1:
-        print(f"  Quel format utiliser ?")
-        for i, f in enumerate(formats):
-            print(f"    {BLD}[{i+1}]{RST} {f}")
-        choix = input(f"  Votre choix (1-{len(formats)}) [défaut: 1]: ").strip()
+    # Si QR affiché → attendre que l'utilisateur scanne (jusqu'à 3 min)
+    if page.query_selector('[data-testid="qrcode"], canvas[aria-label="Scan this QR code"]'):
+        print(f"\n  {YLW}📱 SCANNEZ LE QR CODE avec votre téléphone WhatsApp{RST}")
+        print(f"  {GRY}(WhatsApp → Appareils connectés → Connecter un appareil){RST}\n")
         try:
-            phone = formats[int(choix)-1] if choix else formats[0]
-        except Exception:
-            phone = formats[0]
-    else:
-        phone = formats[0]
+            # Attendre que le QR disparaisse = connexion réussie
+            page.wait_for_selector('[data-testid="default-user"], [title="WhatsApp"]', timeout=180000)
+        except PWTimeout:
+            err("Timeout — QR code non scanné.")
+            browser.close()
+            sys.exit(1)
 
-    # Choisir les services à vérifier
-    line()
-    print(f"\n  {BLD}Services disponibles :{RST}")
-    for i, s in enumerate(SERVICES):
-        print(f"    {BLD}[{i+1:2}]{RST} {s['emoji']}  {s['name']}")
-    print(f"    {BLD}[ 0]{RST} Vérifier TOUS les services\n")
+    # Attendre chargement complet
+    try:
+        page.wait_for_selector('[data-testid="chat-list"], [data-testid="default-user"]', timeout=30000)
+    except PWTimeout:
+        pass
 
-    choix_svc = input(f"  Services à vérifier (ex: 0 pour tous, ou 1 3 5) : ").strip()
+    ok("Connecté à WhatsApp Web !")
+    return browser, page
 
-    if choix_svc == '0' or choix_svc == '':
-        to_check = SERVICES
-    else:
-        indices = []
-        for c in choix_svc.split():
-            try:
-                idx = int(c) - 1
-                if 0 <= idx < len(SERVICES):
-                    indices.append(idx)
-            except ValueError:
-                pass
-        to_check = [SERVICES[i] for i in indices] if indices else SERVICES
+# ── Vérification d'un numéro ──────────────────────────────────────────────────
+def verifier_numero(page, phone):
+    """
+    Retourne True si le numéro est sur WhatsApp, False sinon.
+    Méthode: ouvrir https://web.whatsapp.com/send?phone=NUMERO
+    - Si le numéro existe → la boîte de chat s'ouvre
+    - Si le numéro n'existe pas → message d'erreur affiché
+    """
+    num_propre = phone.replace('+', '').replace(' ', '')
+    url = f'https://web.whatsapp.com/send?phone={num_propre}&text=&app_absent=0'
 
-    line()
-    print(f"\n{BLD}  Démarrage de la vérification pour : {YLW}{phone}{RST}\n")
-    print(f"  {GRY}Le navigateur va s'ouvrir — ne le fermez pas.{RST}\n")
-    input(f"  {WHT}Appuyez sur ENTRÉE pour commencer…{RST}")
+    try:
+        page.goto(url, timeout=30000, wait_until='domcontentloaded')
 
-    async with async_playwright() as pw:
-        browser = await pw.chromium.launch(
-            headless=False,
-            args=['--start-maximized']
+        # Attendre un des deux résultats possibles
+        result = page.wait_for_selector(
+            '[data-testid="compose-box-input"], '          # boîte de saisie = numéro valide
+            '[data-testid="send-to-phone-popup-request-otp"], '
+            'div[role="alert"], '                           # popup d'erreur
+            'span[data-testid="intro-text"]',               # page d'erreur WA
+            timeout=15000
         )
 
-        for svc in to_check:
-            result = await check_service(browser, svc, phone)
-            results[svc['id']] = result
+        if result:
+            # Vérifier si c'est une erreur ou un succès
+            # Erreur: "numéro invalide", "phone number shared via url is invalid"
+            page_text = page.inner_text('body').lower()
+            erreurs = [
+                'phone number shared via url is invalid',
+                'numéro de téléphone',
+                'invalid phone',
+                'not a valid',
+                "n'est pas",
+            ]
+            for e in erreurs:
+                if e in page_text:
+                    return False
 
-        await browser.close()
+            # Vérifier la présence de la boîte de composition = numéro valide
+            compose = page.query_selector('[data-testid="compose-box-input"]')
+            if compose:
+                return True
 
-    show_summary(phone)
+            return False
+        return False
 
-    input(f"  {GRY}Appuyez sur ENTRÉE pour quitter…{RST}")
+    except PWTimeout:
+        return None  # indéterminé
+    except Exception:
+        return None
+
+# ── Génération numéros séquentiels ────────────────────────────────────────────
+def generer_numeros(base, quantite):
+    """Génère une séquence de numéros à partir d'un numéro de base."""
+    base = normaliser(base)
+    # On fait varier les 4 derniers chiffres
+    prefixe = base[:-4]
+    debut = int(base[-4:])
+    nums = []
+    for i in range(quantite):
+        num = prefixe + str((debut + i) % 10000).zfill(4)
+        nums.append(num)
+    return nums
+
+# ── Lire fichier de numéros ───────────────────────────────────────────────────
+def lire_fichier(chemin):
+    nums = []
+    with open(chemin, 'r', encoding='utf-8') as f:
+        for ligne in f:
+            n = normaliser(ligne)
+            if len(n) > 6:
+                nums.append(n)
+    return nums
+
+# ── Exporter CSV ──────────────────────────────────────────────────────────────
+def exporter_csv(resultats, chemin='resultats_whatsapp.csv'):
+    with open(chemin, 'w', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerow(['Numéro', 'Pays', 'Sur WhatsApp', 'Lien WhatsApp'])
+        for r in resultats:
+            statut = 'OUI' if r['wa'] is True else ('NON' if r['wa'] is False else 'INDÉTERMINÉ')
+            lien = f"https://wa.me/{r['phone'].replace('+','')}" if r['wa'] else ''
+            w.writerow([r['phone'], r['pays'], statut, lien])
+    return chemin
+
+# ── Affichage résultats ───────────────────────────────────────────────────────
+def afficher_bilan(resultats):
+    oui  = [r for r in resultats if r['wa'] is True]
+    non  = [r for r in resultats if r['wa'] is False]
+    ind  = [r for r in resultats if r['wa'] is None]
+
+    print(f"\n{'─'*54}")
+    print(f"{BLD}  BILAN FINAL{RST}")
+    print(f"{'─'*54}")
+    print(f"  Total vérifié  : {BLD}{len(resultats)}{RST}")
+    print(f"  Sur WhatsApp   : {GRN}{BLD}{len(oui)}{RST}")
+    print(f"  Pas sur WA     : {RED}{len(non)}{RST}")
+    print(f"  Indéterminé    : {GRY}{len(ind)}{RST}")
+
+    if oui:
+        print(f"\n{GRN}{BLD}  Numéros actifs sur WhatsApp :{RST}")
+        for r in oui:
+            print(f"    {GRN}✓{RST}  {r['phone']}  {GRY}({r['pays']}){RST}")
+    print(f"{'─'*54}")
+
+# ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
+def main():
+    os.system('cls' if os.name=='nt' else 'clear')
+    print(f"""
+{GRN}{BLD}╔══════════════════════════════════════════════╗
+║       WhatsApp Checker Pro  v2.0             ║
+║   Détection automatique via WhatsApp Web     ║
+╚══════════════════════════════════════════════╝{RST}
+""")
+
+    print(f"{BLD}Mode de saisie des numéros :{RST}")
+    print(f"  {CYN}1{RST} — Entrer les numéros manuellement")
+    print(f"  {CYN}2{RST} — Scan automatique (numéros séquentiels)")
+    print(f"  {CYN}3{RST} — Importer depuis un fichier (.txt / .csv)")
+
+    choix = input(f"\n{BLD}Votre choix (1/2/3) : {RST}").strip()
+
+    phones = []
+
+    if choix == '1':
+        print(f"\n{GRY}Entrez les numéros (un par ligne). Ligne vide pour terminer.{RST}")
+        while True:
+            n = input("  Numéro : ").strip()
+            if not n: break
+            phones.append(normaliser(n))
+
+    elif choix == '2':
+        base = input(f"\n  Numéro de départ (ex: +243812345000) : ").strip()
+        qte  = input(f"  Combien de numéros à scanner ? (ex: 100) : ").strip()
+        try:
+            phones = generer_numeros(base, int(qte))
+            inf(f"{len(phones)} numéros générés depuis {base}")
+        except Exception as e:
+            err(f"Erreur : {e}"); sys.exit(1)
+
+    elif choix == '3':
+        chemin = input(f"\n  Chemin du fichier : ").strip().strip('"')
+        if not os.path.exists(chemin):
+            err("Fichier introuvable."); sys.exit(1)
+        phones = lire_fichier(chemin)
+        inf(f"{len(phones)} numéros importés")
+
+    else:
+        err("Choix invalide."); sys.exit(1)
+
+    if not phones:
+        err("Aucun numéro à vérifier."); sys.exit(1)
+
+    # Afficher les numéros et pays détectés
+    print(f"\n{BLD}Numéros à vérifier :{RST}")
+    for p in phones[:10]:
+        pays = detecter_pays(p)
+        print(f"  {GRY}→{RST} {p}  {GRY}({pays}){RST}")
+    if len(phones) > 10:
+        print(f"  {GRY}... et {len(phones)-10} autres{RST}")
+
+    input(f"\n{YLW}Appuyez sur Entrée pour démarrer...{RST}")
+
+    # Lancer Playwright + WhatsApp Web
+    resultats = []
+    with sync_playwright() as pw:
+        browser, page = connecter_whatsapp(pw)
+
+        print(f"\n{BLD}Vérification en cours...{RST}\n")
+        for idx, phone in enumerate(phones, 1):
+            pays = detecter_pays(phone)
+            print(f"  [{idx:>3}/{len(phones)}] {phone}  {GRY}{pays}{RST}", end='  ', flush=True)
+
+            wa = verifier_numero(page, phone)
+
+            if wa is True:
+                print(f"{GRN}✓ Sur WhatsApp{RST}")
+            elif wa is False:
+                print(f"{RED}✗ Pas sur WhatsApp{RST}")
+            else:
+                print(f"{GRY}? Indéterminé{RST}")
+
+            resultats.append({'phone': phone, 'pays': pays, 'wa': wa})
+
+            # Petite pause entre chaque numéro
+            time.sleep(0.8)
+
+        browser.close()
+
+    # Bilan
+    afficher_bilan(resultats)
+
+    # Export CSV
+    sauver = input(f"\n{BLD}Exporter les résultats en CSV ? (o/n) : {RST}").strip().lower()
+    if sauver in ('o', 'oui', 'y', 'yes'):
+        fichier = exporter_csv(resultats)
+        ok(f"Résultats sauvegardés : {fichier}")
+
+    print(f"\n{GRY}À bientôt !{RST}\n")
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
