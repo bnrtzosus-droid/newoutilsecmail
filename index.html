@@ -594,7 +594,7 @@ var currentPage = 'contacts';
 var toastTimer;
 
 /* ── Auth (vérification locale SHA-256, pas de réseau) ───── */
-var PASS_HASH = 'befd9f5113f1ca1397c22cfc886e27ba45bd9d67c220e433645b5a0f05e7c8bf';
+var _ph = 639028611;
 
 function getSession() {
   try { return JSON.parse(localStorage.getItem(SB_SESS_KEY)); } catch(e) { return null; }
@@ -622,27 +622,17 @@ function doLogin(e) {
   var btn  = document.getElementById('loginBtn');
   var err  = document.getElementById('loginErr');
   btn.disabled = true; btn.textContent = 'Vérification…'; err.hidden = true;
-  var p;
-  try { p = crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass)); }
-  catch(ex) {
-    err.textContent = 'Navigateur incompatible. Ouvre le site en HTTPS.';
-    err.hidden = false; btn.disabled = false; btn.textContent = 'Se connecter'; return;
-  }
-  p.then(function(buf) {
-    var hex = Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-    if (hex === PASS_HASH) {
-      saveSession({ ok: true, expires_at: Date.now()/1000 + 86400 * 30 });
-      document.getElementById('loginOverlay').hidden = true;
-      loadContactsFromDB();
-      setInterval(loadContactsFromDB, 10000);
-    } else {
-      err.textContent = 'Mot de passe incorrect.';
-      err.hidden = false; btn.disabled = false; btn.textContent = 'Se connecter';
-    }
-  }).catch(function(ex) {
-    err.textContent = 'Erreur: ' + (ex.message || ex);
+  var h = 5381;
+  for (var i = 0; i < pass.length; i++) h = ((h << 5) + h + pass.charCodeAt(i)) & 0xFFFFFFFF;
+  if ((h >>> 0) === _ph) {
+    saveSession({ ok: true, expires_at: Date.now()/1000 + 86400 * 30 });
+    document.getElementById('loginOverlay').hidden = true;
+    loadContactsFromDB();
+    setInterval(loadContactsFromDB, 10000);
+  } else {
+    err.textContent = 'Mot de passe incorrect.';
     err.hidden = false; btn.disabled = false; btn.textContent = 'Se connecter';
-  });
+  }
 }
 function doLogout() {
   clearSession();
