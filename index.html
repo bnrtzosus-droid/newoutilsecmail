@@ -288,6 +288,86 @@ body {
 }
 .contacts-search-clear:hover { color:var(--er); }
 
+/* ── Selection mode ──────────────────────────────────────── */
+.btn-select {
+  display:flex; align-items:center; gap:5px;
+  background:var(--sf3); color:var(--fg2); border:1px solid var(--bd);
+  border-radius:var(--rs); padding:7px 12px; font-size:12px; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+}
+.btn-select:hover, .btn-select.active { background:var(--acd); color:var(--ac); border-color:var(--bda); }
+.ccard.sel-mode { cursor:pointer; }
+.ccard.sel-mode:hover { border-color:var(--bda); }
+.ccard.selected { border-color:var(--ac); background:linear-gradient(135deg,var(--acd) 0%,rgba(37,211,102,.08) 100%); }
+.ccard-cb { display:none; width:18px; height:18px; flex-shrink:0; accent-color:var(--ac); cursor:pointer; }
+.sel-mode .ccard-cb { display:block; }
+
+.sel-bar {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:var(--sf); border:1px solid var(--bda);
+  border-radius:16px; padding:12px 18px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  box-shadow:0 8px 32px rgba(0,0,0,.35); z-index:200;
+  white-space:nowrap;
+}
+.sel-bar-count { font-size:13px; font-weight:700; color:var(--ac); min-width:100px; }
+.sel-bar-actions { display:flex; align-items:center; gap:7px; }
+.sel-btn-all, .sel-btn-none {
+  background:var(--sf3); color:var(--fg2); border:1px solid var(--bd);
+  border-radius:8px; padding:6px 11px; font-size:12px; font-weight:600;
+  cursor:pointer; transition:all .15s;
+}
+.sel-btn-all:hover, .sel-btn-none:hover { background:var(--acd); color:var(--ac); }
+.sel-btn-copy {
+  display:flex; align-items:center; gap:5px;
+  background:var(--ac); color:#fff; border:none;
+  border-radius:8px; padding:6px 14px; font-size:12px; font-weight:700;
+  cursor:pointer; transition:background .15s;
+}
+.sel-btn-copy:hover { background:var(--acl); }
+.sel-btn-cancel {
+  background:none; color:var(--fg2); border:1px solid var(--bd);
+  border-radius:8px; padding:6px 11px; font-size:12px; font-weight:600;
+  cursor:pointer; transition:all .15s;
+}
+.sel-btn-cancel:hover { color:var(--er); border-color:var(--er); }
+
+.copy-modal-bg {
+  position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:300;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.copy-modal {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:18px; width:100%; max-width:420px;
+  display:flex; flex-direction:column; max-height:80vh;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.copy-modal-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 12px; border-bottom:1px solid var(--bd); flex-shrink:0;
+}
+.copy-modal-title { font-size:15px; font-weight:700; color:var(--fg); }
+.copy-modal-close {
+  background:none; border:none; color:var(--fg2); cursor:pointer;
+  font-size:20px; line-height:1; padding:2px 6px; border-radius:6px;
+}
+.copy-modal-close:hover { color:var(--er); }
+.copy-modal-body {
+  overflow-y:auto; padding:14px 20px; flex:1;
+  display:flex; flex-direction:column; gap:5px;
+}
+.copy-modal-row {
+  display:flex; align-items:center; gap:10px;
+  padding:7px 0; border-bottom:1px solid var(--bd);
+}
+.copy-modal-row:last-child { border-bottom:none; }
+.copy-modal-n { font-size:10px; font-weight:700; color:var(--fg3); background:var(--sf3); border-radius:5px; min-width:22px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.copy-modal-phone { font-size:13px; font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--fg); }
+.copy-modal-foot {
+  display:flex; gap:8px; padding:12px 20px 16px;
+  border-top:1px solid var(--bd); flex-shrink:0;
+}
+
 /* ── Trash card ──────────────────────────────────────────── */
 .trash-grid { display:flex; flex-direction:column; gap:7px; }
 .tcard {
@@ -578,6 +658,10 @@ body {
         <span class="sec-badge" id="contactsBadge">0</span>
       </div>
       <div class="main-actions">
+        <button class="btn-select" id="btnSelMode" onclick="toggleSelMode()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Sélectionner
+        </button>
         <button class="btn-ghost" onclick="exportContacts()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter
@@ -610,6 +694,38 @@ body {
       </div>
       <div id="contactsList">
         <div class="contacts-empty">Aucun contact — les numéros détectés par le logiciel apparaîtront ici automatiquement.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre sélection flottante -->
+  <div class="sel-bar" id="selBar" hidden>
+    <span class="sel-bar-count" id="selBarCount">0 sélectionné(s)</span>
+    <div class="sel-bar-actions">
+      <button class="sel-btn-all" onclick="selectAll()">Tout sélectionner</button>
+      <button class="sel-btn-none" onclick="deselectAll()">Tout décocher</button>
+      <button class="sel-btn-copy" onclick="copySelected()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copier
+      </button>
+      <button class="sel-btn-cancel" onclick="toggleSelMode()">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Modal liste copiée -->
+  <div class="copy-modal-bg" id="copyModalBg" onclick="closeCopyModal()" hidden>
+    <div class="copy-modal" onclick="event.stopPropagation()">
+      <div class="copy-modal-hdr">
+        <span class="copy-modal-title">Numéros copiés</span>
+        <button class="copy-modal-close" onclick="closeCopyModal()">×</button>
+      </div>
+      <div class="copy-modal-body" id="copyModalBody"></div>
+      <div class="copy-modal-foot">
+        <button class="sel-btn-copy" onclick="copyModalAgain()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copier à nouveau
+        </button>
+        <button class="sel-btn-cancel" onclick="closeCopyModal()">Fermer</button>
       </div>
     </div>
   </div>
@@ -793,6 +909,9 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var SB_SESS_KEY = 'wcp_auth_session';
 var sbContacts = [];
 var contactsSearchQuery = '';
+var selMode = false;
+var selectedPhones = new Set();
+var lastCopiedList = [];
 var trashContacts = (function(){ try { return JSON.parse(localStorage.getItem('trash_contacts')||'[]'); } catch(e){ return []; } })();
 var sbHistory  = [];
 var activePays = 'TOUS';
@@ -1074,6 +1193,74 @@ function renderAll() {
   renderList();
 }
 
+function toggleSelMode() {
+  selMode = !selMode;
+  if (!selMode) { selectedPhones.clear(); }
+  var btn = document.getElementById('btnSelMode');
+  if (btn) btn.classList.toggle('active', selMode);
+  document.getElementById('selBar').hidden = !selMode;
+  updateSelBar();
+  renderList();
+}
+function toggleSelect(phone) {
+  if (selectedPhones.has(phone)) selectedPhones.delete(phone);
+  else selectedPhones.add(phone);
+  updateSelBar();
+  var card = document.querySelector('.ccard[data-phone="' + phone + '"]');
+  if (card) {
+    card.classList.toggle('selected', selectedPhones.has(phone));
+    var cb = card.querySelector('.ccard-cb');
+    if (cb) cb.checked = selectedPhones.has(phone);
+  }
+}
+function updateSelBar() {
+  var n = selectedPhones.size;
+  var el = document.getElementById('selBarCount');
+  if (el) el.textContent = n + ' sélectionné' + (n > 1 ? 's' : '');
+}
+function selectAll() {
+  var list = selMode
+    ? (activePays === 'TOUS' ? sbContacts : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; }))
+    : [];
+  if (contactsSearchQuery) list = list.filter(function(c){ return (c.phone||'').toLowerCase().includes(contactsSearchQuery); });
+  list.forEach(function(c){ selectedPhones.add(c.phone); });
+  updateSelBar();
+  renderList();
+}
+function deselectAll() {
+  selectedPhones.clear();
+  updateSelBar();
+  renderList();
+}
+function copySelected() {
+  if (!selectedPhones.size) { showToast('Aucun numéro sélectionné'); return; }
+  lastCopiedList = Array.from(selectedPhones);
+  var text = lastCopiedList.map(function(p, i){ return (i+1)+'. '+p; }).join('\n');
+  try {
+    navigator.clipboard.writeText(text).then(function(){
+      showToast(lastCopiedList.length + ' numéros copiés !');
+      showCopyModal();
+    }).catch(function(){ showCopyModal(); });
+  } catch(e) { showCopyModal(); }
+}
+function showCopyModal() {
+  var body = document.getElementById('copyModalBody');
+  body.innerHTML = lastCopiedList.map(function(p, i){
+    return '<div class="copy-modal-row">'
+      + '<div class="copy-modal-n">'+(i+1)+'</div>'
+      + '<div class="copy-modal-phone">'+p+'</div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('copyModalBg').hidden = false;
+}
+function closeCopyModal() {
+  document.getElementById('copyModalBg').hidden = true;
+}
+function copyModalAgain() {
+  var text = lastCopiedList.map(function(p, i){ return (i+1)+'. '+p; }).join('\n');
+  try { navigator.clipboard.writeText(text).then(function(){ showToast('Copié !'); }); } catch(e){}
+}
+
 function filterContacts(val) {
   contactsSearchQuery = (val||'').trim().toLowerCase();
   var btn = document.getElementById('contactsSearchClear');
@@ -1114,17 +1301,23 @@ function renderList() {
       var date  = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
       var info  = detectCountryInfo(c.pays||'');
       var num   = idx + 1;
-      return '<div class="ccard">'
+      var isSel = selectedPhones.has(c.phone);
+      var selClass = selMode ? ' sel-mode' : '';
+      var selectedClass = isSel ? ' selected' : '';
+      var clickAttr = selMode ? ' onclick="toggleSelect(\''+c.phone+'\')"' : '';
+      return '<div class="ccard'+selClass+selectedClass+'" data-phone="'+c.phone+'"'+clickAttr+'>'
+        + '<input class="ccard-cb" type="checkbox"'+(isSel?' checked':'')
+        +   ' onclick="event.stopPropagation();toggleSelect(\''+c.phone+'\')" tabindex="-1">'
         + '<div class="ccard-num">'+num+'</div>'
         + '<div class="ccard-icon">'+(info.flag||'📱')+'</div>'
         + '<div class="ccard-body">'
         +   '<div class="ccard-phone">'+(c.phone||'')+'</div>'
         +   (date ? '<div class="ccard-meta">'+date+'</div>' : '')
         + '</div>'
-        + '<div class="ccard-actions">'
+        + (selMode ? '' : '<div class="ccard-actions">'
         +   '<a class="btn-wa" href="https://wa.me/'+phone+'" target="_blank">💬</a>'
         +   '<button class="btn-del" onclick="removeContact(\''+c.phone+'\')" title="Supprimer">×</button>'
-        + '</div>'
+        + '</div>')
         + '</div>';
     }).join('')
     + '</div>';
