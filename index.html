@@ -381,6 +381,38 @@ body {
   border-top:1px solid var(--bd); flex-shrink:0;
 }
 
+/* ── Client emails ───────────────────────────────────────── */
+.cl-langs {
+  display:flex; gap:7px; flex-wrap:wrap; margin-bottom:16px;
+}
+.cl-lang {
+  display:flex; align-items:center; gap:5px;
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:20px; padding:6px 14px;
+  font-size:12px; font-weight:600; color:var(--fg2);
+  cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.cl-lang:hover { border-color:var(--bda); color:var(--ac); }
+.cl-lang.active { background:var(--acd); border-color:var(--bda); color:var(--ac); }
+.cl-lang .cl-lang-cnt { font-size:10px; background:var(--sf3); border-radius:10px; padding:1px 6px; color:var(--fg2); }
+.cl-lang.active .cl-lang-cnt { background:rgba(37,211,102,.20); color:var(--ac); }
+
+.cl-grid { display:flex; flex-direction:column; gap:7px; }
+.clcard {
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:var(--r); padding:10px 14px;
+  display:flex; align-items:center; gap:10px;
+  transition:border-color .15s;
+}
+.clcard:hover { border-color:var(--bda); }
+.clcard-num { font-size:10px; font-weight:700; color:var(--fg2); background:var(--sf3); border-radius:5px; min-width:22px; height:20px; padding:0 4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.clcard-icon { width:34px; height:34px; border-radius:9px; display:grid; place-items:center; font-size:16px; flex-shrink:0; background:rgba(37,211,102,.10); }
+.clcard-body { flex:1; min-width:0; }
+.clcard-email { font-size:12.5px; font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.clcard-meta { font-size:10.5px; color:var(--fg3); margin-top:1px; }
+.clcard-lang { display:inline-flex; align-items:center; gap:4px; background:var(--acd2); color:var(--ac); border:1px solid var(--bda); border-radius:6px; padding:1px 7px; font-size:10px; font-weight:600; }
+.clcard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+
 /* ── Trash card ──────────────────────────────────────────── */
 .trash-grid { display:flex; flex-direction:column; gap:7px; }
 .tcard {
@@ -641,6 +673,11 @@ body {
       Corbeille
       <span class="sb-badge" id="navBadgeCorbeille" style="display:none">0</span>
     </button>
+    <button class="sb-link" id="navClients" onclick="showPage('clients')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+      E-mail
+      <span class="sb-badge" id="navBadgeClients" style="display:none">0</span>
+    </button>
   </nav>
 
   <div class="sb-stats">
@@ -866,6 +903,81 @@ body {
     </div>
   </div>
 
+
+  <!-- Page E-mail Clients -->
+  <div id="pageClients" style="display:none">
+    <div class="main-hdr">
+      <div class="main-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+        E-mail Clients
+        <span class="sec-badge" id="clientsBadge">0</span>
+      </div>
+      <div class="main-actions">
+        <button class="btn-ghost" id="btnAddMail" onclick="openAddMailModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter
+        </button>
+        <button class="btn-ghost" onclick="copyClientEmails()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copier
+        </button>
+        <button class="btn-secondary" onclick="clearClientEmails()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Vider
+        </button>
+      </div>
+    </div>
+    <div class="main-body" id="bodyClients">
+      <div class="cl-langs" id="clLangs">
+        <button class="cl-lang active" data-lang="TOUS" onclick="selectClientLang('TOUS')">🌍 Tous</button>
+      </div>
+      <div id="clientsList">
+        <div class="contacts-empty">Aucun e-mail — cliquez sur "Ajouter" pour commencer.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal ajouter e-mail -->
+  <div class="copy-modal-bg" id="addMailModalBg" onclick="closeAddMailModal()" hidden>
+    <div class="copy-modal" onclick="event.stopPropagation()" style="max-width:360px">
+      <div class="copy-modal-hdr">
+        <span class="copy-modal-title">Ajouter un e-mail</span>
+        <button class="copy-modal-close" onclick="closeAddMailModal()">×</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="login-label" style="font-size:11px;font-weight:600;color:var(--fg2);display:block;margin-bottom:5px">Adresse e-mail</label>
+          <input class="contacts-search" id="addMailEmail" type="email" placeholder="exemple@gmail.com" style="width:100%;border-radius:9px" autocomplete="off">
+        </div>
+        <div>
+          <label class="login-label" style="font-size:11px;font-weight:600;color:var(--fg2);display:block;margin-bottom:5px">Langue</label>
+          <select class="contacts-search" id="addMailLang" style="width:100%;border-radius:9px;cursor:pointer">
+            <option>Français</option>
+            <option>Anglais</option>
+            <option>Espagnol</option>
+            <option>Portugais</option>
+            <option>Italien</option>
+            <option>Allemand</option>
+            <option>Arabe</option>
+            <option>Néerlandais</option>
+            <option>Suédois</option>
+            <option>Finlandais</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div>
+          <label class="login-label" style="font-size:11px;font-weight:600;color:var(--fg2);display:block;margin-bottom:5px">Note (optionnel)</label>
+          <input class="contacts-search" id="addMailNote" type="text" placeholder="Ex: client VIP, newsletter…" style="width:100%;border-radius:9px" autocomplete="off">
+        </div>
+        <div id="addMailErr" style="font-size:12px;color:var(--er);display:none"></div>
+      </div>
+      <div class="copy-modal-foot">
+        <button class="sel-btn-copy" onclick="submitAddMail()" id="addMailBtn">Ajouter</button>
+        <button class="sel-btn-cancel" onclick="closeAddMailModal()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -942,6 +1054,8 @@ var activeHistPays = 'TOUS';
 var currentPage = 'contacts';
 var sbEmails = [];
 var activeNet = 'ALL';
+var sbClientEmails = [];
+var activeClientLang = 'TOUS';
 var activeEmailPays = 'TOUS';
 var toastTimer;
 
@@ -1004,13 +1118,16 @@ function showPage(page) {
   document.getElementById('pageHistoire').style.display = page === 'histoire' ? '' : 'none';
   document.getElementById('pageEmail').style.display      = page === 'email'      ? '' : 'none';
   document.getElementById('pageCorbeille').style.display  = page === 'corbeille'  ? '' : 'none';
+  document.getElementById('pageClients').style.display    = page === 'clients'    ? '' : 'none';
   document.getElementById('navContacts').classList.toggle('active', page === 'contacts');
   document.getElementById('navHistoire').classList.toggle('active', page === 'histoire');
   document.getElementById('navEmail').classList.toggle('active', page === 'email');
   document.getElementById('navCorbeille').classList.toggle('active', page === 'corbeille');
+  document.getElementById('navClients').classList.toggle('active', page === 'clients');
   if (page === 'histoire') loadHistory();
   if (page === 'email') loadEmailsFromDB();
   if (page === 'corbeille') renderTrash();
+  if (page === 'clients') loadClientEmailsFromDB();
 }
 
 function detectCountryInfo(paysName) {
@@ -1663,6 +1780,170 @@ function exportEmails() {
   a.href=url; a.download='emails_'+Date.now()+'.csv';
   a.click(); URL.revokeObjectURL(url);
   showToast('Emails exportés !');
+}
+
+/* ── E-mail Clients ─────────────────────────────────────── */
+var LANG_FLAGS = {
+  'Français':'🇫🇷','Anglais':'🇬🇧','Espagnol':'🇪🇸','Portugais':'🇵🇹',
+  'Italien':'🇮🇹','Allemand':'🇩🇪','Arabe':'🇸🇦','Néerlandais':'🇳🇱',
+  'Suédois':'🇸🇪','Finlandais':'🇫🇮','Autre':'🌐'
+};
+
+function loadClientEmailsFromDB() {
+  sbFetch('/rest/v1/client_emails?select=*&order=date_ajout.asc')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      sbClientEmails = Array.isArray(data) ? data : [];
+      buildClientLangTabs();
+      renderClientEmails();
+    })
+    .catch(function(){ renderClientEmails(); });
+}
+
+function buildClientLangTabs() {
+  var langs = ['TOUS'];
+  sbClientEmails.forEach(function(e){
+    var l = e.langue || 'Autre';
+    if (langs.indexOf(l) < 0) langs.push(l);
+  });
+  var html = langs.map(function(l){
+    var flag = l === 'TOUS' ? '🌍' : (LANG_FLAGS[l] || '🌐');
+    var count = l === 'TOUS' ? sbClientEmails.length
+      : sbClientEmails.filter(function(e){ return (e.langue||'Autre') === l; }).length;
+    var active = l === activeClientLang ? ' active' : '';
+    return '<button class="cl-lang'+active+'" data-lang="'+l+'" onclick="selectClientLang(\''+l+'\')">'
+      + flag + ' ' + l
+      + (count ? ' <span style="background:var(--acd);border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">'+count+'</span>' : '')
+      + '</button>';
+  }).join('');
+  document.getElementById('clLangs').innerHTML = html;
+}
+
+function selectClientLang(lang) {
+  activeClientLang = lang;
+  buildClientLangTabs();
+  renderClientEmails();
+}
+
+function renderClientEmails() {
+  var el = document.getElementById('clientsList');
+  var list = sbClientEmails;
+  if (activeClientLang !== 'TOUS') {
+    list = list.filter(function(e){ return (e.langue||'Autre') === activeClientLang; });
+  }
+  var total = sbClientEmails.length;
+  document.getElementById('clientsBadge').textContent = total;
+  var nb = document.getElementById('navBadgeClients');
+  if (nb) { nb.textContent = total; nb.style.display = total ? '' : 'none'; }
+  if (!total) {
+    el.innerHTML = '<div class="contacts-empty">Aucun e-mail — cliquez sur "Ajouter" pour commencer.</div>';
+    return;
+  }
+  if (!list.length) {
+    el.innerHTML = '<div class="contacts-empty">Aucun e-mail pour cette langue.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="contact-grid">'
+    + list.map(function(e, i){
+        var flag = LANG_FLAGS[e.langue] || '🌐';
+        var date = e.date_ajout ? new Date(e.date_ajout).toLocaleDateString('fr-FR') : '';
+        return '<div class="ccard">'
+          + '<div class="ccard-num">'+(i+1)+'</div>'
+          + '<div class="ccard-icon">'+flag+'</div>'
+          + '<div class="ccard-body">'
+          +   '<div class="ccard-phone">'+e.email+'</div>'
+          +   '<div class="ccard-meta">'
+          +     '<span class="clcard-lang">'+flag+' '+(e.langue||'Autre')+'</span>'
+          +     (e.note ? '<span style="color:var(--fg2);font-size:11px">'+e.note+'</span>' : '')
+          +     (date ? '<span>'+date+'</span>' : '')
+          +   '</div>'
+          + '</div>'
+          + '<div class="ccard-actions">'
+          +   '<button class="btn-wa" onclick="copyText(\''+e.email+'\')" title="Copier">📋</button>'
+          +   '<button class="btn-del" onclick="deleteClientEmail('+e.id+')" title="Supprimer">×</button>'
+          + '</div>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function openAddMailModal() {
+  document.getElementById('addMailEmail').value = '';
+  document.getElementById('addMailLang').value = 'Français';
+  document.getElementById('addMailNote').value = '';
+  document.getElementById('addMailErr').style.display = 'none';
+  document.getElementById('addMailBtn').disabled = false;
+  document.getElementById('addMailBtn').textContent = 'Ajouter';
+  document.getElementById('addMailModalBg').hidden = false;
+  setTimeout(function(){ document.getElementById('addMailEmail').focus(); }, 100);
+}
+
+function closeAddMailModal() {
+  document.getElementById('addMailModalBg').hidden = true;
+}
+
+function submitAddMail() {
+  var email = document.getElementById('addMailEmail').value.trim();
+  var langue = document.getElementById('addMailLang').value;
+  var note   = document.getElementById('addMailNote').value.trim();
+  var errEl  = document.getElementById('addMailErr');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Adresse e-mail invalide.';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  var btn = document.getElementById('addMailBtn');
+  btn.disabled = true;
+  btn.textContent = 'Ajout…';
+  sbFetch('/rest/v1/client_emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify({ email: email, langue: langue, note: note || null })
+  })
+  .then(function(){
+    closeAddMailModal();
+    loadClientEmailsFromDB();
+    showToast('E-mail ajouté !');
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.textContent = 'Ajouter';
+    errEl.textContent = 'Erreur lors de l\'ajout.';
+    errEl.style.display = '';
+  });
+}
+
+function deleteClientEmail(id) {
+  sbFetch('/rest/v1/client_emails?id=eq.'+id, { method: 'DELETE' })
+    .then(function(){ loadClientEmailsFromDB(); showToast('E-mail supprimé'); });
+}
+
+function copyClientEmails() {
+  var list = sbClientEmails;
+  if (activeClientLang !== 'TOUS') {
+    list = list.filter(function(e){ return (e.langue||'Autre') === activeClientLang; });
+  }
+  if (!list.length) { showToast('Aucun e-mail à copier'); return; }
+  var text = list.map(function(e, i){ return (i+1)+'. '+e.email; }).join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text)
+      .then(function(){ showToast(list.length+' e-mail(s) copiés !'); })
+      .catch(function(){ fallbackCopy(text); showToast(list.length+' e-mail(s) copiés !'); });
+  } else { fallbackCopy(text); showToast(list.length+' e-mail(s) copiés !'); }
+}
+
+function clearClientEmails() {
+  var list = sbClientEmails;
+  if (activeClientLang !== 'TOUS') {
+    list = list.filter(function(e){ return (e.langue||'Autre') === activeClientLang; });
+  }
+  if (!list.length) { showToast('Aucun e-mail à supprimer'); return; }
+  var label = activeClientLang === 'TOUS' ? 'tous les e-mails' : 'les e-mails en '+activeClientLang;
+  if (!confirm('Supprimer '+label+' ?')) return;
+  var ids = list.map(function(e){ return e.id; });
+  sbFetch('/rest/v1/client_emails?id=in.('+ids.join(',')+')', { method: 'DELETE' })
+    .then(function(){ loadClientEmailsFromDB(); showToast('E-mails supprimés'); });
 }
 
 function showToast(msg) {
