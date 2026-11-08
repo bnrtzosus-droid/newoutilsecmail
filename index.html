@@ -412,6 +412,18 @@ body {
 .clcard-meta { font-size:10.5px; color:var(--fg3); margin-top:1px; }
 .clcard-lang { display:inline-flex; align-items:center; gap:4px; background:var(--acd2); color:var(--ac); border:1px solid var(--bda); border-radius:6px; padding:1px 7px; font-size:10px; font-weight:600; }
 .clcard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+/* email list rows */
+.cl-list { display:flex; flex-direction:column; gap:4px; }
+.cl-row { display:flex; align-items:center; gap:10px; background:var(--sf); border:1px solid var(--bd); border-radius:10px; padding:9px 12px; transition:border-color .15s; }
+.cl-row:hover { border-color:var(--bda); }
+.cl-row.selected { border-color:var(--ac); background:var(--acd2); }
+.cl-row-cb { width:16px; height:16px; accent-color:var(--ac); flex-shrink:0; cursor:pointer; }
+.cl-row-num { font-size:10px; font-weight:700; color:var(--fg3); min-width:20px; text-align:right; flex-shrink:0; }
+.cl-row-email { font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:500; color:var(--fg); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cl-row-note { font-size:11px; color:var(--fg2); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cl-row-date { font-size:10.5px; color:var(--fg3); flex-shrink:0; }
+.cl-row-del { background:none; border:none; color:var(--fg3); cursor:pointer; font-size:16px; line-height:1; padding:0 2px; flex-shrink:0; }
+.cl-row-del:hover { color:var(--er); }
 
 /* ── Trash card ──────────────────────────────────────────── */
 .trash-grid { display:flex; flex-direction:column; gap:7px; }
@@ -913,13 +925,13 @@ body {
         <span class="sec-badge" id="clientsBadge">0</span>
       </div>
       <div class="main-actions">
-        <button class="btn-ghost" id="btnAddMail" onclick="openAddMailModal()">
+        <button class="btn-ghost" onclick="openAddMailModal()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Ajouter
         </button>
-        <button class="btn-ghost" onclick="copyClientEmails()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copier
+        <button class="btn-ghost" onclick="toggleClientSelMode()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><polyline points="9 12 11 14 15 10"/></svg>
+          <span id="clientSelModeLabel">Sélectionner</span>
         </button>
         <button class="btn-secondary" onclick="clearClientEmails()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
@@ -927,6 +939,16 @@ body {
         </button>
       </div>
     </div>
+
+    <!-- Barre sélection emails -->
+    <div class="sel-bar" id="clientSelBar" hidden>
+      <span id="clientSelCount">0 sélectionné(s)</span>
+      <div style="display:flex;gap:7px;margin-left:auto">
+        <button class="sel-btn-copy" onclick="copySelectedClientEmails()">Copier</button>
+        <button class="sel-btn-cancel" onclick="clearClientSel()">Tout décocher</button>
+      </div>
+    </div>
+
     <div class="main-body" id="bodyClients">
       <div class="cl-langs" id="clLangs">
         <button class="cl-lang active" data-lang="TOUS" onclick="selectClientLang('TOUS')">🌍 Tous</button>
@@ -1060,6 +1082,8 @@ var sbEmails = [];
 var activeNet = 'ALL';
 var sbClientEmails = [];
 var activeClientLang = 'TOUS';
+var clientSelMode = false;
+var selectedClientEmails = [];
 var activeEmailPays = 'TOUS';
 var toastTimer;
 
@@ -1870,28 +1894,63 @@ function renderClientEmails() {
     el.innerHTML = '<div class="contacts-empty">Aucun e-mail pour cette langue.</div>';
     return;
   }
-  el.innerHTML = '<div class="contact-grid">'
+  el.innerHTML = '<div class="cl-list">'
     + list.map(function(e, i){
         var m = LANG_META[e.langue] || LANG_META['Autre'];
         var date = e.date_ajout ? new Date(e.date_ajout).toLocaleDateString('fr-FR') : '';
-        return '<div class="ccard">'
-          + '<div class="ccard-num">'+(i+1)+'</div>'
-          + langBadge(e.langue, 'lg')
-          + '<div class="ccard-body">'
-          +   '<div class="ccard-phone">'+e.email+'</div>'
-          +   '<div class="ccard-meta">'
-          +     '<span style="display:inline-flex;align-items:center;gap:3px;background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700">'+(e.langue||'Autre')+'</span>'
-          +     (e.note ? '<span style="color:var(--fg2);font-size:11px">'+e.note+'</span>' : '')
-          +     (date ? '<span>'+date+'</span>' : '')
-          +   '</div>'
-          + '</div>'
-          + '<div class="ccard-actions">'
-          +   '<button class="btn-wa" onclick="copyText(\''+e.email+'\')" title="Copier">📋</button>'
-          +   '<button class="btn-del" onclick="deleteClientEmail('+e.id+')" title="Supprimer">×</button>'
-          + '</div>'
+        var isSel = selectedClientEmails.indexOf(e.id) >= 0;
+        var selClass = isSel ? ' selected' : '';
+        return '<div class="cl-row'+selClass+'" onclick="clientSelMode && toggleClientSel('+e.id+')">'
+          + (clientSelMode ? '<input class="cl-row-cb" type="checkbox"'+(isSel?' checked':'')+' onclick="event.stopPropagation();toggleClientSel('+e.id+')" tabindex="-1">' : '')
+          + '<span class="cl-row-num">'+(i+1)+'</span>'
+          + langBadge(e.langue, 'sm')
+          + '<span class="cl-row-email">'+e.email+'</span>'
+          + (e.note ? '<span class="cl-row-note">'+e.note+'</span>' : '')
+          + '<span class="cl-row-date">'+date+'</span>'
+          + (clientSelMode ? '' : '<button class="cl-row-del" onclick="deleteClientEmail('+e.id+')" title="Supprimer">×</button>')
           + '</div>';
       }).join('')
     + '</div>';
+  updateClientSelBar();
+}
+
+function toggleClientSelMode() {
+  clientSelMode = !clientSelMode;
+  selectedClientEmails = [];
+  document.getElementById('clientSelModeLabel').textContent = clientSelMode ? 'Annuler' : 'Sélectionner';
+  document.getElementById('clientSelBar').hidden = !clientSelMode;
+  renderClientEmails();
+}
+
+function toggleClientSel(id) {
+  var idx = selectedClientEmails.indexOf(id);
+  if (idx >= 0) selectedClientEmails.splice(idx, 1);
+  else selectedClientEmails.push(id);
+  updateClientSelBar();
+  renderClientEmails();
+}
+
+function updateClientSelBar() {
+  if (!clientSelMode) return;
+  var n = selectedClientEmails.length;
+  document.getElementById('clientSelCount').textContent = n + ' sélectionné' + (n > 1 ? 's' : '');
+  document.getElementById('clientSelBar').hidden = false;
+}
+
+function clearClientSel() {
+  selectedClientEmails = [];
+  updateClientSelBar();
+  renderClientEmails();
+}
+
+function copySelectedClientEmails() {
+  var ids = selectedClientEmails;
+  var list = sbClientEmails.filter(function(e){ return ids.indexOf(e.id) >= 0; });
+  if (!list.length) { showToast('Aucun e-mail sélectionné'); return; }
+  var text = list.map(function(e, i){ return (i+1)+'. '+e.email; }).join('\n');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){ showToast(list.length+' e-mail(s) copiés !'); }).catch(function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); showToast(list.length+' e-mail(s) copiés !'); }
 }
 
 function openAddMailModal() {
@@ -1948,15 +2007,11 @@ function deleteClientEmail(id) {
 
 function copyClientEmails() {
   var list = sbClientEmails;
-  if (activeClientLang !== 'TOUS') {
-    list = list.filter(function(e){ return (e.langue||'Autre') === activeClientLang; });
-  }
+  if (activeClientLang !== 'TOUS') list = list.filter(function(e){ return (e.langue||'Autre') === activeClientLang; });
   if (!list.length) { showToast('Aucun e-mail à copier'); return; }
   var text = list.map(function(e, i){ return (i+1)+'. '+e.email; }).join('\n');
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text)
-      .then(function(){ showToast(list.length+' e-mail(s) copiés !'); })
-      .catch(function(){ fallbackCopy(text); showToast(list.length+' e-mail(s) copiés !'); });
+    navigator.clipboard.writeText(text).then(function(){ showToast(list.length+' e-mail(s) copiés !'); }).catch(function(){ fallbackCopy(text); });
   } else { fallbackCopy(text); showToast(list.length+' e-mail(s) copiés !'); }
 }
 
