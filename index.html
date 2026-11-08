@@ -880,30 +880,26 @@ function detectCountryInfo(paysName) {
 }
 
 function loadContactsFromDB() {
-  var PAGE = 1000;
-  var all  = [];
+  var all = [];
   function fetchPage(offset) {
-    return sbFetch('/rest/v1/contacts_whatsapp?select=*&order=date_ajout.asc', {
+    return fetch(SB_URL + '/rest/v1/contacts_whatsapp?select=*&order=date_ajout.asc', {
       headers: {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + authToken(),
         'Range-Unit': 'items',
-        'Range': offset + '-' + (offset + PAGE - 1),
+        'Range': offset + '-' + (offset + 9999),
         'Prefer': 'count=none'
       }
     })
     .then(function(r){ return r.json(); })
     .then(function(data){
-      if (!Array.isArray(data)) return;
+      if (!Array.isArray(data) || data.length === 0) return;
       all = all.concat(data);
-      if (data.length === PAGE) return fetchPage(offset + PAGE);
+      if (data.length === 10000) return fetchPage(offset + 10000);
     });
   }
   fetchPage(0)
-    .then(function(){
-      sbContacts = all;
-      renderAll();
-    })
+    .then(function(){ sbContacts = all; renderAll(); })
     .catch(function(){ renderAll(); });
 }
 
