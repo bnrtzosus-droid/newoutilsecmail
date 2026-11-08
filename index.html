@@ -1111,9 +1111,13 @@ function doLogout() {
 }
 
 function sbFetch(path, opts) {
-  return fetch(SB_URL + path, Object.assign({
-    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+authToken(), 'Content-Type':'application/json' }
-  }, opts || {}));
+  var o = opts || {};
+  var merged = Object.assign({}, o);
+  merged.headers = Object.assign(
+    { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + authToken(), 'Content-Type': 'application/json' },
+    o.headers || {}
+  );
+  return fetch(SB_URL + path, merged);
 }
 
 function showPage(page) {
