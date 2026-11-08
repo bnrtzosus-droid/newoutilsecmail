@@ -413,16 +413,40 @@ body {
 .clcard-lang { display:inline-flex; align-items:center; gap:4px; background:var(--acd2); color:var(--ac); border:1px solid var(--bda); border-radius:6px; padding:1px 7px; font-size:10px; font-weight:600; }
 .clcard-actions { display:flex; align-items:center; gap:5px; flex-shrink:0; }
 /* email list rows */
-.cl-list { display:flex; flex-direction:column; gap:4px; }
-.cl-row { display:flex; align-items:center; gap:10px; background:var(--sf); border:1px solid var(--bd); border-radius:10px; padding:9px 12px; transition:border-color .15s; }
-.cl-row:hover { border-color:var(--bda); }
+.cl-list { display:flex; flex-direction:column; gap:6px; }
+.cl-row {
+  display:flex; align-items:center; gap:12px;
+  background:var(--sf); border:1px solid var(--bd);
+  border-radius:12px; padding:12px 14px;
+  transition:border-color .15s, background .15s;
+  cursor:default;
+}
+.cl-row:hover { border-color:var(--bda); background:var(--sf2); }
 .cl-row.selected { border-color:var(--ac); background:var(--acd2); }
 .cl-row-cb { width:16px; height:16px; accent-color:var(--ac); flex-shrink:0; cursor:pointer; }
-.cl-row-num { font-size:10px; font-weight:700; color:var(--fg3); min-width:20px; text-align:right; flex-shrink:0; }
-.cl-row-email { font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:500; color:var(--fg); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.cl-row-note { font-size:11px; color:var(--fg2); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.cl-row-date { font-size:10.5px; color:var(--fg3); flex-shrink:0; }
-.cl-row-del { background:none; border:none; color:var(--fg3); cursor:pointer; font-size:16px; line-height:1; padding:0 2px; flex-shrink:0; }
+.cl-row-num { font-size:11px; font-weight:700; color:var(--fg3); min-width:22px; text-align:center; flex-shrink:0; }
+.cl-row-avatar {
+  width:38px; height:38px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:800; flex-shrink:0; letter-spacing:-.5px;
+}
+.cl-row-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
+.cl-row-email {
+  font-family:'JetBrains Mono',monospace; font-size:13px;
+  font-weight:600; color:var(--fg);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cl-row-sub { display:flex; align-items:center; gap:7px; }
+.cl-row-lang-pill {
+  font-size:10px; font-weight:700; border-radius:6px;
+  padding:2px 8px; letter-spacing:.3px;
+}
+.cl-row-note { font-size:11px; color:var(--fg2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px; }
+.cl-row-date { font-size:10.5px; color:var(--fg3); margin-left:auto; flex-shrink:0; }
+.cl-row-actions { display:flex; gap:5px; flex-shrink:0; }
+.cl-row-copy { background:var(--acd2); border:1px solid var(--bda); color:var(--ac); border-radius:7px; padding:4px 10px; font-size:11px; font-weight:600; cursor:pointer; }
+.cl-row-copy:hover { background:var(--acd); }
+.cl-row-del { background:none; border:none; color:var(--fg3); cursor:pointer; font-size:18px; line-height:1; padding:0 3px; }
 .cl-row-del:hover { color:var(--er); }
 
 /* ── Trash card ──────────────────────────────────────────── */
@@ -1900,14 +1924,23 @@ function renderClientEmails() {
         var date = e.date_ajout ? new Date(e.date_ajout).toLocaleDateString('fr-FR') : '';
         var isSel = selectedClientEmails.indexOf(e.id) >= 0;
         var selClass = isSel ? ' selected' : '';
-        return '<div class="cl-row'+selClass+'" onclick="clientSelMode && toggleClientSel('+e.id+')">'
+        var initials = e.email.substring(0,2).toUpperCase();
+        return '<div class="cl-row'+selClass+'" onclick="if(clientSelMode)toggleClientSel('+e.id+')">'
           + (clientSelMode ? '<input class="cl-row-cb" type="checkbox"'+(isSel?' checked':'')+' onclick="event.stopPropagation();toggleClientSel('+e.id+')" tabindex="-1">' : '')
           + '<span class="cl-row-num">'+(i+1)+'</span>'
-          + langBadge(e.langue, 'sm')
-          + '<span class="cl-row-email">'+e.email+'</span>'
-          + (e.note ? '<span class="cl-row-note">'+e.note+'</span>' : '')
+          + '<div class="cl-row-avatar" style="background:'+m.color+'22;color:'+m.color+'">'+initials+'</div>'
+          + '<div class="cl-row-body">'
+          +   '<div class="cl-row-email">'+e.email+'</div>'
+          +   '<div class="cl-row-sub">'
+          +     '<span class="cl-row-lang-pill" style="background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44">'+m.abbr+' · '+(e.langue||'Autre')+'</span>'
+          +     (e.note ? '<span class="cl-row-note">'+e.note+'</span>' : '')
+          +   '</div>'
+          + '</div>'
           + '<span class="cl-row-date">'+date+'</span>'
-          + (clientSelMode ? '' : '<button class="cl-row-del" onclick="deleteClientEmail('+e.id+')" title="Supprimer">×</button>')
+          + '<div class="cl-row-actions">'
+          +   (clientSelMode ? '' : '<button class="cl-row-copy" onclick="event.stopPropagation();copyText(\''+e.email+'\')">Copier</button>')
+          +   (clientSelMode ? '' : '<button class="cl-row-del" onclick="event.stopPropagation();deleteClientEmail('+e.id+')">×</button>')
+          + '</div>'
           + '</div>';
       }).join('')
     + '</div>';
