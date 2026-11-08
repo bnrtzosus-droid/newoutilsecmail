@@ -306,13 +306,27 @@ body {
 .sel-bar {
   position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
   background:var(--sf); border:1px solid var(--bda);
-  border-radius:16px; padding:12px 18px;
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  border-radius:16px; padding:10px 16px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
   box-shadow:0 8px 32px rgba(0,0,0,.35); z-index:200;
-  white-space:nowrap;
+  white-space:nowrap; max-width:calc(100vw - 32px);
 }
-.sel-bar-count { font-size:13px; font-weight:700; color:var(--ac); min-width:100px; }
-.sel-bar-actions { display:flex; align-items:center; gap:7px; }
+.sel-bar-count { font-size:12px; font-weight:700; color:var(--ac); flex-shrink:0; }
+.sel-bar-range { display:flex; align-items:center; gap:5px; }
+.sel-bar-range-label { font-size:11px; color:var(--fg2); font-weight:600; }
+.sel-range-input {
+  width:52px; background:var(--bg2); color:var(--fg); border:1px solid var(--bd);
+  border-radius:7px; padding:5px 7px; font-size:12px; font-family:inherit;
+  text-align:center; outline:none; transition:border-color .15s;
+}
+.sel-range-input:focus { border-color:var(--bda); }
+.sel-btn-range {
+  background:var(--sf3); color:var(--fg); border:1px solid var(--bd);
+  border-radius:7px; padding:5px 10px; font-size:12px; font-weight:700;
+  cursor:pointer; transition:all .15s;
+}
+.sel-btn-range:hover { background:var(--acd); color:var(--ac); border-color:var(--bda); }
+.sel-bar-actions { display:flex; align-items:center; gap:6px; }
 .sel-btn-all, .sel-btn-none {
   background:var(--sf3); color:var(--fg2); border:1px solid var(--bd);
   border-radius:8px; padding:6px 11px; font-size:12px; font-weight:600;
@@ -700,9 +714,16 @@ body {
   <!-- Barre sélection flottante -->
   <div class="sel-bar" id="selBar" hidden>
     <span class="sel-bar-count" id="selBarCount">0 sélectionné(s)</span>
+    <div class="sel-bar-range">
+      <span class="sel-bar-range-label">De</span>
+      <input class="sel-range-input" id="selRangeFrom" type="number" min="1" placeholder="1">
+      <span class="sel-bar-range-label">à</span>
+      <input class="sel-range-input" id="selRangeTo" type="number" min="1" placeholder="10">
+      <button class="sel-btn-range" onclick="selectRange()">✓ Cocher</button>
+    </div>
     <div class="sel-bar-actions">
-      <button class="sel-btn-all" onclick="selectAll()">Tout sélectionner</button>
-      <button class="sel-btn-none" onclick="deselectAll()">Tout décocher</button>
+      <button class="sel-btn-all" onclick="selectAll()">Tout</button>
+      <button class="sel-btn-none" onclick="deselectAll()">Décocher</button>
       <button class="sel-btn-copy" onclick="copySelected()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         Copier
@@ -1233,6 +1254,22 @@ function deselectAll() {
   selectedPhones = [];
   updateSelBar();
   renderList();
+}
+function selectRange() {
+  var from = parseInt(document.getElementById('selRangeFrom').value, 10);
+  var to   = parseInt(document.getElementById('selRangeTo').value, 10);
+  if (isNaN(from) || isNaN(to) || from < 1 || to < from) {
+    showToast('Entre un intervalle valide (ex: 1 à 10)'); return;
+  }
+  var list = activePays === 'TOUS' ? sbContacts : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
+  if (contactsSearchQuery) list = list.filter(function(c){ return (c.phone||'').toLowerCase().includes(contactsSearchQuery); });
+  var slice = list.slice(from - 1, to);
+  slice.forEach(function(c){
+    if (c.phone && selectedPhones.indexOf(c.phone) < 0) selectedPhones.push(c.phone);
+  });
+  updateSelBar();
+  renderList();
+  showToast('Numéros ' + from + ' à ' + Math.min(to, list.length) + ' cochés (' + slice.length + ')');
 }
 function copySelected() {
   if (!selectedPhones.length) { showToast('Aucun numéro sélectionné'); return; }
