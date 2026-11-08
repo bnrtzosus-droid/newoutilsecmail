@@ -882,12 +882,10 @@ function detectCountryInfo(paysName) {
 function loadContactsFromDB() {
   var all = [];
   function fetchPage(offset) {
-    return fetch(SB_URL + '/rest/v1/contacts_whatsapp?select=*&order=date_ajout.asc', {
+    return fetch(SB_URL + '/rest/v1/contacts_whatsapp?select=*&order=date_ajout.asc&limit=1000&offset=' + offset, {
       headers: {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + authToken(),
-        'Range-Unit': 'items',
-        'Range': offset + '-' + (offset + 9999),
         'Prefer': 'count=none'
       }
     })
@@ -895,7 +893,7 @@ function loadContactsFromDB() {
     .then(function(data){
       if (!Array.isArray(data) || data.length === 0) return;
       all = all.concat(data);
-      if (data.length === 10000) return fetchPage(offset + 10000);
+      if (data.length === 1000) return fetchPage(offset + 1000);
     });
   }
   fetchPage(0)
