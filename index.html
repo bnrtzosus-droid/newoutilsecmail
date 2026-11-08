@@ -352,17 +352,15 @@ body {
   font-size:20px; line-height:1; padding:2px 6px; border-radius:6px;
 }
 .copy-modal-close:hover { color:var(--er); }
-.copy-modal-body {
-  overflow-y:auto; padding:14px 20px; flex:1;
-  display:flex; flex-direction:column; gap:5px;
+.copy-modal-body { padding:14px 20px; flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.copy-modal-textarea {
+  flex:1; resize:none; min-height:260px;
+  background:var(--bg2); color:var(--fg); border:1px solid var(--bd);
+  border-radius:10px; padding:12px 14px;
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.7;
+  outline:none;
 }
-.copy-modal-row {
-  display:flex; align-items:center; gap:10px;
-  padding:7px 0; border-bottom:1px solid var(--bd);
-}
-.copy-modal-row:last-child { border-bottom:none; }
-.copy-modal-n { font-size:10px; font-weight:700; color:var(--fg3); background:var(--sf3); border-radius:5px; min-width:22px; height:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.copy-modal-phone { font-size:13px; font-family:'JetBrains Mono',monospace; font-weight:500; color:var(--fg); }
+.copy-modal-count { font-size:11px; color:var(--fg2); margin-bottom:8px; }
 .copy-modal-foot {
   display:flex; gap:8px; padding:12px 20px 16px;
   border-top:1px solid var(--bd); flex-shrink:0;
@@ -716,14 +714,17 @@ body {
   <div class="copy-modal-bg" id="copyModalBg" onclick="closeCopyModal()" hidden>
     <div class="copy-modal" onclick="event.stopPropagation()">
       <div class="copy-modal-hdr">
-        <span class="copy-modal-title">Numéros copiés</span>
+        <span class="copy-modal-title" id="copyModalTitle">Numéros sélectionnés</span>
         <button class="copy-modal-close" onclick="closeCopyModal()">×</button>
       </div>
-      <div class="copy-modal-body" id="copyModalBody"></div>
+      <div class="copy-modal-body">
+        <div class="copy-modal-count" id="copyModalCount"></div>
+        <textarea class="copy-modal-textarea" id="copyModalTA" readonly></textarea>
+      </div>
       <div class="copy-modal-foot">
         <button class="sel-btn-copy" onclick="copyModalAgain()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copier à nouveau
+          Copier
         </button>
         <button class="sel-btn-cancel" onclick="closeCopyModal()">Fermer</button>
       </div>
@@ -910,7 +911,7 @@ var SB_SESS_KEY = 'wcp_auth_session';
 var sbContacts = [];
 var contactsSearchQuery = '';
 var selMode = false;
-var selectedPhones = new Set();
+var selectedPhones = [];
 var lastCopiedList = [];
 var trashContacts = (function(){ try { return JSON.parse(localStorage.getItem('trash_contacts')||'[]'); } catch(e){ return []; } })();
 var sbHistory  = [];
@@ -1195,7 +1196,7 @@ function renderAll() {
 
 function toggleSelMode() {
   selMode = !selMode;
-  if (!selMode) { selectedPhones.clear(); }
+  if (!selMode) selectedPhones = [];
   var btn = document.getElementById('btnSelMode');
   if (btn) btn.classList.toggle('active', selMode);
   document.getElementById('selBar').hidden = !selMode;
@@ -1203,62 +1204,68 @@ function toggleSelMode() {
   renderList();
 }
 function toggleSelect(phone) {
-  if (selectedPhones.has(phone)) selectedPhones.delete(phone);
-  else selectedPhones.add(phone);
+  var idx = selectedPhones.indexOf(phone);
+  if (idx >= 0) selectedPhones.splice(idx, 1);
+  else selectedPhones.push(phone);
   updateSelBar();
   var card = document.querySelector('.ccard[data-phone="' + phone + '"]');
   if (card) {
-    card.classList.toggle('selected', selectedPhones.has(phone));
+    var sel = selectedPhones.indexOf(phone) >= 0;
+    card.classList.toggle('selected', sel);
     var cb = card.querySelector('.ccard-cb');
-    if (cb) cb.checked = selectedPhones.has(phone);
+    if (cb) cb.checked = sel;
   }
 }
 function updateSelBar() {
-  var n = selectedPhones.size;
+  var n = selectedPhones.length;
   var el = document.getElementById('selBarCount');
   if (el) el.textContent = n + ' sélectionné' + (n > 1 ? 's' : '');
 }
 function selectAll() {
-  var list = selMode
-    ? (activePays === 'TOUS' ? sbContacts : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; }))
-    : [];
+  var list = activePays === 'TOUS' ? sbContacts : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
   if (contactsSearchQuery) list = list.filter(function(c){ return (c.phone||'').toLowerCase().includes(contactsSearchQuery); });
-  list.forEach(function(c){ selectedPhones.add(c.phone); });
+  selectedPhones = list.map(function(c){ return c.phone; }).filter(Boolean);
   updateSelBar();
   renderList();
 }
 function deselectAll() {
-  selectedPhones.clear();
+  selectedPhones = [];
   updateSelBar();
   renderList();
 }
 function copySelected() {
-  if (!selectedPhones.size) { showToast('Aucun numéro sélectionné'); return; }
-  lastCopiedList = Array.from(selectedPhones);
+  if (!selectedPhones.length) { showToast('Aucun numéro sélectionné'); return; }
+  lastCopiedList = selectedPhones.slice();
+  showCopyModal();
   var text = lastCopiedList.map(function(p, i){ return (i+1)+'. '+p; }).join('\n');
   try {
     navigator.clipboard.writeText(text).then(function(){
       showToast(lastCopiedList.length + ' numéros copiés !');
-      showCopyModal();
-    }).catch(function(){ showCopyModal(); });
-  } catch(e) { showCopyModal(); }
+    }).catch(function(){ copyFallback(text); });
+  } catch(e) { copyFallback(text); }
+}
+function copyFallback(text) {
+  var ta = document.getElementById('copyModalTA');
+  if (ta) { ta.select(); try { document.execCommand('copy'); showToast('Copié !'); } catch(e){} }
 }
 function showCopyModal() {
-  var body = document.getElementById('copyModalBody');
-  body.innerHTML = lastCopiedList.map(function(p, i){
-    return '<div class="copy-modal-row">'
-      + '<div class="copy-modal-n">'+(i+1)+'</div>'
-      + '<div class="copy-modal-phone">'+p+'</div>'
-      + '</div>';
-  }).join('');
+  var n = lastCopiedList.length;
+  var text = lastCopiedList.map(function(p, i){ return (i+1)+'. '+p; }).join('\n');
+  document.getElementById('copyModalTitle').textContent = 'Numéros sélectionnés';
+  document.getElementById('copyModalCount').textContent = n + ' numéro' + (n > 1 ? 's' : '');
+  document.getElementById('copyModalTA').value = text;
   document.getElementById('copyModalBg').hidden = false;
 }
 function closeCopyModal() {
   document.getElementById('copyModalBg').hidden = true;
 }
 function copyModalAgain() {
-  var text = lastCopiedList.map(function(p, i){ return (i+1)+'. '+p; }).join('\n');
-  try { navigator.clipboard.writeText(text).then(function(){ showToast('Copié !'); }); } catch(e){}
+  var ta = document.getElementById('copyModalTA');
+  var text = ta ? ta.value : '';
+  try {
+    navigator.clipboard.writeText(text).then(function(){ showToast('Copié !'); })
+      .catch(function(){ if(ta){ ta.select(); document.execCommand('copy'); showToast('Copié !'); } });
+  } catch(e) { if(ta){ ta.select(); document.execCommand('copy'); showToast('Copié !'); } }
 }
 
 function filterContacts(val) {
@@ -1301,7 +1308,7 @@ function renderList() {
       var date  = c.date_ajout ? new Date(c.date_ajout).toLocaleDateString('fr-FR') : '';
       var info  = detectCountryInfo(c.pays||'');
       var num   = idx + 1;
-      var isSel = selectedPhones.has(c.phone);
+      var isSel = selectedPhones.indexOf(c.phone) >= 0;
       var selClass = selMode ? ' sel-mode' : '';
       var selectedClass = isSel ? ' selected' : '';
       var clickAttr = selMode ? ' onclick="toggleSelect(\''+c.phone+'\')"' : '';
