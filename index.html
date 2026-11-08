@@ -1791,12 +1791,30 @@ function exportEmails() {
 }
 
 /* ── E-mail Clients ─────────────────────────────────────── */
-var LANG_FLAGS = {
-  'Français':'🇫🇷','Anglais':'🇬🇧','Espagnol':'🇪🇸','Portugais':'🇵🇹',
-  'Italien':'🇮🇹','Allemand':'🇩🇪','Néerlandais':'🇳🇱','Polonais':'🇵🇱',
-  'Roumain':'🇷🇴','Grec':'🇬🇷','Suédois':'🇸🇪','Norvégien':'🇳🇴',
-  'Danois':'🇩🇰','Finlandais':'🇫🇮','Autre':'🌐'
+var LANG_META = {
+  'Français':  { abbr:'FR', color:'#3B82F6' },
+  'Anglais':   { abbr:'EN', color:'#EF4444' },
+  'Espagnol':  { abbr:'ES', color:'#F59E0B' },
+  'Portugais': { abbr:'PT', color:'#10B981' },
+  'Italien':   { abbr:'IT', color:'#6366F1' },
+  'Allemand':  { abbr:'DE', color:'#8B5CF6' },
+  'Néerlandais':{ abbr:'NL', color:'#F97316' },
+  'Polonais':  { abbr:'PL', color:'#EC4899' },
+  'Roumain':   { abbr:'RO', color:'#14B8A6' },
+  'Grec':      { abbr:'GR', color:'#0EA5E9' },
+  'Suédois':   { abbr:'SE', color:'#FACC15' },
+  'Norvégien': { abbr:'NO', color:'#A3E635' },
+  'Danois':    { abbr:'DK', color:'#FB7185' },
+  'Finlandais':{ abbr:'FI', color:'#34D399' },
+  'Autre':     { abbr:'??', color:'#9CA3AF' }
 };
+
+function langBadge(langue, size) {
+  var m = LANG_META[langue] || LANG_META['Autre'];
+  var s = size === 'lg' ? 'width:34px;height:34px;font-size:11px;font-weight:800;border-radius:9px'
+                        : 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:18px;font-size:9px;font-weight:800;border-radius:5px;vertical-align:middle';
+  return '<span style="'+s+';background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">'+m.abbr+'</span>';
+}
 
 function loadClientEmailsFromDB() {
   sbFetch('/rest/v1/client_emails?select=*&order=date_ajout.asc')
@@ -1816,13 +1834,13 @@ function buildClientLangTabs() {
     if (langs.indexOf(l) < 0) langs.push(l);
   });
   var html = langs.map(function(l){
-    var flag = l === 'TOUS' ? '🌍' : (LANG_FLAGS[l] || '🌐');
     var count = l === 'TOUS' ? sbClientEmails.length
       : sbClientEmails.filter(function(e){ return (e.langue||'Autre') === l; }).length;
     var active = l === activeClientLang ? ' active' : '';
+    var badge = l === 'TOUS' ? '' : langBadge(l, 'sm');
     return '<button class="cl-lang'+active+'" data-lang="'+l+'" onclick="selectClientLang(\''+l+'\')">'
-      + flag + ' ' + l
-      + (count ? ' <span style="background:var(--acd);border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700">'+count+'</span>' : '')
+      + badge + (l === 'TOUS' ? '🌍 ' : ' ') + l
+      + ' <span class="cl-lang-cnt">'+count+'</span>'
       + '</button>';
   }).join('');
   document.getElementById('clLangs').innerHTML = html;
@@ -1854,15 +1872,15 @@ function renderClientEmails() {
   }
   el.innerHTML = '<div class="contact-grid">'
     + list.map(function(e, i){
-        var flag = LANG_FLAGS[e.langue] || '🌐';
+        var m = LANG_META[e.langue] || LANG_META['Autre'];
         var date = e.date_ajout ? new Date(e.date_ajout).toLocaleDateString('fr-FR') : '';
         return '<div class="ccard">'
           + '<div class="ccard-num">'+(i+1)+'</div>'
-          + '<div class="ccard-icon">'+flag+'</div>'
+          + langBadge(e.langue, 'lg')
           + '<div class="ccard-body">'
           +   '<div class="ccard-phone">'+e.email+'</div>'
           +   '<div class="ccard-meta">'
-          +     '<span class="clcard-lang">'+flag+' '+(e.langue||'Autre')+'</span>'
+          +     '<span style="display:inline-flex;align-items:center;gap:3px;background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700">'+(e.langue||'Autre')+'</span>'
           +     (e.note ? '<span style="color:var(--fg2);font-size:11px">'+e.note+'</span>' : '')
           +     (date ? '<span>'+date+'</span>' : '')
           +   '</div>'
