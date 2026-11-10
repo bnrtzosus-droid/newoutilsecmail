@@ -648,46 +648,159 @@ body {
   position:fixed; bottom:28px; left:50%;
   transform:translateX(-50%) translateY(80px);
   background:var(--fg); color:var(--bg); padding:10px 22px; border-radius:100px;
-  font-size:14px; font-weight:600; z-index:300;
+  font-size:14px; font-weight:600; z-index:1000;
   transition:transform .3s cubic-bezier(.32,.72,0,1);
   white-space:nowrap; pointer-events:none; box-shadow:0 8px 30px rgba(0,0,0,.4);
 }
 .toast.show { transform:translateX(-50%) translateY(0); }
 
+/* ── Mobile top bar (hidden desktop) ────────────────────── */
+.mob-topbar {
+  display:none;
+}
+
+/* ── Bottom navigation (hidden desktop) ─────────────────── */
+.mob-nav {
+  display:none;
+}
+
+/* ── Bottom sheet (export menu on mobile) ───────────────── */
+.bsheet-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.55);
+  z-index:500; backdrop-filter:blur(4px);
+}
+.bsheet-overlay.open { display:block; }
+.bsheet {
+  position:fixed; bottom:0; left:0; right:0; z-index:501;
+  background:var(--sf); border-radius:20px 20px 0 0;
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  transform:translateY(100%);
+  transition:transform .32s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,.35);
+}
+.bsheet-overlay.open .bsheet { transform:translateY(0); }
+.bsheet-handle {
+  width:36px; height:4px; background:var(--sf3);
+  border-radius:2px; margin:12px auto 0;
+}
+.bsheet-title {
+  font-size:13px; font-weight:600; color:var(--fg2);
+  padding:14px 20px 8px; text-transform:uppercase; letter-spacing:.8px;
+}
+.bsheet-opt {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; font-size:15px; font-weight:500; color:var(--fg);
+  border:none; background:none; width:100%; text-align:left;
+  font-family:inherit; cursor:pointer; transition:background .12s;
+}
+.bsheet-opt:active { background:var(--sf2); }
+.bsheet-opt-icon {
+  width:40px; height:40px; border-radius:12px;
+  background:var(--acd2); display:grid; place-items:center; flex-shrink:0;
+  color:var(--ac);
+}
+.bsheet-opt-sub { font-size:12px; color:var(--fg2); margin-top:1px; }
+.bsheet-opt-badge {
+  margin-left:auto; background:var(--ac); color:#fff;
+  border-radius:9px; padding:2px 8px; font-size:12px; font-weight:700;
+}
+.bsheet-sep { height:1px; background:var(--bd); margin:0 20px; }
+.bsheet-cancel {
+  display:block; width:calc(100% - 32px); margin:12px 16px 16px;
+  padding:14px; background:var(--sf2); border:1px solid var(--bd);
+  border-radius:14px; font-size:15px; font-weight:600; color:var(--fg2);
+  font-family:inherit; cursor:pointer;
+}
+
 /* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width:680px) {
-  :root { --sb: 100vw; }
-  body { flex-direction:column; overflow:auto; height:auto; }
-  .sidebar {
-    width:100%; height:auto; flex-direction:row; flex-wrap:wrap;
-    border-right:none; border-bottom:1px solid var(--bd);
-    position:sticky; top:0; z-index:100;
-    background:rgba(8,14,20,.92);
+  :root { --mob-nav-h: 68px; }
+
+  /* Cache la sidebar desktop */
+  .sidebar { display:none !important; }
+
+  /* Top bar mobile */
+  .mob-topbar {
+    display:flex; align-items:center;
+    position:fixed; top:0; left:0; right:0; z-index:200;
+    height:54px; padding:0 16px;
+    padding-left:max(16px, env(safe-area-inset-left,0px));
+    padding-right:max(16px, env(safe-area-inset-right,0px));
+    background:var(--bg2); border-bottom:1px solid var(--bd);
+    gap:10px;
     backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
   }
-  .sb-brand { border-bottom:none; padding:12px 14px; flex:1; }
-  .sb-sync  { display:none; }
-  .sb-nav   {
-    flex-direction:row; padding:0 8px 10px; border-bottom:none;
-    width:100%; gap:3px;
+  .mob-top-icon {
+    width:34px; height:34px; border-radius:10px; flex-shrink:0;
+    background:linear-gradient(135deg,var(--ac),var(--ac2));
+    display:grid; place-items:center; font-size:17px;
   }
-  .sb-link  { flex:1; justify-content:center; padding:8px 4px; font-size:11px; gap:4px; }
-  .sb-stats { display:none; }
-  .main     { height:auto; overflow:visible; }
-  .main-body { overflow:visible; padding:14px 14px 40px; }
-  .main-hdr {
-    padding:10px 14px; height:auto; min-height:52px;
-    flex-wrap:wrap; gap:8px;
+  .mob-top-title {
+    font-size:15px; font-weight:700; flex:1;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .main-title { font-size:14px; }
-  .main-actions { gap:5px; }
-  .btn-ghost, .btn-secondary, .btn-select {
-    padding:7px 10px; font-size:12px; gap:5px;
+  .mob-top-actions { display:flex; gap:6px; align-items:center; }
+  .mob-icon-btn {
+    width:36px; height:36px; border-radius:10px;
+    background:var(--sf); border:1px solid var(--bd);
+    display:grid; place-items:center; color:var(--fg2);
+    cursor:pointer; position:relative; flex-shrink:0;
   }
-  .btn-ghost svg, .btn-secondary svg, .btn-select svg { width:12px; height:12px; }
-  .export-dropdown { right:0; left:auto; min-width:180px; }
-  /* Sur mobile : cache le label "Sélectionner" pour garder juste l'icône */
-  .btn-select .btn-sel-label { display:none; }
+  .mob-icon-btn.accent { background:var(--acd2); border-color:var(--bda); color:var(--ac); }
+  .mob-icon-btn .mob-badge {
+    position:absolute; top:-4px; right:-4px;
+    background:var(--ac); color:#fff; border-radius:9px;
+    padding:0 5px; font-size:9px; font-weight:800; line-height:16px;
+    border:2px solid var(--bg2); white-space:nowrap;
+  }
+
+  /* Layout général */
+  body { flex-direction:column; overflow:hidden; height:100dvh; }
+  .main {
+    flex:1; height:100dvh; overflow:hidden;
+    padding-top:54px; padding-bottom:var(--mob-nav-h);
+  }
+  .main-hdr { display:none; }
+  .main-body {
+    padding:14px max(14px,env(safe-area-inset-right,0px)) 14px max(14px,env(safe-area-inset-left,0px));
+    overflow-y:auto; height:100%; -webkit-overflow-scrolling:touch;
+  }
+
+  /* Bottom nav */
+  .mob-nav {
+    display:flex; position:fixed;
+    bottom:0; left:0; right:0; z-index:200;
+    height:var(--mob-nav-h);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    padding-left:env(safe-area-inset-left,0px);
+    padding-right:env(safe-area-inset-right,0px);
+    background:var(--bg2); border-top:1px solid var(--bd);
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  }
+  .mob-tab {
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:4px; border:none; background:none;
+    color:var(--fg3); cursor:pointer; padding:0 4px; position:relative;
+    font-family:inherit; transition:color .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mob-tab.active { color:var(--ac); }
+  .mob-tab svg { width:22px; height:22px; flex-shrink:0; }
+  .mob-tab-label { font-size:10px; font-weight:600; letter-spacing:.2px; }
+  .mob-tab-dot {
+    position:absolute; top:8px; right:calc(50% - 14px);
+    width:7px; height:7px; border-radius:50%; background:var(--ac);
+    border:2px solid var(--bg2); display:none;
+  }
+  .mob-tab-dot.show { display:block; }
+
+  /* Toast monte au-dessus de la bottom nav */
+  .toast { bottom:calc(var(--mob-nav-h) + 12px); }
+
+  /* Boutons desktop → cachés sur mobile */
+  .btn-ghost, .btn-secondary, .btn-select { display:none !important; }
+  .export-wrap { display:none !important; }
 }
 </style>
 </head>
@@ -790,7 +903,7 @@ body {
           <button class="btn-ghost" onclick="toggleExportMenu(event)" id="btnExport">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Exporter
-            <span id="btnVcfCount" style="background:var(--ac);color:#fff;border-radius:9px;padding:0 5px;font-size:10px;font-weight:700" hidden></span>
+            <span id="btnVcfCountDesktop" style="background:var(--ac);color:#fff;border-radius:9px;padding:0 5px;font-size:10px;font-weight:700" hidden></span>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="export-dropdown" id="exportDropdown">
@@ -1303,7 +1416,7 @@ function loadContactsFromDB() {
     });
   }
   fetchPage(0)
-    .then(function(){ sbContacts = all; renderAll(); updateVcfNewCount(); })
+    .then(function(){ sbContacts = all; renderAll(); mobUpdateBadges(); })
     .catch(function(){ renderAll(); });
 }
 
@@ -1672,25 +1785,28 @@ function setLastVcfExport(ts) {
 
 async function updateVcfNewCount() {
   var last = getLastVcfExport();
-  var b1 = document.getElementById('btnVcfCount');
-  var b2 = document.getElementById('btnVcfCount2');
-  if (!last) {
-    if (b1) b1.hidden = true;
-    if (b2) b2.hidden = true;
-    return;
+  // Tous les badges à mettre à jour
+  var bDesktop = document.getElementById('btnVcfCountDesktop');
+  var bMob     = document.getElementById('btnVcfCount');       // top bar mobile
+  var bSheet   = document.getElementById('btnVcfCount2');      // bottom sheet
+  function hideAll() {
+    [bDesktop, bMob, bSheet].forEach(function(b){ if (b) b.hidden = true; });
   }
+  if (!last) { hideAll(); return; }
   try {
     var url = '/rest/v1/contacts_whatsapp?select=phone&date_ajout=gt.' + encodeURIComponent(last) + '&limit=1';
     var r = await sbFetch(url, { headers: { 'Prefer': 'count=exact' } });
     var cr = r.headers.get('content-range') || '';
     var total = parseInt(cr.split('/')[1] || '0', 10);
-    var label = total > 0 ? '+' + total : '✓';
-    if (b1) { b1.textContent = label; b1.hidden = false; }
-    if (b2) { b2.textContent = total > 0 ? '+' + total : ''; b2.hidden = total <= 0; }
-  } catch(e) {
-    if (b1) b1.hidden = true;
-    if (b2) b2.hidden = true;
-  }
+    if (total > 0) {
+      var label = '+' + total;
+      if (bDesktop) { bDesktop.textContent = label; bDesktop.hidden = false; }
+      if (bMob)     { bMob.textContent     = label; bMob.hidden     = false; }
+      if (bSheet)   { bSheet.textContent   = label; bSheet.hidden   = false; }
+    } else {
+      hideAll();
+    }
+  } catch(e) { hideAll(); }
 }
 
 function buildVcf(contacts) {
@@ -2365,6 +2481,147 @@ document.addEventListener('click', function(e){
     document.getElementById('cpDropdownEmail').classList.remove('open');
   }
 });
+
+// ── Mobile UI ───────────────────────────────────────────────
+var MOB_PAGE_TITLES = {
+  contacts:  'Contacts WhatsApp',
+  histoire:  'Historique',
+  email:     'Email Finder',
+  corbeille: 'Corbeille',
+  clients:   'E-mail Clients'
+};
+
+function mobShowPage(page) {
+  showPage(page);
+  // Met à jour la top bar
+  var title = document.getElementById('mobTopTitle');
+  if (title) title.textContent = MOB_PAGE_TITLES[page] || page;
+  // Met à jour la bottom nav
+  ['contacts','histoire','email','corbeille','clients'].forEach(function(p){
+    var tab = document.getElementById('mobTab_' + p);
+    if (tab) tab.classList.toggle('active', p === page);
+  });
+  // Actions boutons dans la top bar
+  var actContacts = document.getElementById('mobActContacts');
+  var actOther    = document.getElementById('mobActOther');
+  if (actContacts) actContacts.hidden = (page !== 'contacts');
+  if (actOther)    actOther.hidden    = (page === 'contacts');
+  // Scroll haut
+  var body = document.getElementById('bodyContacts');
+  if (body && page === 'contacts') body.scrollTop = 0;
+}
+
+function openBsheet() {
+  document.getElementById('bsheetOverlay').classList.add('open');
+}
+function closeBsheet() {
+  document.getElementById('bsheetOverlay').classList.remove('open');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var ov = document.getElementById('bsheetOverlay');
+  if (ov) ov.addEventListener('click', function(e){
+    if (e.target === ov) closeBsheet();
+  });
+});
+
+function mobUpdateBadges() {
+  // Dot contacts
+  var cDot = document.getElementById('mobDotContacts');
+  if (cDot) cDot.classList.toggle('show', sbContacts.length > 0);
+  // Count badge
+  var cBadge = document.getElementById('mobCountBadge');
+  if (cBadge) cBadge.textContent = sbContacts.length > 999 ? '999+' : sbContacts.length;
+  updateVcfNewCount();
+}
 </script>
+
+<!-- ── Mobile top bar ──────────────────────────────────────── -->
+<div class="mob-topbar">
+  <div class="mob-top-icon">📱</div>
+  <div class="mob-top-title" id="mobTopTitle">Contacts WhatsApp</div>
+  <div class="mob-top-actions">
+    <!-- Actions page Contacts -->
+    <div id="mobActContacts" style="display:flex;gap:6px;align-items:center">
+      <button class="mob-icon-btn" onclick="toggleSelMode()" title="Sélectionner">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </button>
+      <button class="mob-icon-btn accent" onclick="openBsheet()" title="Exporter">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="mob-badge" id="btnVcfCount" hidden></span>
+      </button>
+      <button class="mob-icon-btn" onclick="openEmailModal()" title="Envoyer par email">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+      </button>
+    </div>
+    <!-- Actions autres pages -->
+    <div id="mobActOther" hidden>
+      <span id="mobCountBadge" style="background:var(--acd);color:var(--ac);border:1px solid var(--bda);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">0</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Bottom sheet (export) ───────────────────────────────── -->
+<div class="bsheet-overlay" id="bsheetOverlay">
+  <div class="bsheet">
+    <div class="bsheet-handle"></div>
+    <div class="bsheet-title">Exporter les contacts</div>
+    <button class="bsheet-opt" onclick="closeBsheet();exportContacts()">
+      <div class="bsheet-opt-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div>
+        <div>Exporter CSV</div>
+        <div class="bsheet-opt-sub">Tableau Excel / Google Sheets</div>
+      </div>
+    </button>
+    <div class="bsheet-sep"></div>
+    <button class="bsheet-opt" onclick="closeBsheet();exportVcf(false)" id="bsheetVcfNew">
+      <div class="bsheet-opt-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <div>Nouveaux contacts VCF</div>
+        <div class="bsheet-opt-sub">Seulement les ajouts récents</div>
+      </div>
+      <span id="btnVcfCount2" class="bsheet-opt-badge" hidden></span>
+    </button>
+    <div class="bsheet-sep"></div>
+    <button class="bsheet-opt" onclick="closeBsheet();exportVcf(true)">
+      <div class="bsheet-opt-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div>
+        <div>Tous les contacts VCF</div>
+        <div class="bsheet-opt-sub">Export complet pour nouveau téléphone</div>
+      </div>
+    </button>
+    <button class="bsheet-cancel" onclick="closeBsheet()">Annuler</button>
+  </div>
+</div>
+
+<!-- ── Bottom navigation ────────────────────────────────────── -->
+<nav class="mob-nav">
+  <button class="mob-tab active" id="mobTab_contacts" onclick="mobShowPage('contacts')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span class="mob-tab-label">Contacts</span>
+    <span class="mob-tab-dot" id="mobDotContacts"></span>
+  </button>
+  <button class="mob-tab" id="mobTab_histoire" onclick="mobShowPage('histoire')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span class="mob-tab-label">Historique</span>
+  </button>
+  <button class="mob-tab" id="mobTab_email" onclick="mobShowPage('email')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="mob-tab-label">Email</span>
+  </button>
+  <button class="mob-tab" id="mobTab_clients" onclick="mobShowPage('clients')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+    <span class="mob-tab-label">Clients</span>
+  </button>
+  <button class="mob-tab" id="mobTab_corbeille" onclick="mobShowPage('corbeille')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+    <span class="mob-tab-label">Corbeille</span>
+  </button>
+</nav>
 </body>
 </html>
