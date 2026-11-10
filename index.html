@@ -748,6 +748,10 @@ body {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           Sélectionner
         </button>
+        <button class="btn-ghost" onclick="openEmailModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+          E-mail
+        </button>
         <button class="btn-ghost" onclick="exportContacts()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter
@@ -979,6 +983,40 @@ body {
       </div>
       <div id="clientsList">
         <div class="contacts-empty">Aucun e-mail — cliquez sur "Ajouter" pour commencer.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal envoi numéros par e-mail -->
+  <div class="copy-modal-bg" id="emailContactsModalBg" onclick="closeEmailModal()" hidden>
+    <div class="copy-modal" onclick="event.stopPropagation()" style="max-width:480px;max-height:80vh;display:flex;flex-direction:column">
+      <div class="copy-modal-hdr">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span class="copy-modal-title">Envoyer par e-mail</span>
+          <span id="emailModalSubtitle" style="font-size:11px;color:var(--fg2)"></span>
+        </div>
+        <button class="copy-modal-close" onclick="closeEmailModal()">×</button>
+      </div>
+      <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--bd);flex-shrink:0">
+        <label style="font-size:11px;font-weight:600;color:var(--fg2);display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="radio" name="emailFmt" value="pays" checked onchange="refreshEmailPreview()"> Par pays
+        </label>
+        <label style="font-size:11px;font-weight:600;color:var(--fg2);display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="radio" name="emailFmt" value="liste" onchange="refreshEmailPreview()"> Liste simple
+        </label>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:var(--fg2)">Filtre actif :</span>
+          <span id="emailFilterLabel" style="font-size:11px;font-weight:600;color:var(--ac)"></span>
+        </div>
+      </div>
+      <textarea id="emailContactsTA" readonly style="flex:1;min-height:260px;resize:none;background:var(--sf2);border:none;border-radius:0;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--fg);line-height:1.6;outline:none"></textarea>
+      <div class="copy-modal-foot" style="flex-wrap:wrap;gap:8px">
+        <button class="sel-btn-copy" onclick="sendEmailContacts()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2 8 12 13 22 8"/></svg>
+          Ouvrir messagerie
+        </button>
+        <button class="sel-btn-copy" onclick="copyEmailContent()" style="background:var(--sf2);color:var(--fg);border:1px solid var(--bd)">Copier</button>
+        <button class="sel-btn-cancel" onclick="closeEmailModal()">Fermer</button>
       </div>
     </div>
   </div>
@@ -1836,6 +1874,73 @@ function exportEmails() {
   a.href=url; a.download='emails_'+Date.now()+'.csv';
   a.click(); URL.revokeObjectURL(url);
   showToast('Emails exportés !');
+}
+
+/* ── Envoi numéros par e-mail ───────────────────────────── */
+function openEmailModal() {
+  refreshEmailPreview();
+  document.getElementById('emailContactsModalBg').hidden = false;
+}
+
+function closeEmailModal() {
+  document.getElementById('emailContactsModalBg').hidden = true;
+}
+
+function refreshEmailPreview() {
+  var fmt = document.querySelector('input[name="emailFmt"]:checked').value;
+  var list = activePays === 'TOUS' ? sbContacts
+    : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
+  if (contactsSearchQuery) list = list.filter(function(c){ return (c.phone||'').toLowerCase().includes(contactsSearchQuery); });
+
+  var filterLabel = activePays === 'TOUS' ? 'Tous les pays' : activePays;
+  document.getElementById('emailFilterLabel').textContent = filterLabel + ' (' + list.length + ')';
+  document.getElementById('emailModalSubtitle').textContent = list.length + ' numéro' + (list.length > 1 ? 's' : '') + ' · organisés par pays';
+
+  var text = '';
+  if (fmt === 'pays') {
+    var byCountry = {};
+    list.forEach(function(c){
+      var pays = c.pays || 'Inconnu';
+      if (!byCountry[pays]) byCountry[pays] = [];
+      byCountry[pays].push(c.phone);
+    });
+    Object.keys(byCountry).sort().forEach(function(pays){
+      text += '━━━ ' + pays.toUpperCase() + ' (' + byCountry[pays].length + ' numéros) ━━━\n';
+      byCountry[pays].forEach(function(phone, i){
+        text += pays + ' N' + (i+1) + ' : ' + phone + '\n';
+      });
+      text += '\n';
+    });
+  } else {
+    list.forEach(function(c, i){
+      text += (i+1) + '. ' + (c.pays||'Inconnu') + ' : ' + (c.phone||'') + '\n';
+    });
+  }
+
+  document.getElementById('emailContactsTA').value = text.trim();
+}
+
+function sendEmailContacts() {
+  var text = document.getElementById('emailContactsTA').value;
+  var list = activePays === 'TOUS' ? sbContacts
+    : sbContacts.filter(function(c){ return (c.pays||'Inconnu') === activePays; });
+  var subject = encodeURIComponent('Numéros WhatsApp — ' + (activePays === 'TOUS' ? 'Tous pays' : activePays) + ' (' + list.length + ')');
+  var body = encodeURIComponent(text);
+  // mailto a une limite ~2000 chars — on tronque le body si besoin
+  var link = 'mailto:?subject=' + subject + '&body=' + body;
+  if (link.length > 2000) {
+    var shortBody = encodeURIComponent(text.substring(0, 1500) + '\n\n[... liste tronquée — copiez le texte complet depuis le dashboard]');
+    link = 'mailto:?subject=' + subject + '&body=' + shortBody;
+  }
+  window.location.href = link;
+  showToast('Ouverture de la messagerie…');
+}
+
+function copyEmailContent() {
+  var text = document.getElementById('emailContactsTA').value;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){ showToast('Contenu copié !'); }).catch(function(){ fallbackCopy(text); });
+  } else { fallbackCopy(text); showToast('Contenu copié !'); }
 }
 
 /* ── E-mail Clients ─────────────────────────────────────── */
