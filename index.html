@@ -756,9 +756,13 @@ body {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exporter CSV
         </button>
-        <button class="btn-ghost" onclick="exportVcf()" id="btnExportVcf">
+        <button class="btn-ghost" onclick="exportVcf(false)" id="btnExportVcf" title="Exporter uniquement les nouveaux contacts">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Exporter VCF
+          <span id="btnVcfLabel">VCF nouveaux</span><span id="btnVcfCount" style="margin-left:4px;background:var(--ac);color:#fff;border-radius:9px;padding:0 5px;font-size:10px;font-weight:700" hidden></span>
+        </button>
+        <button class="btn-ghost" onclick="exportVcf(true)" id="btnExportVcfAll" title="Exporter tous les contacts">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          VCF tout
         </button>
         <button class="btn-secondary" onclick="clearContacts()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
@@ -1254,7 +1258,7 @@ function loadContactsFromDB() {
     });
   }
   fetchPage(0)
-    .then(function(){ sbContacts = all; renderAll(); })
+    .then(function(){ sbContacts = all; renderAll(); updateVcfNewCount(); })
     .catch(function(){ renderAll(); });
 }
 
@@ -1598,58 +1602,100 @@ function exportContacts() {
   showToast('Contacts exportés !');
 }
 
-async function exportVcf() {
-  var btn = document.getElementById('btnExportVcf');
-  if (btn) { btn.disabled = true; btn.textContent = 'Chargement…'; }
+var VCF_EXPORT_KEY = 'vcf_last_export_ts';
+
+function getLastVcfExport() {
+  try { return localStorage.getItem(VCF_EXPORT_KEY) || null; } catch(e) { return null; }
+}
+function setLastVcfExport(ts) {
+  try { localStorage.setItem(VCF_EXPORT_KEY, ts); } catch(e) {}
+}
+
+async function updateVcfNewCount() {
+  var last = getLastVcfExport();
+  var badge = document.getElementById('btnVcfCount');
+  if (!badge) return;
+  if (!last) { badge.hidden = true; return; }
   try {
-    // Récupère TOUS les contacts (pas seulement le filtre actuel)
+    var url = '/rest/v1/contacts_whatsapp?select=phone&date_ajout=gt.' + encodeURIComponent(last) + '&limit=1&prefer=count%3Dexact';
+    var r = await sbFetch(url, { headers: { 'Prefer': 'count=exact' } });
+    var total = parseInt(r.headers.get('content-range')?.split('/')[1] || '0', 10);
+    if (total > 0) {
+      badge.textContent = '+' + total;
+      badge.hidden = false;
+    } else {
+      badge.textContent = '0';
+      badge.hidden = false;
+    }
+  } catch(e) { badge.hidden = true; }
+}
+
+function buildVcf(contacts) {
+  var byPays = {};
+  contacts.forEach(function(c){
+    var p = (c.pays || 'Inconnu').replace(/[^\w\s]/g,'').trim();
+    if (!byPays[p]) byPays[p] = [];
+    byPays[p].push(c.phone);
+  });
+  var lines = [];
+  Object.keys(byPays).sort().forEach(function(pays){
+    byPays[pays].forEach(function(phone, i){
+      var name = pays + ' N' + (i + 1);
+      lines.push('BEGIN:VCARD');
+      lines.push('VERSION:3.0');
+      lines.push('FN:' + name);
+      lines.push('N:' + name + ';;;');
+      lines.push('TEL;TYPE=CELL:' + phone);
+      lines.push('END:VCARD');
+    });
+  });
+  return lines.join('\n');
+}
+
+async function exportVcf(exportAll) {
+  var btn = document.getElementById(exportAll ? 'btnExportVcfAll' : 'btnExportVcf');
+  if (btn) { btn.disabled = true; }
+  var exportTs = new Date().toISOString();
+  try {
+    var last = exportAll ? null : getLastVcfExport();
     var allContacts = [];
     var offset = 0, limit = 1000;
     while (true) {
-      var r = await sbFetch('/rest/v1/contacts_whatsapp?select=phone,pays,date_ajout&order=pays.asc,date_ajout.asc&limit='+limit+'&offset='+offset);
+      var qs = '/rest/v1/contacts_whatsapp?select=phone,pays,date_ajout&order=pays.asc,date_ajout.asc&limit='+limit+'&offset='+offset;
+      if (last) qs += '&date_ajout=gt.' + encodeURIComponent(last);
+      var r = await sbFetch(qs);
       var chunk = await r.json();
       if (!Array.isArray(chunk) || !chunk.length) break;
       allContacts = allContacts.concat(chunk);
       if (chunk.length < limit) break;
       offset += limit;
     }
-    if (!allContacts.length) { showToast('Aucun contact à exporter'); return; }
-    // Groupe par pays pour nommer Pays N1, N2…
-    var byPays = {};
-    allContacts.forEach(function(c){
-      var p = (c.pays || 'Inconnu').replace(/[^\w\s]/g,'').trim();
-      if (!byPays[p]) byPays[p] = [];
-      byPays[p].push(c.phone);
-    });
-    // Génère le VCF
-    var lines = [];
-    Object.keys(byPays).sort().forEach(function(pays){
-      byPays[pays].forEach(function(phone, i){
-        var name = pays + ' N' + (i + 1);
-        lines.push('BEGIN:VCARD');
-        lines.push('VERSION:3.0');
-        lines.push('FN:' + name);
-        lines.push('N:' + name + ';;;');
-        lines.push('TEL;TYPE=CELL:' + phone);
-        lines.push('END:VCARD');
-      });
-    });
-    var vcf = lines.join('\n');
+    if (!allContacts.length) {
+      showToast(last ? 'Aucun nouveau contact depuis le dernier export ✓' : 'Aucun contact à exporter');
+      return;
+    }
+    var vcf  = buildVcf(allContacts);
     var blob = new Blob([vcf], {type:'text/vcard'});
     var url  = URL.createObjectURL(blob);
     var a    = document.createElement('a');
-    a.href = url;
-    a.download = 'contacts_whatsapp_' + allContacts.length + '_' + new Date().toISOString().slice(0,10) + '.vcf';
+    a.href   = url;
+    var suffix = exportAll ? 'complet' : 'nouveaux';
+    a.download = 'contacts_wa_' + suffix + '_' + allContacts.length + '_' + exportTs.slice(0,10) + '.vcf';
     a.click();
     URL.revokeObjectURL(url);
-    showToast(allContacts.length + ' contacts exportés en VCF !');
+    // Mémorise la date de cet export (seulement pour "nouveaux")
+    if (!exportAll) {
+      setLastVcfExport(exportTs);
+      setTimeout(updateVcfNewCount, 300);
+    }
+    var msg = exportAll
+      ? allContacts.length + ' contacts exportés (complet)'
+      : allContacts.length + ' nouveaux contacts exportés — compteur remis à zéro ✓';
+    showToast(msg);
   } catch(e) {
     showToast('Erreur export VCF');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Exporter VCF';
-    }
+    if (btn) btn.disabled = false;
   }
 }
 
